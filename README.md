@@ -1,2 +1,2 @@
-# Short-Circuit-Calculation
+# ShortCircuitCalc
 A little bit science :)
