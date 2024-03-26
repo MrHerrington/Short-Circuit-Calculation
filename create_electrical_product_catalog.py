@@ -41,11 +41,11 @@ class VoltageNominal(Base):
 
 
 # Таблица групп соединений обмоток трансформаторов
-class VectorGroup(Base):
-    __tablename__ = 'vector_group'
+class Scheme(Base):
+    __tablename__ = 'scheme'
     id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
-    vector_gr = sa.Column(sa.String(10))
-    transformers = sa.orm.relationship('Transformer', back_populates='vector_groups')
+    vector_group = sa.Column(sa.String(10))
+    transformers = sa.orm.relationship('Transformer', back_populates='schemes')
 
 
 # Таблица связи по трансформаторам с мощностью потерь и напряжением короткого замыкания
@@ -54,13 +54,19 @@ class Transformer(Base):
     id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
     Snom_id = sa.Column(sa.Integer, sa.ForeignKey(PowerNominal.id, ondelete='CASCADE'))
     Unom_id = sa.Column(sa.Integer, sa.ForeignKey(VoltageNominal.id, ondelete='CASCADE'))
-    vector_group_id = sa.Column(sa.Integer, sa.ForeignKey(VectorGroup.id, ondelete='CASCADE'))
+    scheme_id = sa.Column(sa.Integer, sa.ForeignKey(Scheme.id, ondelete='CASCADE'))
     power_short_circuit = sa.Column(sa.Numeric(2, 2), nullable=False)
     voltage_short_circuit = sa.Column(sa.Numeric(1, 1), nullable=False)
     power_nominals = sa.orm.relationship('PowerNominal', back_populates='transformers')
     voltage_nominals = sa.orm.relationship('VoltageNominal', back_populates='transformers')
-    vector_groups = sa.orm.relationship('VectorGroup', back_populates='transformers')
+    schemes = sa.orm.relationship('Scheme', back_populates='transformers')
 
+
+
+
+
+class Cable:
+    __tablename__ = 'cable'
 
 engine = sa.create_engine(db_access(), echo=True)
 Base.metadata.create_all(engine)

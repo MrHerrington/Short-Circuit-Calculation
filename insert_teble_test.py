@@ -1,6 +1,6 @@
 import sqlalchemy as sa
 import sqlalchemy.orm
-from create_electrical_product_catalog import engine, PowerNominal, VoltageNominal, VectorGroup, Transformer
+from create_electrical_product_catalog import engine, PowerNominal, VoltageNominal, Scheme, Transformer
 
 Session = sa.orm.sessionmaker(engine)
 
