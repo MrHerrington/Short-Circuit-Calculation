@@ -1,7 +1,7 @@
 import sqlalchemy as sa
 from sqlalchemy.orm import declared_attr
 import sqlalchemy.exc
-from tools import Base, engine
+from tools import Base, engine, session_scope
 from typing import Union, Callable
 import re
 
@@ -30,8 +30,13 @@ class BaseMixin:
         except sa.exc.OperationalError as err:
             print(f"{type(err)}: Table '{cls.__tablename__}' already exists!")
 
-    # @classmethod
-    # def read_table(cls) -> sa.Row:
+    @classmethod
+    def read_table(cls, col_name, *args, **kwargs) -> map:
+        # noinspection PyArgumentList
+        with session_scope() as session:
+            request = session.query(cls).filter(cls.__getattribute__(cls, '%s' % col_name)).all()
+        print(args)
+        return map(lambda x: x.__getattribute__('%s' % col_name), request)
 
     @classmethod
     def drop_table(cls, confirm: Union[Callable, str, None] = None) -> None:
@@ -40,6 +45,6 @@ class BaseMixin:
                 Base.metadata.tables[cls.__tablename__].drop(engine)
                 print(f"Table '{cls.__tablename__}' has been deleted.")
             else:
-                print(f"Table '{cls.__tablename__}' deletion not confirmed.")
+                raise f"Table '{cls.__tablename__}' deletion not confirmed."
         except sa.exc.OperationalError as err:
-            print(f"{type(err)}: Unknown table '{cls.__tablename__}'!")
+            raise err from None
