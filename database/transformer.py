@@ -41,9 +41,9 @@ class Transformer(BaseMixin, Base):
 
 
 if __name__ == '__main__':
-    # PowerNominal.create_table()
-    # VoltageNominal.create_table()
-    # Scheme.create_table()
+    PowerNominal.create_table()
+    VoltageNominal.create_table()
+    Scheme.create_table()
     Transformer.create_table()
     # PowerNominal.drop_table(PowerNominal.__tablename__)
     # VoltageNominal.drop_table(VoltageNominal.__tablename__)
