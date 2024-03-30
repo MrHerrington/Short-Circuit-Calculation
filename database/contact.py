@@ -1,36 +1,50 @@
+# -*- coding: utf-8 -*-
+"""The module contains ORM models of tables with equipment
+of the category 'contacts and other resistances'"""
+
+
 import sqlalchemy as sa
 import sqlalchemy.orm
-from tools import Base, engine
+from tools import Base
+from database import BaseMixin
 
 
-# Таблица типов коммутационных аппаратов: автоматы, рубильники, etc
-class Device(Base):
-    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
-    device_type = sa.Column(sa.String(25), nullable=False, unique=True)
+class Device(BaseMixin, Base):
+    """The class describes a table of switching devices.
+
+    Describes a table of switching devices: automatic current breaker, switches, etc.
+
+    """
+    device_type = sa.mapped_column(sa.String(25), nullable=False, unique=True, sort_order=10)
+
+    # relationships
     current_breakers = sa.orm.relationship('CurrentBreaker', back_populates='devices')
 
 
-# Таблица токовых номиналов для коммутационных аппаратов
-class CurrentNominal(Base):
-    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
-    current_value = sa.Column(sa.Integer, nullable=False, unique=True)
+class CurrentNominal(BaseMixin, Base):
+    """The class describes a table of the switching devices current nominals"""
+    current_value = sa.mapped_column(sa.Integer, nullable=False, unique=True, sort_order=10)
+
+    # relationships
     current_breakers = sa.orm.relationship('CurrentBreaker', back_populates='current_nominals')
 
 
-# Таблица связи по коммутационным аппаратам с активными сопротивлениями
-class CurrentBreaker(Base):
-    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
-    device_type_id = sa.Column(sa.Integer, sa.ForeignKey(Device.id, ondelete='CASCADE'))
-    current_value_id = sa.Column(sa.Integer, sa.ForeignKey(CurrentNominal.id, ondelete='CASCADE'))
-    resistance = sa.Column(sa.Numeric(5, 5), nullable=False)
+class CurrentBreaker(BaseMixin, Base):
+    """The class describes a table of the switching devices.
+
+    Describes a table of the switching devices, it's device type id, current value id, resistances.
+
+    """
+    device_type_id = sa.mapped_column(sa.Integer, sa.ForeignKey(Device.id, ondelete='CASCADE'), sort_order=10)
+    current_value_id = sa.mapped_column(sa.Integer, sa.ForeignKey(CurrentNominal.id, ondelete='CASCADE'), sort_order=10)
+    resistance = sa.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
+
+    # relationships
     devices = sa.orm.relationship('Device', back_populates='current_breakers')
     current_nominals = sa.orm.relationship('CurrentNominal', back_populates='current_breakers')
 
 
-class OtherContact(Base):
-    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
-    contact_type = sa.Column(sa.String(25), nullable=False, unique=True)
-    resistance = sa.Column(sa.Numeric(5, 5), nullable=False)
-
-
-Base.metadata.create_all(engine)
+class OtherContact(BaseMixin, Base):
+    """The class describes a table of the others resistances."""
+    contact_type = sa.mapped_column(sa.String(25), nullable=False, unique=True, sort_order=10)
+    resistance = sa.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)

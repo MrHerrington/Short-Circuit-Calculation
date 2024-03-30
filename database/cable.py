@@ -1,45 +1,55 @@
+# -*- coding: utf-8 -*-
+"""The module contains ORM models of tables with equipment
+of the category 'cables and wires'"""
+
+
 import sqlalchemy as sa
 import sqlalchemy.orm
-from tools import Base, engine
+from tools import Base
+from database import BaseMixin
 
 
-# Субтаблицы с параметрами кабелей / проводов
-# Таблица типов маркировки кабелей
-class Mark(Base):
-    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
-    mark_name = sa.Column(sa.String(20), nullable=False, unique=True)
+class Mark(BaseMixin, Base):
+    """The class describes a table of cable marking types"""
+    mark_name = sa.mapped_column(sa.String(20), nullable=False, unique=True, sort_order=10)
+
+    # relationships
     cables = sa.orm.relationship('Cable', back_populates='marks')
 
 
-# Таблица количества токопроводящих жил кабелей
-class Amount(Base):
-    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
-    multicore_amount = sa.Column(sa.Integer, nullable=False, unique=True)
+class Amount(BaseMixin, Base):
+    """The class describes a table of the number of conductive cores of cables"""
+    multicore_amount = sa.mapped_column(sa.Integer, nullable=False, unique=True, sort_order=10)
+
+    # relationships
     cables = sa.orm.relationship('Cable', back_populates='amounts')
 
 
-# Таблица поперечных сечений кабелей
-class Range(Base):
-    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
-    cable_range = sa.Column(sa.Numeric(3, 2), nullable=False, unique=True)
+class Range(BaseMixin, Base):
+    """The class describes a table of cable ranges"""
+    cable_range = sa.mapped_column(sa.Numeric(3, 2), nullable=False, unique=True, sort_order=10)
+
+    # relationships
     cables = sa.orm.relationship('Cable', back_populates='ranges')
 
 
-# Таблица связи по кабелям, допустимым величинам длительно протекающего тока,
-# сопротивлениями и реактансами прямой и обратной последовательностей
-class Cable(Base):
-    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
-    mark_name_id = sa.Column(sa.Integer, sa.ForeignKey(Mark.id, ondelete='CASCADE'))
-    multicore_amount_id = sa.Column(sa.Integer, sa.ForeignKey(Amount.id, ondelete='CASCADE'))
-    cable_range_id = sa.Column(sa.Integer, sa.ForeignKey(Range.id, ondelete='CASCADE'))
-    continuous_current = sa.Column(sa.Numeric(3, 2), nullable=False)
-    resistance_r1 = sa.Column(sa.Numeric(5, 5), nullable=False)
-    reactance_x1 = sa.Column(sa.Numeric(5, 5), nullable=False)
-    resistance_r0 = sa.Column(sa.Numeric(5, 5), nullable=False)
-    reactance_x0 = sa.Column(sa.Numeric(5, 5), nullable=False)
+class Cable(BaseMixin, Base):
+    """The class describes a table of communication by cables.
+
+    Describes a table of communication by cables, permissible values of long-term flowing
+    current, resistance and reactance of forward and reverse sequences.
+
+    """
+    mark_name_id = sa.mapped_column(sa.Integer, sa.ForeignKey(Mark.id, ondelete='CASCADE'), sort_order=10)
+    multicore_amount_id = sa.mapped_column(sa.Integer, sa.ForeignKey(Amount.id, ondelete='CASCADE'), sort_order=10)
+    cable_range_id = sa.mapped_column(sa.Integer, sa.ForeignKey(Range.id, ondelete='CASCADE'), sort_order=10)
+    continuous_current = sa.mapped_column(sa.Numeric(3, 2), nullable=False, sort_order=10)
+    resistance_r1 = sa.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
+    reactance_x1 = sa.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
+    resistance_r0 = sa.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
+    reactance_x0 = sa.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
+
+    # relationships
     marks = sa.orm.relationship('Mark', back_populates='cables')
     amounts = sa.orm.relationship('Amount', back_populates='cables')
     ranges = sa.orm.relationship('Range', back_populates='cables')
-
-
-Base.metadata.create_all(engine)
