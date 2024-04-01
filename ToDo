@@ -1,2 +1,3 @@
 Check join stmn between tables
-Write CRUD methods
+add autoincrement reset in tables
+add onupdate = 'CASCADE' for assoc tables

@@ -57,7 +57,8 @@ import re
 #     for i in question:
 #         print(i)
 
-a = PowerNominal.read_table(filtrate='power <= 63')
-print(a['power'].sum())
+# a = PowerNominal.read_table(filtrate='power <= 63')
+# print(a['power'].sum())
 
-PowerNominal.show_table(filtrate='power <= 63')
+Transformer.show_table()
+# Transformer.delete_table('id > 20')

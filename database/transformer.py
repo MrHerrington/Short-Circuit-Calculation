@@ -44,12 +44,12 @@ class Transformer(BaseMixin, Base):
     power_id = sa.orm.mapped_column(sa.Integer, sa.ForeignKey(PowerNominal.id, ondelete='CASCADE'), sort_order=10)
     voltage_id = sa.orm.mapped_column(sa.Integer, sa.ForeignKey(VoltageNominal.id, ondelete='CASCADE'), sort_order=10)
     vector_group_id = sa.orm.mapped_column(sa.Integer, sa.ForeignKey(Scheme.id, ondelete='CASCADE'), sort_order=10)
-    power_short_circuit = sa.orm.mapped_column(sa.Numeric(2, 2), nullable=False, sort_order=10)
-    voltage_short_circuit = sa.orm.mapped_column(sa.Numeric(1, 1), nullable=False, sort_order=10)
-    resistance_r1 = sa.orm.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
-    reactance_x1 = sa.orm.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
-    resistance_r0 = sa.orm.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
-    reactance_x0 = sa.orm.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
+    # power_short_circuit = sa.orm.mapped_column(sa.Numeric(2, 2), nullable=False, sort_order=10)
+    # voltage_short_circuit = sa.orm.mapped_column(sa.Numeric(1, 1), nullable=False, sort_order=10)
+    # resistance_r1 = sa.orm.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
+    # reactance_x1 = sa.orm.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
+    # resistance_r0 = sa.orm.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
+    # reactance_x0 = sa.orm.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
 
     # relationships
     power_nominals = sa.orm.relationship('PowerNominal', back_populates='transformers')
