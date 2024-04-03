@@ -5,8 +5,8 @@ of the category 'contacts and other resistances'"""
 
 import sqlalchemy as sa
 import sqlalchemy.orm
-from tools import Base
-from database import BaseMixin
+from ShortCircuitCalc.tools import Base
+from ShortCircuitCalc.database import BaseMixin
 
 
 class Device(BaseMixin, Base):
@@ -35,8 +35,10 @@ class CurrentBreaker(BaseMixin, Base):
     Describes a table of the switching devices, it's device type id, current value id, resistances.
 
     """
-    device_type_id = sa.mapped_column(sa.Integer, sa.ForeignKey(Device.id, ondelete='CASCADE'), sort_order=10)
-    current_value_id = sa.mapped_column(sa.Integer, sa.ForeignKey(CurrentNominal.id, ondelete='CASCADE'), sort_order=10)
+    device_type_id = sa.mapped_column(
+        sa.Integer, sa.ForeignKey(Device.id, ondelete='CASCADE', onupdate='CASCADE'), sort_order=10)
+    current_value_id = sa.mapped_column(
+        sa.Integer, sa.ForeignKey(CurrentNominal.id, ondelete='CASCADE', onupdate='CASCADE'), sort_order=10)
     resistance = sa.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
 
     # relationships

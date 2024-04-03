@@ -11,7 +11,7 @@ The package also presents ORM models of the database of various electrical devic
 import sqlalchemy as sa
 from sqlalchemy.orm import declared_attr
 import sqlalchemy.exc
-from tools import Base, engine, session_scope
+from ShortCircuitCalc.tools import Base, engine, session_scope
 import typing as ty
 import re
 import pandas as pd
@@ -48,14 +48,19 @@ class BaseMixin:
         return sa.orm.mapped_column(sa.Integer, primary_key=True, autoincrement=True, sort_order=0)
 
     @classmethod
-    def create_table(cls) -> None:
+    def create_table(cls, drop_first: bool = False) -> None:
         """The method creates the table.
 
         The method create table. If successful, outputs the message
         'Table <tablename> has been created.', outputs
         'Table <tablename> already exists.' otherwise.
 
+        Args:
+            drop_first (bool): defaults by False, drop table first if existing.
+
         """
+        if drop_first:
+            cls.drop_table(cls.__tablename__)
         try:
             Base.metadata.tables[cls.__tablename__].create(engine)
             print(f"Table '{cls.__tablename__}' has been created.")
@@ -206,6 +211,16 @@ class BaseMixin:
                 raise f"Table '{cls.__tablename__}' deletion not confirmed."
         except sa.exc.OperationalError as err:
             raise err from None
+
+    @classmethod
+    def reset_id(cls) -> None:
+        """The method reset id order for the table with updating in child tables."""
+        # noinspection PyArgumentList
+        with session_scope() as session:
+            session.execute(sa.text(f'SET @count = 0'))
+            session.execute(sa.text(f'UPDATE {cls.__tablename__} SET {cls.__tablename__}.id = @count:= @count + 1'))
+            session.execute(sa.text(f'ALTER TABLE {cls.__tablename__} AUTO_INCREMENT = 1'))
+            print(f"id order for table '{cls.__tablename__}' has been reset!")
 
     @staticmethod
     def __camel_to_snake(name: str) -> str:

@@ -59,6 +59,10 @@ import re
 
 # a = PowerNominal.read_table(filtrate='power <= 63')
 # print(a['power'].sum())
-
-Transformer.show_table()
-# Transformer.delete_table('id > 20')
+# PowerNominal.reset_auto_increment()
+# PowerNominal.show_table()
+# PowerNominal.reset_auto_increment()
+# Transformer.reset_id()
+# Transformer.show_table()
+# PowerNominal.delete_table('power = 1000')
+Transformer.create_table(True)

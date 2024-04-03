@@ -5,8 +5,8 @@ of the category 'cables and wires'"""
 
 import sqlalchemy as sa
 import sqlalchemy.orm
-from tools import Base
-from database import BaseMixin
+from ShortCircuitCalc.tools import Base
+from ShortCircuitCalc.database import BaseMixin
 
 
 class Mark(BaseMixin, Base):
@@ -40,9 +40,12 @@ class Cable(BaseMixin, Base):
     current, resistance and reactance of forward and reverse sequences.
 
     """
-    mark_name_id = sa.mapped_column(sa.Integer, sa.ForeignKey(Mark.id, ondelete='CASCADE'), sort_order=10)
-    multicore_amount_id = sa.mapped_column(sa.Integer, sa.ForeignKey(Amount.id, ondelete='CASCADE'), sort_order=10)
-    cable_range_id = sa.mapped_column(sa.Integer, sa.ForeignKey(Range.id, ondelete='CASCADE'), sort_order=10)
+    mark_name_id = sa.mapped_column(
+        sa.Integer, sa.ForeignKey(Mark.id, ondelete='CASCADE', onupdate='CASCADE'), sort_order=10)
+    multicore_amount_id = sa.mapped_column(
+        sa.Integer, sa.ForeignKey(Amount.id, ondelete='CASCADE', onupdate='CASCADE'), sort_order=10)
+    cable_range_id = sa.mapped_column(
+        sa.Integer, sa.ForeignKey(Range.id, ondelete='CASCADE', onupdate='CASCADE'), sort_order=10)
     continuous_current = sa.mapped_column(sa.Numeric(3, 2), nullable=False, sort_order=10)
     resistance_r1 = sa.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
     reactance_x1 = sa.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)

@@ -4,8 +4,8 @@ of the category 'transformers'"""
 
 import sqlalchemy as sa
 import sqlalchemy.orm
-from tools import Base
-from database import BaseMixin
+from ShortCircuitCalc.tools import Base
+from ShortCircuitCalc.database import BaseMixin
 
 
 class PowerNominal(BaseMixin, Base):
@@ -41,9 +41,12 @@ class Transformer(BaseMixin, Base):
     powers and voltages, resistance and reactance of forward and reverse sequences.
 
     """
-    power_id = sa.orm.mapped_column(sa.Integer, sa.ForeignKey(PowerNominal.id, ondelete='CASCADE'), sort_order=10)
-    voltage_id = sa.orm.mapped_column(sa.Integer, sa.ForeignKey(VoltageNominal.id, ondelete='CASCADE'), sort_order=10)
-    vector_group_id = sa.orm.mapped_column(sa.Integer, sa.ForeignKey(Scheme.id, ondelete='CASCADE'), sort_order=10)
+    power_id = sa.orm.mapped_column(
+        sa.Integer, sa.ForeignKey(PowerNominal.id, ondelete='CASCADE', onupdate='CASCADE'), sort_order=10)
+    voltage_id = sa.orm.mapped_column(
+        sa.Integer, sa.ForeignKey(VoltageNominal.id, ondelete='CASCADE', onupdate='CASCADE'), sort_order=10)
+    vector_group_id = sa.orm.mapped_column(
+        sa.Integer, sa.ForeignKey(Scheme.id, ondelete='CASCADE', onupdate='CASCADE'), sort_order=10)
     # power_short_circuit = sa.orm.mapped_column(sa.Numeric(2, 2), nullable=False, sort_order=10)
     # voltage_short_circuit = sa.orm.mapped_column(sa.Numeric(1, 1), nullable=False, sort_order=10)
     # resistance_r1 = sa.orm.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
@@ -58,10 +61,10 @@ class Transformer(BaseMixin, Base):
 
 
 if __name__ == '__main__':
-    PowerNominal.create_table()
-    VoltageNominal.create_table()
-    Scheme.create_table()
-    Transformer.create_table()
+    # PowerNominal.create_table()
+    # VoltageNominal.create_table()
+    # Scheme.create_table()
+    # Transformer.create_table()
     # PowerNominal.drop_table(PowerNominal.__tablename__)
     # VoltageNominal.drop_table(VoltageNominal.__tablename__)
     # Scheme.drop_table(Scheme.__tablename__)

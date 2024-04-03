@@ -1,5 +1,5 @@
 import json
-from config import DB_SECURITY_DIR, ENGINE_ECHO
+from ShortCircuitCalc.config import DB_SECURITY_DIR, ENGINE_ECHO
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
 from contextlib import contextmanager
