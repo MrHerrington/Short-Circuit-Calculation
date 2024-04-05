@@ -8,14 +8,17 @@ with the selected database table is presented.
 
 The package also presents ORM models of the database of various electrical devices."""
 
+
+import typing as ty
+import pathlib
+import re
+import csv
 import sqlalchemy as sa
 from sqlalchemy.orm import declared_attr
 import sqlalchemy.exc
-from ShortCircuitCalc.tools import Base, engine, session_scope
-import typing as ty
-import re
 import pandas as pd
 from tabulate import tabulate
+from ShortCircuitCalc.tools import Base, engine, session_scope
 
 
 class BaseMixin:
@@ -48,18 +51,19 @@ class BaseMixin:
         return sa.orm.mapped_column(sa.Integer, primary_key=True, autoincrement=True, sort_order=0)
 
     @classmethod
-    def create_table(cls, drop_first: bool = False) -> None:
+    def create_table(cls, drop_first: bool = False, forced_drop: bool = False) -> None:
         """The method creates the table.
 
-        The method create table. If successful, outputs the message
-        'Table <tablename> has been created.', outputs
-        'Table <tablename> already exists.' otherwise.
+        The method create table. If successful, outputs the info message.
 
         Args:
             drop_first (bool): defaults by False, drop table first if existing.
+            forced_drop (bool): Force drop table bypassing foreign key constraint.
 
         """
-        if drop_first:
+        if drop_first and forced_drop:
+            cls.drop_table(cls.__tablename__, True)
+        elif drop_first:
             cls.drop_table(cls.__tablename__)
         try:
             Base.metadata.tables[cls.__tablename__].create(engine)
@@ -81,7 +85,6 @@ class BaseMixin:
             pd.DataFrame: Object with query results
 
         """
-        # noinspection PyArgumentList
         with session_scope() as session:
             if filtrate is None:
                 df = pd.read_sql(session.query(cls).statement, session.bind)[:limit]
@@ -109,20 +112,27 @@ class BaseMixin:
         print(tabulate(df, headers='keys', tablefmt='psql', showindex=indexes))
 
     @classmethod
-    def insert_table(cls, data: ty.List[dict]) -> None:
+    def insert_table(cls, data: ty.Optional[ty.List[dict]] = None,
+                     from_csv: ty.Union[str, pathlib.WindowsPath] = None) -> None:
         """The method inserts values in chosen table.
 
         This method allows to add records to the table
         both as individual values and as bulk operations.
+        Also, available from CSV format values insert.
 
         Args:
-            data (List[dict]): A list with dictionary(es) of values.
+            data (List[dict]): A list with dictionary(es) of values. Defaults by None, if from_csv param is True.
+            from_csv (Union[str, pathlib.WindowsPath]): Path to the CSV-file.
 
         Sample:
-            PowerNominals.insert_table({'id': 1, 'power': 25}, {'id':9, 'power': 1000})
+            PowerNominals.insert_table({'id': 1, 'power': 25}, {'id':9, 'power': 1000}) or
+            PowerNominals.insert_table(DATA_DIR/'power')
 
         """
-        # noinspection PyArgumentList
+        if all((data is None, from_csv is None)):
+            raise ValueError('Requires at least one not NoneType argument!')
+        if from_csv:
+            data = BaseMixin.__csv_to_list_of_dicts(from_csv)
         with session_scope() as session:
             result = session.connection().execute(sa.insert(cls), data).rowcount
             print(f"Table '{cls.__tablename__}' has been updated. {result} string(s) were inserted.")
@@ -153,18 +163,15 @@ class BaseMixin:
 
         """
         def __primary_keys():
-            # noinspection PyArgumentList
             with session_scope() as session:
                 return session.execute(sa.update(cls), data).rowcount
 
         def __with_alias():
-            # noinspection PyArgumentList
             with session_scope() as session:
                 return session.connection().execute(
                     sa.update(cls).where(getattr(cls, attr) == sa.bindparam(alias)), data).returned_defaults
 
         def __where_condition():
-            # noinspection PyArgumentList
             with session_scope() as session:
                 return session.execute(sa.update(cls).where(getattr(cls, attr).in_(criteria)).values(data)).rowcount
 
@@ -187,17 +194,17 @@ class BaseMixin:
             Transformer.delete_table('id > 20')
 
         """
-        # noinspection PyArgumentList
         with session_scope() as session:
             rows_deleted = session.connection().execute(sa.delete(cls).filter(sa.text(filtrate))).rowcount
             print(f"Rows were deleted from table '{cls.__tablename__}'. {rows_deleted} matches found!")
 
     @classmethod
-    def drop_table(cls, confirm: ty.Union[ty.Callable, str, None] = None) -> None:
+    def drop_table(cls, confirm: ty.Union[ty.Callable, str, None] = None, forced: bool = False) -> None:
         """The method drops the table.
 
         Args:
             confirm (Union[Callable, str], optional): Accepts confirmation of table deletion.
+            forced (bool): Force drop table bypassing foreign key constraint.
         Note:
              To drop table, enter the name of the table in the form of 'cls.__tablename__'
              or in the format of a string.
@@ -205,17 +212,26 @@ class BaseMixin:
         """
         try:
             if confirm == cls.__tablename__:
-                Base.metadata.tables[cls.__tablename__].drop(engine)
-                print(f"Table '{cls.__tablename__}' has been deleted.")
+                if not forced:
+                    Base.metadata.tables[cls.__tablename__].drop(engine)
+                    print(f"Table '{cls.__tablename__}' has been deleted.")
+                else:
+                    with session_scope() as session:
+                        session.execute(sa.text(f'SET FOREIGN_KEY_CHECKS = 0;'))
+                        session.execute(sa.text(f'DROP TABLE {cls.__tablename__};'))
+                        session.execute(sa.text(f'SET FOREIGN_KEY_CHECKS = 1;'))
+                    print(f"Table '{cls.__tablename__}' has been forced deleted.")
             else:
                 raise f"Table '{cls.__tablename__}' deletion not confirmed."
         except sa.exc.OperationalError as err:
-            raise err from None
+            if 'Unknown table' in err.orig.__str__():
+                print(f"There is no need to delete the table '{cls.__tablename__}', it does not exist")
+            else:
+                raise err from None
 
     @classmethod
     def reset_id(cls) -> None:
         """The method reset id order for the table with updating in child tables."""
-        # noinspection PyArgumentList
         with session_scope() as session:
             session.execute(sa.text(f'SET @count = 0'))
             session.execute(sa.text(f'UPDATE {cls.__tablename__} SET {cls.__tablename__}.id = @count:= @count + 1'))
@@ -232,8 +248,41 @@ class BaseMixin:
         Args:
             name (str): Default table name.
         Returns:
-            str: Return new table name
+            str: Return new table name.
 
         """
         name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
         return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
+
+    @staticmethod
+    def __convert_types(val) -> ty.Union[int, float, str]:
+        """The method converts val type.
+
+        Args:
+            val (str): Value in string format from CSV file
+        Returns:
+            Union[int, float, str]: Value with new type.
+
+        """
+        val_types = (int, float)
+        for type_ in val_types:
+            try:
+                val = type_(val)
+                return val
+            except ValueError:
+                continue
+        return val
+
+    @staticmethod
+    def __csv_to_list_of_dicts(path: ty.Union[str, pathlib.WindowsPath]) -> ty.List[dict]:
+        """The method converts CSV-file datas into list of the dictionaries.
+
+        Args:
+            path: Union[str, pathlib.WindowsPath]: Path to the CSV-file.
+        Returns:
+            List[dict]: CSV-file datas into list of the dictionaries.
+
+        """
+        with open(path, 'r', encoding='UTF-8') as tmp_file:
+            tmp_data = map(lambda x: {k: BaseMixin.__convert_types(v) for k, v in x.items()}, csv.DictReader(tmp_file))
+            return list(tmp_data)
