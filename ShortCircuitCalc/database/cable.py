@@ -11,7 +11,7 @@ from ShortCircuitCalc.database import BaseMixin
 
 class Mark(BaseMixin, Base):
     """The class describes a table of cable marking types"""
-    mark_name = sa.mapped_column(sa.String(20), nullable=False, unique=True, sort_order=10)
+    mark_name = sa.orm.mapped_column(sa.String(20), nullable=False, unique=True, sort_order=10)
 
     # relationships
     cables = sa.orm.relationship('Cable', back_populates='marks')
@@ -19,15 +19,15 @@ class Mark(BaseMixin, Base):
 
 class Amount(BaseMixin, Base):
     """The class describes a table of the number of conductive cores of cables"""
-    multicore_amount = sa.mapped_column(sa.Integer, nullable=False, unique=True, sort_order=10)
+    multicore_amount = sa.orm.mapped_column(sa.Integer, nullable=False, unique=True, sort_order=10)
 
     # relationships
     cables = sa.orm.relationship('Cable', back_populates='amounts')
 
 
-class Range(BaseMixin, Base):
+class RangeVal(BaseMixin, Base):
     """The class describes a table of cable ranges"""
-    cable_range = sa.mapped_column(sa.Numeric(3, 2), nullable=False, unique=True, sort_order=10)
+    cable_range = sa.orm.mapped_column(sa.Numeric(4, 1), nullable=False, unique=True, sort_order=10)
 
     # relationships
     cables = sa.orm.relationship('Cable', back_populates='ranges')
@@ -40,17 +40,17 @@ class Cable(BaseMixin, Base):
     current, resistance and reactance of forward and reverse sequences.
 
     """
-    mark_name_id = sa.mapped_column(
+    mark_name_id = sa.orm.mapped_column(
         sa.Integer, sa.ForeignKey(Mark.id, ondelete='CASCADE', onupdate='CASCADE'), sort_order=10)
-    multicore_amount_id = sa.mapped_column(
+    multicore_amount_id = sa.orm.mapped_column(
         sa.Integer, sa.ForeignKey(Amount.id, ondelete='CASCADE', onupdate='CASCADE'), sort_order=10)
-    cable_range_id = sa.mapped_column(
-        sa.Integer, sa.ForeignKey(Range.id, ondelete='CASCADE', onupdate='CASCADE'), sort_order=10)
-    continuous_current = sa.mapped_column(sa.Numeric(3, 2), nullable=False, sort_order=10)
-    resistance_r1 = sa.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
-    reactance_x1 = sa.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
-    resistance_r0 = sa.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
-    reactance_x0 = sa.mapped_column(sa.Numeric(5, 5), nullable=False, sort_order=10)
+    cable_range_id = sa.orm.mapped_column(
+        sa.Integer, sa.ForeignKey(RangeVal.id, ondelete='CASCADE', onupdate='CASCADE'), sort_order=10)
+    continuous_current = sa.orm.mapped_column(sa.Numeric(5, 2), nullable=False, sort_order=10)
+    resistance_r1 = sa.orm.mapped_column(sa.Numeric(8, 5), nullable=False, sort_order=10)
+    reactance_x1 = sa.orm.mapped_column(sa.Numeric(8, 5), nullable=False, sort_order=10)
+    resistance_r0 = sa.orm.mapped_column(sa.Numeric(8, 5), nullable=False, sort_order=10)
+    reactance_x0 = sa.orm.mapped_column(sa.Numeric(8, 5), nullable=False, sort_order=10)
 
     # relationships
     marks = sa.orm.relationship('Mark', back_populates='cables')
