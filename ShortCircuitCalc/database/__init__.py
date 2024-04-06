@@ -62,7 +62,7 @@ class BaseMixin:
 
         """
         if drop_first and forced_drop:
-            cls.drop_table(cls.__tablename__, True)
+            cls.drop_table(cls.__tablename__, forced=True)
         elif drop_first:
             cls.drop_table(cls.__tablename__)
         try:

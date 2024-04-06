@@ -1,3 +1,6 @@
+"""Module contains program configuration settings"""
+
+
 from pathlib import Path
 
 
