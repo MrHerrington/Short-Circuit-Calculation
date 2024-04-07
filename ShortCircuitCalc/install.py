@@ -2,10 +2,27 @@
 of basic lookup tables and their filling from equipment parameter catalogs"""
 
 
+import typing as ty
+import pathlib
+from tools import engine, metadata
+from config import DATA_DIR
 from ShortCircuitCalc.database.transformer import *
 from ShortCircuitCalc.database.cable import *
 from ShortCircuitCalc.database.contact import *
-from config import DATA_DIR
+
+
+def deploy_if_not_exist(table: Base, pathlike: ty.Union[str, pathlib.WindowsPath] = None) -> None:
+    """Function to deploy a table if it does not already exist in the database.
+
+    Args:
+        table (Base): The table object to deploy.
+        pathlike (Union[str, pathlib.WindowsPath], optional): The path to the CSV file. Defaults to None.
+
+    """
+    metadata.reflect(bind=engine)
+    if table.__tablename__ not in metadata.tables:
+        table.create_table()
+        table.insert_table(from_csv=pathlike)
 
 
 if __name__ == '__main__':

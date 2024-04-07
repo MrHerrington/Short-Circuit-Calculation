@@ -29,6 +29,7 @@ def db_access() -> str:
 
 
 engine = sa.create_engine(db_access(), echo=ENGINE_ECHO)
+metadata = sa.MetaData()
 Session = sa.orm.sessionmaker(bind=engine, expire_on_commit=False)
 
 
