@@ -39,7 +39,10 @@ class CurrentBreaker(BaseMixin, Base):
         sa.Integer, sa.ForeignKey(Device.id, ondelete='CASCADE', onupdate='CASCADE'), sort_order=10)
     current_value_id = sa.orm.mapped_column(
         sa.Integer, sa.ForeignKey(CurrentNominal.id, ondelete='CASCADE', onupdate='CASCADE'), sort_order=10)
-    resistance = sa.orm.mapped_column(sa.Numeric(8, 5), nullable=False, sort_order=10)
+    resistance_r1 = sa.orm.mapped_column(sa.Numeric(8, 5), nullable=False, sort_order=10)
+    reactance_x1 = sa.orm.mapped_column(sa.Numeric(8, 5), nullable=True, default=0, sort_order=10)
+    resistance_r0 = sa.orm.mapped_column(sa.Numeric(8, 5), nullable=True, default=0, sort_order=10)
+    reactance_x0 = sa.orm.mapped_column(sa.Numeric(8, 5), nullable=True, default=0, sort_order=10)
 
     # relationships
     devices = sa.orm.relationship('Device', back_populates='current_breakers')
@@ -49,4 +52,7 @@ class CurrentBreaker(BaseMixin, Base):
 class OtherContact(BaseMixin, Base):
     """The class describes a table of the others resistances."""
     contact_type = sa.orm.mapped_column(sa.String(25), nullable=False, unique=True, sort_order=10)
-    resistance = sa.orm.mapped_column(sa.Numeric(8, 5), nullable=False, sort_order=10)
+    resistance_r1 = sa.orm.mapped_column(sa.Numeric(8, 5), nullable=False, sort_order=10)
+    reactance_x1 = sa.orm.mapped_column(sa.Numeric(8, 5), nullable=True, default=0, sort_order=10)
+    resistance_r0 = sa.orm.mapped_column(sa.Numeric(8, 5), nullable=True, default=0, sort_order=10)
+    reactance_x0 = sa.orm.mapped_column(sa.Numeric(8, 5), nullable=True, default=0, sort_order=10)

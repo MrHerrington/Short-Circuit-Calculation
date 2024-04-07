@@ -6,6 +6,7 @@ and utility tools for the main functionality of the program"""
 import json
 from contextlib import contextmanager
 import sqlalchemy as sa
+import sqlalchemy.orm
 from ShortCircuitCalc.config import DB_SECURITY_DIR, ENGINE_ECHO
 
 
