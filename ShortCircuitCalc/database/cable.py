@@ -55,4 +55,4 @@ class Cable(BaseMixin, Base):
     # relationships
     marks = sa.orm.relationship('Mark', back_populates='cables')
     amounts = sa.orm.relationship('Amount', back_populates='cables')
-    ranges = sa.orm.relationship('Range', back_populates='cables')
+    ranges = sa.orm.relationship('RangeVal', back_populates='cables')

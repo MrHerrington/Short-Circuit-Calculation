@@ -1,3 +1,2 @@
-Check join stmn between tables
-add autoincrement reset in tables
-add onupdate = 'CASCADE' for assoc tables
+Write class Resistance
+Using Sphinx write doc for project

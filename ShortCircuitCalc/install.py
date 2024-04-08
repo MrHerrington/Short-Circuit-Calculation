@@ -11,10 +11,7 @@ from ShortCircuitCalc.database.cable import *
 from ShortCircuitCalc.database.contact import *
 
 
-T = ty.TypeVar('T', bound=Base)
-
-
-def deploy_if_not_exist(db_table: ty.Type[T], pathlike: ty.Union[str, pathlib.WindowsPath],
+def deploy_if_not_exist(db_table: ty.Type[Base], pathlike: ty.Union[str, pathlib.WindowsPath],
                         full: bool = False) -> None:
     """Function to deploy a table if it does not already exist in the database.
 
