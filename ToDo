@@ -1,2 +1,6 @@
-Write class Resistance
+Write class Calculator
 Using Sphinx write doc for project
+Add support SQLite DB
+Add # -*- coding: utf-8 -*- in files
+Add one_phase_summary_resistance
+Add one_phase_voltage_short_circuit
