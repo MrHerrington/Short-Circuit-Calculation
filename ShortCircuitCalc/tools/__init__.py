@@ -7,7 +7,7 @@ import json
 from contextlib import contextmanager
 import sqlalchemy as sa
 import sqlalchemy.orm
-from ShortCircuitCalc.config import DB_SECURITY_DIR, ENGINE_ECHO
+from ShortCircuitCalc.config import CREDENTIALS_DIR, ENGINE_ECHO
 
 
 class Base(sa.orm.DeclarativeBase):
@@ -22,14 +22,17 @@ def db_access() -> str:
         Return engine string with access info from security JSON file.
 
     """
-    with open(DB_SECURITY_DIR, 'r', encoding='UTF-8') as file:
-        temp = json.load(file)['db_access']
-        login, password, db_name = temp['login'], temp['password'], temp['db_name']
-        engine_string = f"mysql+pymysql://{login}:{password}@localhost/{db_name}?charset=utf8mb4"
-    return engine_string
+    if not hasattr(db_access, 'engine_string'):
+        print('Initializing credentials...')
+        with open(CREDENTIALS_DIR, 'r', encoding='UTF-8') as file:
+            temp = json.load(file)['db_access']
+            login, password, db_name = temp['login'], temp['password'], temp['db_name']
+            db_access.engine_string = f"mysql+pymysql://{login}:{password}@localhost/{db_name}?charset=utf8mb4"
+        print('Credentials initialized')
+    return db_access.engine_string
 
 
-engine = sa.create_engine(db_access(), echo=ENGINE_ECHO)
+engine = sa.create_engine(url=db_access(), echo=ENGINE_ECHO)
 metadata = sa.MetaData()
 Session = sa.orm.sessionmaker(bind=engine, expire_on_commit=False)
 

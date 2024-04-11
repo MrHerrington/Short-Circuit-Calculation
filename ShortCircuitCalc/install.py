@@ -4,7 +4,7 @@ of basic lookup tables and their filling from equipment parameter catalogs"""
 
 import typing as ty
 import pathlib
-from tools import engine, metadata, Base
+from tools import engine, metadata
 from config import DATA_DIR, DB_TABLES_CLEAR_INSTALL
 from ShortCircuitCalc.database.transformer import *
 from ShortCircuitCalc.database.cable import *

@@ -7,7 +7,7 @@ from decimal import Decimal
 
 # Program settings
 ROOT_DIR = Path(__file__).resolve().parent
-DB_SECURITY_DIR = ROOT_DIR / 'db_security.json'
+CREDENTIALS_DIR = ROOT_DIR / 'credentials.json'
 DATA_DIR = ROOT_DIR / 'data'
 ENGINE_ECHO = False
 DB_TABLES_CLEAR_INSTALL = True

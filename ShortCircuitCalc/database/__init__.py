@@ -36,7 +36,7 @@ class BaseMixin:
             str: The name of the table in the snake_case style.
 
         """
-        return BaseMixin.__camel_to_snake(cls.__name__)
+        return cls.__camel_to_snake(cls.__name__)
 
     @declared_attr
     @classmethod
@@ -238,8 +238,11 @@ class BaseMixin:
             session.execute(sa.text(f'ALTER TABLE {cls.__tablename__} AUTO_INCREMENT = 1'))
             print(f"id order for table '{cls.__tablename__}' has been reset!")
 
-    @staticmethod
-    def __camel_to_snake(name: str) -> str:
+    _new_name: ty.ClassVar[ty.Optional[str]]
+
+    @classmethod
+    def __camel_to_snake(cls, name: str) -> str:
+
         """The method converts the register.
 
         A utility method that converts the name of the ORM model of
@@ -251,8 +254,25 @@ class BaseMixin:
             str: Return new table name.
 
         """
-        name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
+        if not hasattr(cls, '_new_name'):
+            name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+            name = re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
+            cls._new_name = name
+        return cls._new_name
+
+    @classmethod
+    def __csv_to_list_of_dicts(cls, path: ty.Union[str, pathlib.WindowsPath]) -> ty.List[dict]:
+        """The method converts CSV-file datas into list of the dictionaries.
+
+        Args:
+            path: Union[str, pathlib.WindowsPath]: Path to the CSV-file.
+        Returns:
+            List[dict]: CSV-file datas into list of the dictionaries.
+
+        """
+        with open(path, 'r', encoding='UTF-8') as tmp_file:
+            tmp_data = map(lambda x: {k: cls.__convert_types(v) for k, v in x.items()}, csv.DictReader(tmp_file))
+            return list(tmp_data)
 
     @staticmethod
     def __convert_types(val) -> ty.Union[int, float, str]:
@@ -272,17 +292,3 @@ class BaseMixin:
             except ValueError:
                 continue
         return val
-
-    @staticmethod
-    def __csv_to_list_of_dicts(path: ty.Union[str, pathlib.WindowsPath]) -> ty.List[dict]:
-        """The method converts CSV-file datas into list of the dictionaries.
-
-        Args:
-            path: Union[str, pathlib.WindowsPath]: Path to the CSV-file.
-        Returns:
-            List[dict]: CSV-file datas into list of the dictionaries.
-
-        """
-        with open(path, 'r', encoding='UTF-8') as tmp_file:
-            tmp_data = map(lambda x: {k: BaseMixin.__convert_types(v) for k, v in x.items()}, csv.DictReader(tmp_file))
-            return list(tmp_data)

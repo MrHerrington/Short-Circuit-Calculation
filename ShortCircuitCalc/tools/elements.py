@@ -182,6 +182,22 @@ class Calculator:
             Decimal(math.sqrt(3)) / 2 * self.three_phase_current_short_circuit,
             CALCULATIONS_ACCURACY)
 
+    @property
+    def one_phase_voltage_short_circuit(self) -> Decimal:
+        """Calculates the one-phase current during a short circuit.
+
+        Returns:
+            Decimal: The calculated one-phase current during a short circuit.
+        .. math::
+            I_{k^{(1)}} = \\frac{\\sqrt{3} * U}{z_{^{(1)}}}
+        :math:`U` - voltage value,
+        :math:`I_{k^{(1)}}` - one-phase current during a short circuit.
+
+        """
+        return round(
+            Decimal(math.sqrt(3)) * SYSTEM_VOLTAGE_IN_KILOVOLTS / self.__one_phase_summary_resistance(),
+            CALCULATIONS_ACCURACY)
+
     def __three_phase_summary_resistance(self) -> Decimal:
         """
         Service function, calculates three-phase summary resistance.
@@ -199,6 +215,28 @@ class Calculator:
                 i.resistance_r1 for i in self.obj)), 2) + math.pow(
             reduce(lambda x, y: x + y, (
                 i.reactance_x1 for i in self.obj)), 2)))
+
+    def __one_phase_summary_resistance(self) -> Decimal:
+        """
+        Service function, calculates one-phase summary resistance.
+
+        Returns:
+            single Decimal value.
+        .. math::
+            z_{^{(1)}} = \\sqrt{{(2r_{1\\sum_{}} + r_{0\\sum_{}})}^{2} + {(2x_{1\\sum_{}} + x_{0\\sum_{}})}^{2}}
+        :math:`r_1` - resistance value resistance_r1,
+        :math:`r_0` - resistance value resistance_r0,
+        :math:`x_1` - reactance value reactance_x1,
+        :math:`x_0` - reactance value reactance_x0.
+
+        """
+        return Decimal(math.sqrt(
+            math.pow(
+                2 * reduce(lambda x, y: x + y, (i.resistance_r1 for i in self.obj)) +
+                reduce(lambda x, y: x + y, (i.resistance_r0 for i in self.obj)), 2) +
+            math.pow(
+                2 * reduce(lambda x, y: x + y, (i.reactance_x1 for i in self.obj)) +
+                reduce(lambda x, y: x + y, (i.reactance_x0 for i in self.obj)), 2)))
 
 
 # print(T(25, 'У/Ун-0').resistance_r1)
@@ -223,3 +261,4 @@ D = R('Дуга')
 TCH = T(160, 'У/Ун-0')
 print(Calculator((TCH, D)).three_phase_current_short_circuit)
 print(Calculator((TCH, D)).two_phase_voltage_short_circuit)
+print(Calculator((TCH, D)).one_phase_voltage_short_circuit)
