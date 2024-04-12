@@ -2,6 +2,7 @@
 """The module contains ORM models of tables with equipment
 of the category 'transformers'"""
 
+
 import sqlalchemy as sa
 import sqlalchemy.orm
 from ShortCircuitCalc.tools import Base

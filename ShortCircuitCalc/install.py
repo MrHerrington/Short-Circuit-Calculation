@@ -4,11 +4,9 @@ of basic lookup tables and their filling from equipment parameter catalogs"""
 
 import typing as ty
 import pathlib
-from tools import engine, metadata
-from config import DATA_DIR, DB_TABLES_CLEAR_INSTALL
-from ShortCircuitCalc.database.transformer import *
-from ShortCircuitCalc.database.cable import *
-from ShortCircuitCalc.database.contact import *
+from ShortCircuitCalc.tools import Base, engine, metadata
+from ShortCircuitCalc.config import DATA_DIR, DB_TABLES_CLEAR_INSTALL
+import ShortCircuitCalc.database as db
 
 
 def deploy_if_not_exist(db_table: ty.Type[Base], pathlike: ty.Union[str, pathlib.WindowsPath],
@@ -35,19 +33,19 @@ def install(clear: bool = False) -> None:
 
     """
     # Deploying part of the database for equipment category 'Transformers'
-    for table in (PowerNominal, VoltageNominal, Scheme, Transformer):
+    for table in (db.PowerNominal, db.VoltageNominal, db.Scheme, db.Transformer):
         deploy_if_not_exist(table, DATA_DIR / 'transformer_catalog' / table.__tablename__, clear)
 
     # Deploying part of the database for equipment category 'Cables and wires'
-    for table in (Mark, Amount, RangeVal, Cable):
+    for table in (db.Mark, db.Amount, db.RangeVal, db.Cable):
         deploy_if_not_exist(table, DATA_DIR / 'cable_catalog' / table.__tablename__, clear)
 
     # Deploying part of the database for equipment category 'Current breaker devices'
-    for table in (Device, CurrentNominal, CurrentBreaker):
+    for table in (db.Device, db.CurrentNominal, db.CurrentBreaker):
         deploy_if_not_exist(table, DATA_DIR / 'current_breaker_catalog' / table.__tablename__, clear)
 
     # Deploying part of the database for equipment category 'Other resistances'
-    deploy_if_not_exist(OtherContact, DATA_DIR / OtherContact.__tablename__, clear)
+    deploy_if_not_exist(db.OtherContact, DATA_DIR / db.OtherContact.__tablename__, clear)
 
 
 if __name__ == '__main__':

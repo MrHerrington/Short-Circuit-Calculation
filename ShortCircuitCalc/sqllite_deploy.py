@@ -9,5 +9,5 @@
 #
 # Base.metadata.create_all(engine)
 
-from ShortCircuitCalc.database.transformer import *
+from database import *
 from tools import engine

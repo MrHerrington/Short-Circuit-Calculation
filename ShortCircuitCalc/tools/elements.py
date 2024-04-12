@@ -1,17 +1,17 @@
 """This module contains classes for various electrical elements such as transformers, cables
 and contacts, for programmatically inputting data related to these categories."""
 
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from decimal import Decimal
 import typing as ty
 import math
 from functools import reduce
+import sqlalchemy as sa
 from ShortCircuitCalc.tools import session_scope
 from ShortCircuitCalc.config import SYSTEM_VOLTAGE_IN_KILOVOLTS, CALCULATIONS_ACCURACY
-from ShortCircuitCalc.database.transformer import *
-from ShortCircuitCalc.database.cable import *
-from ShortCircuitCalc.database.contact import *
+import ShortCircuitCalc.database as db
 
 
 class BaseElement(ABC):
@@ -73,13 +73,13 @@ class T(BaseElement):
 
     def _sql_query(self, attr_name) -> 'sa.scalar':
         with session_scope() as session:
-            return session.execute(sa.select(getattr(Transformer, attr_name)).
-                                   join(PowerNominal, Transformer.power_id == PowerNominal.id).
-                                   join(VoltageNominal, Transformer.voltage_id == VoltageNominal.id).
-                                   join(Scheme, Transformer.vector_group_id == Scheme.id).
-                                   where(sa.and_(PowerNominal.power == self.power,
-                                                 VoltageNominal.voltage == self.voltage),
-                                         Scheme.vector_group == self.vector_group)).scalar()
+            return session.execute(sa.select(getattr(db.Transformer, attr_name)).
+                                   join(db.PowerNominal, db.Transformer.power_id == db.PowerNominal.id).
+                                   join(db.VoltageNominal, db.Transformer.voltage_id == db.VoltageNominal.id).
+                                   join(db.Scheme, db.Transformer.vector_group_id == db.Scheme.id).
+                                   where(sa.and_(db.PowerNominal.power == self.power,
+                                                 db.VoltageNominal.voltage == self.voltage),
+                                         db.Scheme.vector_group == self.vector_group)).scalar()
 
 
 @dataclass
@@ -95,13 +95,13 @@ class W(BaseElement):
     def _sql_query(self, attr_name) -> 'sa.scalar':
         """Returns the resistance value for the specified length."""
         with session_scope() as session:
-            query_val = session.execute(sa.select(getattr(Cable, attr_name)).
-                                        join(Mark, Cable.mark_name_id == Mark.id).
-                                        join(Amount, Cable.multicore_amount_id == Amount.id).
-                                        join(RangeVal, Cable.cable_range_id == RangeVal.id).
-                                        where(sa.and_(Mark.mark_name == self.mark,
-                                                      Amount.multicore_amount == self.amount,
-                                                      RangeVal.cable_range == self.range_val))).scalar()
+            query_val = session.execute(sa.select(getattr(db.Cable, attr_name)).
+                                        join(db.Mark, db.Cable.mark_name_id == db.Mark.id).
+                                        join(db.Amount, db.Cable.multicore_amount_id == db.Amount.id).
+                                        join(db.RangeVal, db.Cable.cable_range_id == db.RangeVal.id).
+                                        where(sa.and_(db.Mark.mark_name == self.mark,
+                                                      db.Amount.multicore_amount == self.amount,
+                                                      db.RangeVal.cable_range == self.range_val))).scalar()
         return query_val / 1000 * self.length
 
 
@@ -113,11 +113,11 @@ class Q(BaseElement):
 
     def _sql_query(self, attr_name) -> 'sa.scalar':
         with session_scope() as session:
-            return session.execute(sa.select(getattr(CurrentBreaker, attr_name)).
-                                   join(Device, CurrentBreaker.device_type_id == Device.id).
-                                   join(CurrentNominal, CurrentBreaker.current_value_id == CurrentNominal.id).
-                                   where(sa.and_(Device.device_type == self.device_type,
-                                                 CurrentNominal.current_value == self.current_value))).scalar()
+            return session.execute(sa.select(getattr(db.CurrentBreaker, attr_name)).
+                                   join(db.Device, db.CurrentBreaker.device_type_id == db.Device.id).
+                                   join(db.CurrentNominal, db.CurrentBreaker.current_value_id == db.CurrentNominal.id).
+                                   where(sa.and_(db.Device.device_type == self.device_type,
+                                                 db.CurrentNominal.current_value == self.current_value))).scalar()
 
 
 @dataclass
@@ -137,8 +137,8 @@ class R(BaseElement):
 
     def _sql_query(self, attr_name) -> 'sa.scalar':
         with session_scope() as session:
-            return session.execute(sa.select(getattr(OtherContact, attr_name)).
-                                   where(OtherContact.contact_type == self.contact_type)).scalar()
+            return session.execute(sa.select(getattr(db.OtherContact, attr_name)).
+                                   where(db.OtherContact.contact_type == self.contact_type)).scalar()
 
 
 class Calculator:
@@ -257,8 +257,9 @@ class Calculator:
 # print()
 #
 # print(R('РУ').resistance_r1)
-D = R('Дуга')
-TCH = T(160, 'У/Ун-0')
-print(Calculator((TCH, D)).three_phase_current_short_circuit)
-print(Calculator((TCH, D)).two_phase_voltage_short_circuit)
-print(Calculator((TCH, D)).one_phase_voltage_short_circuit)
+# D = R('Дуга').one_phase_voltage_short_circuit)
+
+# TCH = T(160, 'У/Ун-0')
+# print(Calculator((TCH, D)).three_phase_current_short_circuit)
+# print(Calculator((TCH, D)).two_phase_voltage_short_circuit)
+# print(Calculator((TCH, D))

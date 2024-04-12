@@ -6,3 +6,4 @@ Add one_phase_summary_resistance
 Add one_phase_voltage_short_circuit
 Add redis in db queries
 Reworking DB access func
+Writing packages info
