@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Module contains program configuration settings"""
 
 
@@ -11,6 +12,7 @@ CREDENTIALS_DIR = ROOT_DIR / 'credentials.json'
 DATA_DIR = ROOT_DIR / 'data'
 ENGINE_ECHO = False
 DB_TABLES_CLEAR_INSTALL = True
+SQLITE_DB_NAME = 'electrical_product_catalog.db'
 
 # Calculations settings
 SYSTEM_VOLTAGE_IN_KILOVOLTS = Decimal('0.4')

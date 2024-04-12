@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module uses for managing custom SQL queries in the database."""
 
 

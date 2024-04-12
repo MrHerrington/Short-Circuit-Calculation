@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module contains classes for various electrical elements such as transformers, cables
 and contacts, for programmatically inputting data related to these categories."""
 

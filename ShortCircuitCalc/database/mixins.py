@@ -210,15 +210,26 @@ class BaseMixin:
                     Base.metadata.tables[cls.__tablename__].drop(engine)
                     print(f"Table '{cls.__tablename__}' has been deleted.")
                 else:
-                    with session_scope() as session:
-                        session.execute(sa.text(f'SET FOREIGN_KEY_CHECKS = 0;'))
-                        session.execute(sa.text(f'DROP TABLE {cls.__tablename__};'))
-                        session.execute(sa.text(f'SET FOREIGN_KEY_CHECKS = 1;'))
+
+                    # MySQL dialect
+                    try:
+                        with session_scope() as session:
+                            session.execute(sa.text(f'SET FOREIGN_KEY_CHECKS = 0;'))
+                            session.execute(sa.text(f'DROP TABLE {cls.__tablename__};'))
+                            session.execute(sa.text(f'SET FOREIGN_KEY_CHECKS = 1;'))
+
+                    # SQLite dialect
+                    except sa.exc.OperationalError:
+                        with session_scope() as session:
+                            session.execute(sa.text(f'PRAGMA FOREIGN_KEYS = OFF;'))
+                            session.execute(sa.text(f'DROP TABLE {cls.__tablename__};'))
+                            session.execute(sa.text(f'PRAGMA FOREIGN_KEYS = ON;'))
+
                     print(f"Table '{cls.__tablename__}' has been forced deleted.")
             else:
                 raise f"Table '{cls.__tablename__}' deletion not confirmed."
         except sa.exc.OperationalError as err:
-            if 'Unknown table' in err.orig.__str__():
+            if 'Unknown table' in err.orig.__str__() or 'no such table' in err.orig.__str__():
                 print(f"There is no need to delete the table '{cls.__tablename__}', it does not exist")
             else:
                 raise err from None
@@ -226,11 +237,20 @@ class BaseMixin:
     @classmethod
     def reset_id(cls) -> None:
         """The method reset id order for the table with updating in child tables."""
-        with session_scope() as session:
-            session.execute(sa.text(f'SET @count = 0'))
-            session.execute(sa.text(f'UPDATE {cls.__tablename__} SET {cls.__tablename__}.id = @count:= @count + 1'))
-            session.execute(sa.text(f'ALTER TABLE {cls.__tablename__} AUTO_INCREMENT = 1'))
+
+        # MySQL dialect
+        try:
+            with session_scope() as session:
+                session.execute(sa.text(f'SET @count = 0'))
+                session.execute(sa.text(f'UPDATE {cls.__tablename__} SET {cls.__tablename__}.id = @count:= @count + 1'))
+                session.execute(sa.text(f'ALTER TABLE {cls.__tablename__} AUTO_INCREMENT = 1'))
             print(f"id order for table '{cls.__tablename__}' has been reset!")
+
+        # SQLite dialect
+        except sa.exc.OperationalError:
+            print('For SQLite basically without AUTOINCREMENT rowid is '
+                  'determined according to the highes existing rowid, '
+                  'so if none exist then the rowid will be 1')
 
     _new_name: ty.ClassVar[ty.Optional[str]]
 

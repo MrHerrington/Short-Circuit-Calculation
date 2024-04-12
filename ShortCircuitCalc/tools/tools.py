@@ -4,10 +4,11 @@ and utility tools for the main functionality of the program"""
 
 
 import json
+from pathlib import Path
 from contextlib import contextmanager
 import sqlalchemy as sa
 import sqlalchemy.orm
-from ShortCircuitCalc.config import CREDENTIALS_DIR, ENGINE_ECHO
+from ShortCircuitCalc.config import CREDENTIALS_DIR, ENGINE_ECHO, SQLITE_DB_NAME
 
 
 class Base(sa.orm.DeclarativeBase):
@@ -23,12 +24,26 @@ def db_access() -> str:
 
     """
     if not hasattr(db_access, 'engine_string'):
-        print('Credentials initializing...')
-        with open(CREDENTIALS_DIR, 'r', encoding='UTF-8') as file:
-            temp = json.load(file)['db_access']
-            login, password, db_name = temp['login'], temp['password'], temp['db_name']
-            db_access.engine_string = f"mysql+pymysql://{login}:{password}@localhost/{db_name}?charset=utf8mb4"
-        print('Credentials initialized!')
+        try:
+            print('Accessing MySQL database...')
+            print('Credentials initializing...')
+            with open(CREDENTIALS_DIR, 'r', encoding='UTF-8') as file:
+                temp = json.load(file)['db_access']
+                login, password, db_name = temp['login'], temp['password'], temp['db_name']
+                db_access.engine_string = f"mysql+pymysql://{login}:{password}@localhost/{db_name}?charset=utf8mb4"
+            print('Credentials initialized!')
+            path_link = Path(SQLITE_DB_NAME)
+            if path_link.is_file():
+                path_link.unlink()
+                print(f"Existing SQLite database '{SQLITE_DB_NAME}' deleted!")
+        except FileNotFoundError:
+            print('Credentials file for MySQL database not found!')
+            print('Accessing SQLite database...')
+            db_access.engine_string = f"sqlite:///{SQLITE_DB_NAME}"
+    if 'mysql' in db_access.engine_string:
+        print('MySQL database connected!')
+    elif 'sqlite' in db_access.engine_string:
+        print('SQLite database connected!')
     return db_access.engine_string
 
 

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module performs the initial deployment of the database, including the creation
 of basic lookup tables and their filling from equipment parameter catalogs"""
 
