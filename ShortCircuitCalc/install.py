@@ -4,13 +4,13 @@ of basic lookup tables and their filling from equipment parameter catalogs"""
 
 
 import typing as ty
-import pathlib
+from pathlib import Path
 from ShortCircuitCalc.tools import Base, engine, metadata
 from ShortCircuitCalc.config import DATA_DIR, DB_TABLES_CLEAR_INSTALL
 import ShortCircuitCalc.database as db
 
 
-def deploy_if_not_exist(db_table: ty.Type[Base], pathlike: ty.Union[str, pathlib.WindowsPath],
+def deploy_if_not_exist(db_table: ty.Type[Base], pathlike: ty.Union[str, Path],
                         full: bool = False) -> None:
     """Function to deploy a table if it does not already exist in the database.
 
@@ -35,18 +35,18 @@ def install(clear: bool = False) -> None:
     """
     # Deploying part of the database for equipment category 'Transformers'
     for table in (db.PowerNominal, db.VoltageNominal, db.Scheme, db.Transformer):
-        deploy_if_not_exist(table, DATA_DIR / 'transformer_catalog' / table.__tablename__, clear)
+        deploy_if_not_exist(table, DATA_DIR / 'transformer_catalog' / Path(table.__tablename__ + 's'), clear)
 
     # Deploying part of the database for equipment category 'Cables and wires'
     for table in (db.Mark, db.Amount, db.RangeVal, db.Cable):
-        deploy_if_not_exist(table, DATA_DIR / 'cable_catalog' / table.__tablename__, clear)
+        deploy_if_not_exist(table, DATA_DIR / 'cable_catalog' / Path(table.__tablename__ + 's'), clear)
 
     # Deploying part of the database for equipment category 'Current breaker devices'
     for table in (db.Device, db.CurrentNominal, db.CurrentBreaker):
-        deploy_if_not_exist(table, DATA_DIR / 'current_breaker_catalog' / table.__tablename__, clear)
+        deploy_if_not_exist(table, DATA_DIR / 'current_breaker_catalog' / Path(table.__tablename__ + 's'), clear)
 
     # Deploying part of the database for equipment category 'Other resistances'
-    deploy_if_not_exist(db.OtherContact, DATA_DIR / db.OtherContact.__tablename__, clear)
+    deploy_if_not_exist(db.OtherContact, DATA_DIR / Path(db.OtherContact.__tablename__ + 's'), clear)
 
 
 if __name__ == '__main__':

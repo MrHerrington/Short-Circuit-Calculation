@@ -8,7 +8,7 @@ from pathlib import Path
 from contextlib import contextmanager
 import sqlalchemy as sa
 import sqlalchemy.orm
-from ShortCircuitCalc.config import CREDENTIALS_DIR, ENGINE_ECHO, SQLITE_DB_NAME
+from ShortCircuitCalc.config import CREDENTIALS_DIR, ENGINE_ECHO, SQLITE_DB_NAME, ROOT_DIR
 
 
 class Base(sa.orm.DeclarativeBase):
@@ -39,7 +39,7 @@ def db_access() -> str:
         except FileNotFoundError:
             print('Credentials file for MySQL database not found!')
             print('Accessing SQLite database...')
-            db_access.engine_string = f"sqlite:///{SQLITE_DB_NAME}"
+            db_access.engine_string = f"sqlite:///{ROOT_DIR}/{SQLITE_DB_NAME}"
     if 'mysql' in db_access.engine_string:
         print('MySQL database connected!')
     elif 'sqlite' in db_access.engine_string:
