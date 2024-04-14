@@ -1,13 +1,12 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
-    name='short',
+    name='shortcircuitcalc',
     version='1.0',
-    packages=find_packages(),
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'get_db = ShortCircuitCalc.install: installer',
+            'get_install = ShortCircuitCalc.install: installer',
             'get_res = ShortCircuitCalc.run: main',
         ],
     },

@@ -49,5 +49,9 @@ def install(clear: bool = False) -> None:
     deploy_if_not_exist(db.OtherContact, DATA_DIR / Path(db.OtherContact.__tablename__ + 's'), clear)
 
 
-if __name__ == '__main__':
+def installer():
     install(clear=DB_TABLES_CLEAR_INSTALL)
+
+
+if __name__ == '__main__':
+    installer()
