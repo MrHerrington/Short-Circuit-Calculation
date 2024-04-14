@@ -5,7 +5,8 @@ setup(
     version='1.0',
     entry_points={
         'console_scripts': [
-            'get_shortcircuit = ShortCircuitCalc.tools.elements:Calculator',
+            'get_db = ShortCircuitCalc.install: installer',
+            'get_res = ShortCircuitCalc.run: main',
         ],
     },
 )

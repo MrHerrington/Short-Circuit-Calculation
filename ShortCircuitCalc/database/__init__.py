@@ -10,19 +10,19 @@ The package also presents ORM models of the database of various electrical devic
 
 
 from ShortCircuitCalc.database.mixins import BaseMixin
-from ShortCircuitCalc.database.transformer import (
+from ShortCircuitCalc.database.transformers import (
     PowerNominal,
     VoltageNominal,
     Scheme,
     Transformer
 )
-from ShortCircuitCalc.database.cable import (
+from ShortCircuitCalc.database.cables import (
     Mark,
     Amount,
     RangeVal,
     Cable
 )
-from ShortCircuitCalc.database.contact import (
+from ShortCircuitCalc.database.contacts import (
     Device,
     CurrentNominal,
     CurrentBreaker,

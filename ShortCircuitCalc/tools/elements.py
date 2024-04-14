@@ -258,9 +258,8 @@ class Calculator:
 # print()
 #
 # print(R('РУ').resistance_r1)
-# D = R('Дуга').one_phase_voltage_short_circuit)
-
+# D = R('Дуга')
 # TCH = T(160, 'У/Ун-0')
-# print(Calculator((TCH, D)).three_phase_current_short_circuit)
 # print(Calculator((TCH, D)).two_phase_voltage_short_circuit)
-# print(Calculator((TCH, D))
+# print(Calculator((TCH, D)).three_phase_current_short_circuit)
+# print(Calculator((T(160, 'У/Ун-0'), R('Дуга'))).three_phase_current_short_circuit)
