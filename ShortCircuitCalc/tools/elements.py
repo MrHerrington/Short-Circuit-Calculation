@@ -15,6 +15,24 @@ from ShortCircuitCalc.config import SYSTEM_VOLTAGE_IN_KILOVOLTS, CALCULATIONS_AC
 import ShortCircuitCalc.database as db
 
 
+class Validator:
+    """The class for validating the input data"""
+    def __init__(self, arg):
+        self.arg = arg
+
+    def __set_name__(self, owner, name):
+        self.name = name
+
+    def __get__(self, instance, owner):
+        value = owner.__dict__
+        print(value)
+        try:
+            pass
+            # print(owner.__dict__['__annotations__'][self.name](value))
+        except TypeError:
+            raise TypeError(f'The type of the {self.name} must be {ty.get_type_hints(owner)[self.name]}')
+
+
 class BaseElement(ABC):
     """The abstract class for all elements"""
     __slots__ = ()
@@ -67,9 +85,8 @@ class BaseElement(ABC):
 @dataclass
 class T(BaseElement):
     """The class for transformer"""
-    __slots__ = ('power', 'vector_group')
-    power: int
-    vector_group: str
+    power: int = field(default=Validator())
+    vector_group: str = field(default=Validator())
     voltage: Decimal = field(init=False, default=SYSTEM_VOLTAGE_IN_KILOVOLTS)
 
     def _sql_query(self, attr_name) -> 'sa.scalar':
@@ -259,7 +276,14 @@ class Calculator:
 #
 # print(R('РУ').resistance_r1)
 # D = R('Дуга')
-# TCH = T(160, 'У/Ун-0')
+t = T(160, 'У/Ун-0')
+print(t.power)
 # print(Calculator((TCH, D)).two_phase_voltage_short_circuit)
 # print(Calculator((TCH, D)).three_phase_current_short_circuit)
 # print(Calculator((T(160, 'У/Ун-0'), R('Дуга'))).three_phase_current_short_circuit)
+# class Test:
+#     a = Validator(5)
+#
+#
+# t2 = Test()
+# print(t2.a)

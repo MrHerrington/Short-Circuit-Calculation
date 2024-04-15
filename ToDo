@@ -1,2 +1,5 @@
 Using Sphinx write doc for project
 Add # -*- coding: utf-8 -*- in files
+replace eval на getattr
+reworking DB connection (less info strings)
+add pretty output into console output through entry_points

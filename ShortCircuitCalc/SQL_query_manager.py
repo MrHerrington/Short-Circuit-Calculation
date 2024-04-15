@@ -3,11 +3,12 @@
 
 
 from ShortCircuitCalc.tools import session_scope
+from ShortCircuitCalc.tools import elements
 
 
 with session_scope() as session:
     pass
 
 
-from database import Transformer
-Transformer.reset_id()
+a = getattr(elements, 'W')('ВВГ', 3, '16', '20')
+print(a)
