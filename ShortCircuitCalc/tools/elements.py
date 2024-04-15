@@ -16,21 +16,46 @@ import ShortCircuitCalc.database as db
 
 
 class Validator:
-    """The class for validating the input data"""
-    def __init__(self, arg):
-        self.arg = arg
+    """The class for validating the input data.
 
-    def __set_name__(self, owner, name):
-        self.name = name
+    The class for validating the input data in accordance with
+    the type annotations specified when creating the dataclasses.
 
-    def __get__(self, instance, owner):
-        value = owner.__dict__
-        print(value)
-        try:
-            pass
-            # print(owner.__dict__['__annotations__'][self.name](value))
-        except TypeError:
-            raise TypeError(f'The type of the {self.name} must be {ty.get_type_hints(owner)[self.name]}')
+    Sample:
+        @dataclass
+        class Person:
+            age: float = field(default=Validator())
+            ---: ...
+
+        print(Person('10').age) -> 10.0
+        print(type(Person('10').age)) -> <class 'float'>
+
+    """
+    def __init__(self, arg=None) -> None:
+        self._arg = arg
+
+    def __set_name__(self, owner: ty.Any, name: ty.Any) -> None:
+        self._public_name = name
+        self._private_name = '_' + name
+
+    def __get__(self, obj: ty.Any, owner: ty.Any) -> ty.Any:
+        return getattr(obj, self._private_name)
+
+    def __set__(self, obj: ty.Any, value: ty.Any) -> None:
+        # https://stackoverflow.com/questions/67612451/combining-a-descriptor-class-with-dataclass-and-field
+        # Next in Validator.__set__, when the arg argument is not provided to the
+        # constructor, the value argument will actually be the instance of the
+        # Validator class. So we need to change the guard to see if value is self:
+        if value is self:
+            value = self._arg
+        else:
+            try:
+                value = ty.get_type_hints(obj)[self._public_name](value)
+            except (TypeError, ValueError):
+                msg = (f"The type of the attribute '{type(obj).__name__}.{self._public_name}' "
+                       f'must be {ty.get_type_hints(obj)[self._public_name]}.')
+                raise TypeError(msg)
+        setattr(obj, self._private_name, value)
 
 
 class BaseElement(ABC):
@@ -85,6 +110,7 @@ class BaseElement(ABC):
 @dataclass
 class T(BaseElement):
     """The class for transformer"""
+    __slots__ = ('_power', '_vector_group')
     power: int = field(default=Validator())
     vector_group: str = field(default=Validator())
     voltage: Decimal = field(init=False, default=SYSTEM_VOLTAGE_IN_KILOVOLTS)
@@ -103,12 +129,12 @@ class T(BaseElement):
 @dataclass
 class W(BaseElement):
     """The class for cables and wires"""
-    __slots__ = ('mark', 'amount', 'range_val', 'length')
-    mark: str
-    amount: int
-    range_val: float
+    __slots__ = ('_mark', '_amount', '_range_val', '_length')
+    mark: str = field(default=Validator())
+    amount: int = field(default=Validator())
+    range_val: float = field(default=Validator())
     # Length in meters
-    length: int
+    length: int = field(default=Validator())
 
     def _sql_query(self, attr_name) -> 'sa.scalar':
         """Returns the resistance value for the specified length."""
@@ -125,9 +151,9 @@ class W(BaseElement):
 
 @dataclass
 class Q(BaseElement):
-    __slots__ = ('device_type', 'current_value')
-    current_value: int
-    device_type: str
+    __slots__ = ('_device_type', '_current_value')
+    current_value: int = field(default=Validator())
+    device_type: str = field(default=Validator())
 
     def _sql_query(self, attr_name) -> 'sa.scalar':
         with session_scope() as session:
@@ -140,18 +166,20 @@ class Q(BaseElement):
 
 @dataclass
 class QF(Q):
-    device_type: str = field(default='Автомат')
+    def __post_init__(self):
+        self.device_type = 'Автомат'
 
 
 @dataclass
 class QS(Q):
-    device_type: str = field(default='Рубильник')
+    def __post_init__(self):
+        self.device_type = 'Рубильник'
 
 
 @dataclass
 class R(BaseElement):
-    __slots__ = 'contact_type'
-    contact_type: str
+    __slots__ = '_contact_type'
+    contact_type: str = field(default=Validator())
 
     def _sql_query(self, attr_name) -> 'sa.scalar':
         with session_scope() as session:
@@ -269,21 +297,16 @@ class Calculator:
 # print(W('СИП', 3, 120, 1000).reactance_x0)
 # print()
 #
-# print(Q(4, 'Автомат').resistance_r1)
+# print(Q(4, 'Пускатель'))
 # print(QF(4).resistance_r1)
-# print(QS(4).resistance_r1)
+# print(QS(20).resistance_r1)
 # print()
 #
 # print(R('РУ').resistance_r1)
 # D = R('Дуга')
-t = T(160, 'У/Ун-0')
-print(t.power)
+# t = T('160', 'У/Ун-0')
+# print(type(t.power))
+# TCH = T(160, 'У/Ун-0')
 # print(Calculator((TCH, D)).two_phase_voltage_short_circuit)
 # print(Calculator((TCH, D)).three_phase_current_short_circuit)
 # print(Calculator((T(160, 'У/Ун-0'), R('Дуга'))).three_phase_current_short_circuit)
-# class Test:
-#     a = Validator(5)
-#
-#
-# t2 = Test()
-# print(t2.a)
