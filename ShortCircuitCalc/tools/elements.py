@@ -10,9 +10,12 @@ import typing as ty
 import math
 from functools import reduce
 import sqlalchemy as sa
-from ShortCircuitCalc.tools import session_scope
-from ShortCircuitCalc.config import SYSTEM_VOLTAGE_IN_KILOVOLTS, CALCULATIONS_ACCURACY
+from .tools import session_scope
+from ..config import SYSTEM_VOLTAGE_IN_KILOVOLTS, CALCULATIONS_ACCURACY
 import ShortCircuitCalc.database as db
+
+
+__all__ = ('T', 'W', 'Q', 'QF', 'QS', 'R', 'Calculator')
 
 
 class Validator:
@@ -283,30 +286,3 @@ class Calculator:
             math.pow(
                 2 * reduce(lambda x, y: x + y, (i.reactance_x1 for i in self.obj)) +
                 reduce(lambda x, y: x + y, (i.reactance_x0 for i in self.obj)), 2)))
-
-
-# print(T(25, 'У/Ун-0').resistance_r1)
-# print(T(25, 'У/Ун-0').reactance_x1)
-# print(T(25, 'У/Ун-0').resistance_r0)
-# print(T(25, 'У/Ун-0').reactance_x0)
-# print()
-#
-# print(W('СИП', 3, 120, 1000).resistance_r1)
-# print(W('СИП', 3, 120, 1000).reactance_x1)
-# print(W('СИП', 3, 120, 1000).resistance_r0)
-# print(W('СИП', 3, 120, 1000).reactance_x0)
-# print()
-#
-# print(Q(4, 'Пускатель'))
-# print(QF(4).resistance_r1)
-# print(QS(20).resistance_r1)
-# print()
-#
-# print(R('РУ').resistance_r1)
-# D = R('Дуга')
-# t = T('160', 'У/Ун-0')
-# print(type(t.power))
-# TCH = T(160, 'У/Ун-0')
-# print(Calculator((TCH, D)).two_phase_voltage_short_circuit)
-# print(Calculator((TCH, D)).three_phase_current_short_circuit)
-# print(Calculator((T(160, 'У/Ун-0'), R('Дуга'))).three_phase_current_short_circuit)

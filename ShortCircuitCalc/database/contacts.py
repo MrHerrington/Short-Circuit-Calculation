@@ -5,8 +5,11 @@ of the category 'contacts and other resistances'"""
 
 import sqlalchemy as sa
 import sqlalchemy.orm
-from ShortCircuitCalc.tools import Base
-from ShortCircuitCalc.database import BaseMixin
+from ..tools import Base
+from .mixins import BaseMixin
+
+
+__all__ = ('Device', 'CurrentNominal', 'CurrentBreaker', 'OtherContact')
 
 
 class Device(BaseMixin, Base):

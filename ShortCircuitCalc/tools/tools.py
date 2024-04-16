@@ -7,7 +7,10 @@ import json
 from contextlib import contextmanager
 import sqlalchemy as sa
 import sqlalchemy.orm
-from ShortCircuitCalc.config import CREDENTIALS_DIR, ENGINE_ECHO, SQLITE_DB_NAME, ROOT_DIR
+from ..config import CREDENTIALS_DIR, ENGINE_ECHO, SQLITE_DB_NAME, ROOT_DIR
+
+
+__all__ = ('Base', 'engine', 'metadata', 'session_scope')
 
 
 class Base(sa.orm.DeclarativeBase):

@@ -12,8 +12,7 @@ CONFIG_DIR = ROOT_DIR / 'config.py'
 CREDENTIALS_DIR = ROOT_DIR / 'credentials.json'
 DATA_DIR = ROOT_DIR / 'data'
 ENGINE_ECHO = False
-DB_EXISTING_CONNECTION = 'MySQL'
-DB_TABLES_CLEAR_INSTALL = False
+DB_TABLES_CLEAR_INSTALL = True
 SQLITE_DB_NAME = 'electrical_product_catalog.db'
 
 # Calculations settings

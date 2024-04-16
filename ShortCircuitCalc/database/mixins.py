@@ -12,7 +12,10 @@ from sqlalchemy.orm import declared_attr
 import sqlalchemy.exc
 import pandas as pd
 from tabulate import tabulate
-from ShortCircuitCalc.tools import Base, engine, session_scope
+from ..tools import Base, engine, session_scope
+
+
+__all__ = ('BaseMixin',)
 
 
 class BaseMixin:
