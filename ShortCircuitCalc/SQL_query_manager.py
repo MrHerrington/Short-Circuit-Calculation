@@ -8,7 +8,3 @@ from ShortCircuitCalc.tools import elements
 
 with session_scope() as session:
     pass
-
-
-a = getattr(elements, 'W')('ВВГ', 3, '16', '20')
-print(a)
