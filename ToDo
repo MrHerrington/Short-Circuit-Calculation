@@ -1,4 +1,3 @@
-reworking DB connection (less info strings)
 add pretty output into console output through entry_points
 replace eval на getattr
 Add # -*- coding: utf-8 -*- in files

@@ -98,13 +98,13 @@ class BaseElement(ABC):
         return query_val
 
     @abstractmethod
-    def _sql_query(self, attr_name) -> 'sa.scalar':
+    def _sql_query(self, attr_name) -> Decimal:
         """Returns the resistance value from the database.
 
         Args:
             attr_name (str): The attribute name to query.
         Returns:
-            sa.scalar: The scalar value from the query.
+            Decimal: The scalar value from the query.
 
         """
         pass
@@ -118,7 +118,7 @@ class T(BaseElement):
     vector_group: str = field(default=Validator())
     voltage: Decimal = field(init=False, default=SYSTEM_VOLTAGE_IN_KILOVOLTS)
 
-    def _sql_query(self, attr_name) -> 'sa.scalar':
+    def _sql_query(self, attr_name) -> Decimal:
         with session_scope() as session:
             return session.execute(sa.select(getattr(db.Transformer, attr_name)).
                                    join(db.PowerNominal, db.Transformer.power_id == db.PowerNominal.id).
@@ -139,7 +139,7 @@ class W(BaseElement):
     # Length in meters
     length: int = field(default=Validator())
 
-    def _sql_query(self, attr_name) -> 'sa.scalar':
+    def _sql_query(self, attr_name) -> Decimal:
         """Returns the resistance value for the specified length."""
         with session_scope() as session:
             query_val = session.execute(sa.select(getattr(db.Cable, attr_name)).
@@ -158,7 +158,7 @@ class Q(BaseElement):
     current_value: int = field(default=Validator())
     device_type: str = field(default=Validator())
 
-    def _sql_query(self, attr_name) -> 'sa.scalar':
+    def _sql_query(self, attr_name) -> Decimal:
         with session_scope() as session:
             return session.execute(sa.select(getattr(db.CurrentBreaker, attr_name)).
                                    join(db.Device, db.CurrentBreaker.device_type_id == db.Device.id).
@@ -184,7 +184,7 @@ class R(BaseElement):
     __slots__ = '_contact_type'
     contact_type: str = field(default=Validator())
 
-    def _sql_query(self, attr_name) -> 'sa.scalar':
+    def _sql_query(self, attr_name) -> Decimal:
         with session_scope() as session:
             return session.execute(sa.select(getattr(db.OtherContact, attr_name)).
                                    where(db.OtherContact.contact_type == self.contact_type)).scalar()
