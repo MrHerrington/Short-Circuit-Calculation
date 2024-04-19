@@ -11,6 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.orm import declared_attr
 import sqlalchemy.exc
 import pandas as pd
+import matplotlib.pyplot as plt
 from tabulate import tabulate
 from ..tools import Base, engine, session_scope
 
@@ -84,13 +85,14 @@ class BaseMixin:
         """
         with session_scope() as session:
             if filtrate is None:
-                df = pd.read_sql(session.query(cls).statement, session.bind)[:limit]
+                df = pd.read_sql(session.query(cls).statement, session.bind, dtype=object)[:limit]
             else:
-                df = pd.read_sql(session.query(cls).filter(sa.text(filtrate)).statement, session.bind)[:limit]
+                df = pd.read_sql(
+                    session.query(cls).filter(sa.text(filtrate)).statement, session.bind, dtype=object)[:limit]
         return df
 
     @classmethod
-    def show_table(cls, filtrate: ty.Optional[str] = None, limit: ty.Optional[int] = None,
+    def show_table(cls, gui: bool = False, filtrate: ty.Optional[str] = None, limit: ty.Optional[int] = None,
                    indexes: bool = False) -> None:
         """The method shows the table.
 
@@ -106,7 +108,17 @@ class BaseMixin:
 
         """
         df = cls.read_table(filtrate=filtrate, limit=limit)
-        print(tabulate(df, headers='keys', tablefmt='psql', showindex=indexes))
+        if not gui:
+            print(tabulate(df, headers='keys', tablefmt='psql', numalign='center', showindex=indexes))
+        else:
+            fig, ax = plt.subplots()
+            ax.axis('tight')
+            ax.axis('off')
+            table = plt.table(cellText=df.values, colLabels=df.columns, loc='center', cellLoc='center')
+            table.auto_set_column_width(col=list(range(len(df.columns))))
+            table.set_fontsize(12)
+            table.set_figure(fig)
+            plt.show()
 
     @classmethod
     def insert_table(cls, data: ty.Optional[ty.List[dict]] = None,
