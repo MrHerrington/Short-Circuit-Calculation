@@ -114,10 +114,11 @@ class BaseMixin:
             fig, ax = plt.subplots()
             ax.axis('tight')
             ax.axis('off')
-            table = plt.table(cellText=df.values, colLabels=df.columns, loc='center', cellLoc='center')
+            table = ax.table(cellText=df.values, colLabels=df.columns, loc='center', cellLoc='center')
             table.auto_set_column_width(col=list(range(len(df.columns))))
-            table.set_fontsize(12)
-            table.set_figure(fig)
+            # table.set_fontsize(12)
+            # table.scale(1, 1)
+            plt.get_current_fig_manager().window.state('zoomed')
             plt.show()
 
     @classmethod
