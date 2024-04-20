@@ -2,8 +2,9 @@
 """This module uses for managing custom SQL queries in the database."""
 
 
-from ShortCircuitCalc.tools import session_scope
-from ShortCircuitCalc.tools import elements
+# noinspection PyUnresolvedReferences
+from ShortCircuitCalc.database import *
+from ShortCircuitCalc.tools import *
 
 
 with session_scope() as session:

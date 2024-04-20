@@ -14,6 +14,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from tabulate import tabulate
 from ..tools import Base, engine, session_scope
+from ..gui import ScrollableWindow
 
 
 __all__ = ('BaseMixin',)
@@ -89,14 +90,16 @@ class BaseMixin:
             else:
                 df = pd.read_sql(
                     session.query(cls).filter(sa.text(filtrate)).statement, session.bind, dtype=object)[:limit]
+        df = df.sort_values(by=['id'])
         return df
 
     @classmethod
-    def show_table(cls, gui: bool = False, filtrate: ty.Optional[str] = None, limit: ty.Optional[int] = None,
+    def show_table(cls, gui: bool = True, filtrate: ty.Optional[str] = None, limit: ty.Optional[int] = None,
                    indexes: bool = False) -> None:
         """The method shows the table.
 
         Args:
+            gui (bool): Defaults by True, shows the table in the GUI mode.
             filtrate (Optional[str]): Defaults to None. Accepts the filtering condition.
             limit (Optional[int]): Defaults shows all results, otherwise shows the specified number of results.
             indexes (bool): Parameter shows rows indexes of the query results.
@@ -111,15 +114,17 @@ class BaseMixin:
         if not gui:
             print(tabulate(df, headers='keys', tablefmt='psql', numalign='center', showindex=indexes))
         else:
-            fig, ax = plt.subplots()
-            ax.axis('tight')
+            df = cls.read_table()
+            figsize_x = len(df.columns) + 1
+            figsize_y = (len(df.index) + 1) * 0.4
+            fig, ax = plt.subplots(figsize=(figsize_x, figsize_y))
             ax.axis('off')
-            table = ax.table(cellText=df.values, colLabels=df.columns, loc='center', cellLoc='center')
+            ax.set_title(cls.__tablename__)
+            table = ax.table(cellText=df.values, colLabels=df.columns, loc='center',
+                             cellLoc='center', bbox=[0, 0, 1, 1], fontsize='large')
             table.auto_set_column_width(col=list(range(len(df.columns))))
-            # table.set_fontsize(12)
-            # table.scale(1, 1)
-            plt.get_current_fig_manager().window.state('zoomed')
-            plt.show()
+            plt.tight_layout()
+            ScrollableWindow(fig, title=cls.__tablename__)
 
     @classmethod
     def insert_table(cls, data: ty.Optional[ty.List[dict]] = None,

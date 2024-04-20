@@ -1,4 +1,4 @@
 add pretty output into console output through entry_points
-replace eval на getattr
+replace eval на getattr in run
 Add # -*- coding: utf-8 -*- in files
 Using Sphinx write doc for project
