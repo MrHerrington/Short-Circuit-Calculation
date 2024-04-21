@@ -5,9 +5,9 @@ of basic lookup tables and their filling from equipment parameter catalogs"""
 
 import typing as ty
 from pathlib import Path
+import ShortCircuitCalc.database as db
 from ShortCircuitCalc.tools import Base, engine, metadata
 from ShortCircuitCalc.config import DATA_DIR, DB_TABLES_CLEAR_INSTALL
-import ShortCircuitCalc.database as db
 
 
 def deploy_if_not_exist(db_table: ty.Type[Base], pathlike: ty.Union[str, Path],

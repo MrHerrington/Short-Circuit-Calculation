@@ -119,12 +119,12 @@ class BaseMixin:
             figsize_y = (len(df.index) + 1) * 0.4
             fig, ax = plt.subplots(figsize=(figsize_x, figsize_y))
             ax.axis('off')
-            ax.set_title(cls.__tablename__)
+            ax.set_title(cls.__tablename__.title())
             table = ax.table(cellText=df.values, colLabels=df.columns, loc='center',
                              cellLoc='center', bbox=[0, 0, 1, 1], fontsize='large')
             table.auto_set_column_width(col=list(range(len(df.columns))))
             plt.tight_layout()
-            ScrollableWindow(fig, title=cls.__tablename__)
+            ScrollableWindow(fig, title=cls.__tablename__.title())
 
     @classmethod
     def insert_table(cls, data: ty.Optional[ty.List[dict]] = None,

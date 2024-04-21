@@ -11,6 +11,7 @@ ROOT_DIR = Path(__file__).resolve().parent
 CONFIG_DIR = ROOT_DIR / 'config.py'
 CREDENTIALS_DIR = ROOT_DIR / 'credentials.json'
 DATA_DIR = ROOT_DIR / 'data'
+GUI_DIR = ROOT_DIR / 'gui'
 ENGINE_ECHO = False
 DB_EXISTING_CONNECTION = 'MySQL'
 DB_TABLES_CLEAR_INSTALL = False
