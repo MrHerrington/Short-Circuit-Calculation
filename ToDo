@@ -1,3 +1,4 @@
+add annotations to elements classes
 add pretty output into Calculator element for single chain
 add pretty output into Calculator element for multiply chain
 replace eval на getattr in run

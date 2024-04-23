@@ -15,7 +15,7 @@ from ..config import SYSTEM_VOLTAGE_IN_KILOVOLTS, CALCULATIONS_ACCURACY
 import ShortCircuitCalc.database as db
 
 
-__all__ = ('T', 'W', 'Q', 'QF', 'QS', 'R', 'Calculator')
+__all__ = ('T', 'W', 'Q', 'QF', 'QS', 'R', 'Line', 'Arc', 'Calculator')
 
 
 class Validator:
@@ -188,6 +188,18 @@ class R(BaseElement):
         with session_scope() as session:
             return session.execute(sa.select(getattr(db.OtherContact, attr_name)).
                                    where(db.OtherContact.contact_type == self.contact_type)).scalar()
+
+
+@dataclass
+class Line(R):
+    def __post_init__(self):
+        self.contact_type = 'РУ'
+
+
+@dataclass
+class Arc(R):
+    def __post_init__(self):
+        self.contact_type = 'Дуга'
 
 
 class Calculator:
