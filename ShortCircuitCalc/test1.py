@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from ShortCircuitCalc.tools import *
 from ShortCircuitCalc.config import GUI_DIR
-from ShortCircuitCalc.gui import ScrollableWindow
+from test2 import ScrollableWindow
 
 
 dct = {
@@ -97,4 +97,10 @@ for idx, col in enumerate(schem):
 
 plt.subplots_adjust(hspace=0)
 plt.tight_layout()
-ScrollableWindow(fig, 'Stick finger')
+# ScrollableWindow(fig, 'Stick finger')
+# fig.canvas.toolbar.pan()
+# plt.show()
+from test2 import *
+app = QApplication(sys.argv)
+w = ScrollableWindow(fig, 'Stick finger')
+sys.exit(app.exec_())
