@@ -12,7 +12,7 @@ from ShortCircuitCalc.gui import *
 from ShortCircuitCalc.config import GUI_DIR
 
 
-background_image = plt.imread(GUI_DIR / 'transformer.jpg')
+background_image = plt.imread(GUI_DIR / 'resources' / 'images' / 'info_catalog_back.jpg')
 table_transparency = 0.7
 
 # Creating the dataframe for transformers info in catalog

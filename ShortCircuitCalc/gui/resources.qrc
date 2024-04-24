@@ -1,0 +1,10 @@
+<RCC>
+  <qresource prefix="images">
+    <file>resources/images/info_catalog_back.jpg</file>
+    <file>resources/images/main_back.jpg</file>
+  </qresource>
+  <qresource prefix="icons">
+    <file>resources/icons/input.svg</file>
+    <file>resources/icons/result.svg</file>
+  </qresource>
+</RCC>
