@@ -3,6 +3,7 @@
 the functionality of the declarative base class 'Base'"""
 
 
+import sys
 import typing as ty
 import pathlib
 import re
@@ -12,9 +13,10 @@ from sqlalchemy.orm import declared_attr
 import sqlalchemy.exc
 import pandas as pd
 import matplotlib.pyplot as plt
+from PyQt5 import QtWidgets
 from tabulate import tabulate
 from ..tools import Base, engine, session_scope
-from ..gui import ScrollableWindow
+from ..gui import ViewerWindow
 
 
 __all__ = ('BaseMixin',)
@@ -114,6 +116,7 @@ class BaseMixin:
         if not gui:
             print(tabulate(df, headers='keys', tablefmt='psql', numalign='center', showindex=indexes))
         else:
+            # Creating fig in matplotlib
             df = cls.read_table()
             figsize_x = len(df.columns) + 1
             figsize_y = (len(df.index) + 1) * 0.4
@@ -124,7 +127,12 @@ class BaseMixin:
                              cellLoc='center', bbox=[0, 0, 1, 1], fontsize='large')
             table.auto_set_column_width(col=list(range(len(df.columns))))
             plt.tight_layout()
-            ScrollableWindow(fig, title=cls.__tablename__.title())
+
+            # Creating GUI
+            app = QtWidgets.QApplication(sys.argv)
+            window = ViewerWindow(cls.__tablename__.title(), fig)
+            window.show()
+            app.exec_()
 
     @classmethod
     def insert_table(cls, data: ty.Optional[ty.List[dict]] = None,

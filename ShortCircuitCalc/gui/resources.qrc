@@ -6,5 +6,7 @@
   <qresource prefix="icons">
     <file>resources/icons/input.svg</file>
     <file>resources/icons/result.svg</file>
+    <file>resources/icons/file_save.svg</file>
+    <file>resources/icons/save_part.svg</file>
   </qresource>
 </RCC>

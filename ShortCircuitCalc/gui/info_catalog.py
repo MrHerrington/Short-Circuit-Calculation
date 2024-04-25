@@ -3,10 +3,12 @@
 electrical equipment presented in the program database."""
 
 
+import sys
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
+from PyQt5 import QtWidgets
 from ShortCircuitCalc.database import *
 from ShortCircuitCalc.gui import *
 from ShortCircuitCalc.config import GUI_DIR
@@ -110,4 +112,7 @@ background_ax.set_zorder(-1)  # set the background subplot behind the others
 background_ax.imshow(background_image, aspect='auto')  # show the backgroud image
 
 # Showing GUI window
-ScrollableWindow(fig, 'Electrical product catalog', 1120)
+app = QtWidgets.QApplication(sys.argv)
+window = ViewerWindow('Electrical product catalog', fig)
+window.show()
+app.exec_()
