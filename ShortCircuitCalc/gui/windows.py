@@ -16,9 +16,9 @@ from ..config import GUI_DIR
 from PyQt5 import QtWidgets, QtCore, QtGui, uic
 
 from matplotlib.backends.backend_qt5agg import (
-                        FigureCanvasQTAgg as FigCanvas,
-                        NavigationToolbar2QT as NavToolbar,
-                    )
+    FigureCanvasQTAgg as FigCanvas,
+    NavigationToolbar2QT as NavToolbar,
+)
 
 
 __all__ = ('CustomGraphicView', 'ViewerWidget')
@@ -45,19 +45,26 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
     Sets the graphics scene, canvas, transformation anchor, and resize anchor for the CustomGraphicView.
 
     """
+
     def __init__(self, parent: ty.Optional[QtWidgets.QWidget] = None) -> None:
         super(CustomGraphicView, self).__init__(parent)
+
         self._scene = QtWidgets.QGraphicsScene()
         self._canvas = FigCanvas(self.parent().figure)
         self._scene.addWidget(self._canvas)
+
         self.setScene(self._scene)
         self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
+        # Start viewing position
+        self.horizontalScrollBar().setSliderPosition(1)
+        self.verticalScrollBar().setSliderPosition(1)
+
         self._zoom = 0
         self._mousePressed = False
         self._drag_pos = None
 
-    def mousePressEvent(self,  event: QtCore.Qt.MouseButton.LeftButton) -> None:
+    def mousePressEvent(self, event: QtCore.Qt.MouseButton.LeftButton) -> None:
         """Handle the mouse press event.
 
         Args:
@@ -69,6 +76,7 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
             self.viewport().setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.OpenHandCursor))
             self._drag_pos = event.pos()
             event.accept()
+
         else:
             super(CustomGraphicView, self).mousePressEvent(event)
 
@@ -91,6 +99,7 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
             self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - diff.x())
             self.verticalScrollBar().setValue(self.verticalScrollBar().value() - diff.y())
             self.viewport().setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.OpenHandCursor))
+
         else:
             super(CustomGraphicView, self).mouseMoveEvent(event)
 
@@ -109,6 +118,7 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
             self._mousePressed = False
             self.viewport().setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.ArrowCursor))
+
         super(CustomGraphicView, self).mouseReleaseEvent(event)
 
     def wheelEvent(self, event: QtCore.Qt.KeyboardModifier.ControlModifier) -> None:
@@ -126,18 +136,22 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
 
         """
         modifiers = QtWidgets.QApplication.keyboardModifiers()
+
         if modifiers == QtCore.Qt.KeyboardModifier.ControlModifier:
+
             if event.angleDelta().y() > 0:
                 factor = 1.25
                 self._zoom += 1
             else:
                 factor = 0.8
                 self._zoom -= 1
+
             if self._zoom > 0:
                 self.scale(factor, factor)
             else:
                 self._zoom = 0
                 self.resetTransform()
+
         else:
             super(CustomGraphicView, self).wheelEvent(event)
 
@@ -145,16 +159,41 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
 class ViewerWidget(QtWidgets.QWidget):
     """Initializes a ViewerWidget object.
 
+    ViewerWidget is a QWidget that displays a matplotlib figure in a QGraphicsView widget.
+    Also allows saving the figure as any graphical format or saving part of the figure as an image.
+
     Args:
         title (str): The title of the viewer widget.
         figure (Optional[matplotlib.figure.Figure]): The matplotlib figure to display.
 
     """
+
     def __init__(self, title: str = 'Viewer',
                  figure: ty.Optional[matplotlib.figure.Figure] = None) -> None:
         super(ViewerWidget, self).__init__()
+        # self.figure definition before loadUi is necessarily!
         self.figure = figure
         uic.loadUi(GUI_DIR / 'viewer.ui', self)
         self.setWindowTitle(title)
+
         self.allButton.setToolTip('Save whole page')
+        self.allButton.clicked.connect(lambda: NavToolbar.save_figure(self.figure))
+
         self.partButton.setToolTip('Save part of page')
+        self.partButton.clicked.connect(self.save_image)
+
+    def save_image(self):
+        """Saves the current visible area widget as an image.
+
+        Note:
+            Saves the current visible area as an image without the scrollbars.
+
+        """
+        rect_region = QtCore.QRect(0, 0,
+                                   self.graphicsView.width() - self.graphicsView.verticalScrollBar().width(),
+                                   self.graphicsView.height() - self.graphicsView.horizontalScrollBar().height())
+        pixmap = self.graphicsView.grab(rect_region)
+        fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save as image', 'image.png',
+                                                      'PNG (*.png);;JPEG (*.jpg)')[0]
+        if fname:
+            pixmap.save(fname)

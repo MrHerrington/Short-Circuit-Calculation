@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from ShortCircuitCalc.tools import *
 from ShortCircuitCalc.config import GUI_DIR
 from ShortCircuitCalc.gui import ViewerWidget
-from PyQt5.QtWidgets import QApplication
+from PyQt5 import QtWidgets
 import sys
 
 
@@ -100,7 +100,8 @@ for idx, col in enumerate(schem):
 plt.subplots_adjust(hspace=0)
 plt.tight_layout()
 
-app = QApplication(sys.argv)
+
+app = QtWidgets.QApplication(sys.argv)
 w = ViewerWidget('Assbaton', fig)
 w.show()
 app.exec_()

@@ -20,9 +20,9 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
-    <layout class="QVBoxLayout" name="verticalLayout">
+    <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout">
+      <layout class="QVBoxLayout" name="verticalLayout">
        <item>
         <widget class="QPushButton" name="allButton">
          <property name="font">
@@ -58,7 +58,7 @@ color: rgb(255, 255, 255);
 } </string>
          </property>
          <property name="text">
-          <string>ALL</string>
+          <string/>
          </property>
          <property name="icon">
           <iconset resource="resources.qrc">
@@ -107,7 +107,7 @@ color: rgb(255, 255, 255);
 } </string>
          </property>
          <property name="text">
-          <string>PART</string>
+          <string/>
          </property>
          <property name="icon">
           <iconset resource="resources.qrc">
@@ -122,14 +122,14 @@ color: rgb(255, 255, 255);
         </widget>
        </item>
        <item>
-        <spacer name="horizontalSpacer">
+        <spacer name="verticalSpacer">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
-           <width>40</width>
-           <height>20</height>
+           <width>20</width>
+           <height>40</height>
           </size>
          </property>
         </spacer>
