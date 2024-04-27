@@ -32,6 +32,9 @@
            <bold>true</bold>
           </font>
          </property>
+         <property name="statusTip">
+          <string>Save all</string>
+         </property>
          <property name="styleSheet">
           <string notr="true">QPushButton {
   background: rgba(230, 230, 230, 0.8); 
@@ -77,6 +80,9 @@ color: rgb(255, 255, 255);
            <weight>75</weight>
            <bold>true</bold>
           </font>
+         </property>
+         <property name="statusTip">
+          <string>Save part</string>
          </property>
          <property name="styleSheet">
           <string notr="true">QPushButton {
@@ -131,12 +137,19 @@ color: rgb(255, 255, 255);
       </layout>
      </item>
      <item>
-      <widget class="QGraphicsView" name="graphicsView"/>
+      <widget class="CustomGraphicView" name="graphicsView"/>
      </item>
     </layout>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CustomGraphicView</class>
+   <extends>QGraphicsView</extends>
+   <header>ShortCircuitCalc.gui.windows</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="resources.qrc"/>
  </resources>

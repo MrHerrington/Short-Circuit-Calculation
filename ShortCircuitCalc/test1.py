@@ -2,7 +2,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from ShortCircuitCalc.tools import *
 from ShortCircuitCalc.config import GUI_DIR
-from ShortCircuitCalc.gui import ScrollableWindow
+from ShortCircuitCalc.gui import ViewerWidget
+from PyQt5.QtWidgets import QApplication
+import sys
 
 
 dct = {
@@ -97,4 +99,8 @@ for idx, col in enumerate(schem):
 
 plt.subplots_adjust(hspace=0)
 plt.tight_layout()
-ScrollableWindow(fig, 'Stick finger')
+
+app = QApplication(sys.argv)
+w = ViewerWidget('Assbaton', fig)
+w.show()
+app.exec_()
