@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from ShortCircuitCalc.tools import *
 from ShortCircuitCalc.config import GUI_DIR
-from ShortCircuitCalc.gui import ViewerWidget
+from ShortCircuitCalc.gui import ViewerWidget, CustomGraphicView
 from PyQt5 import QtWidgets
 import sys
 
@@ -102,6 +102,6 @@ plt.tight_layout()
 
 
 app = QtWidgets.QApplication(sys.argv)
-w = ViewerWidget('Assbaton', fig)
+w = ViewerWidget(fig)
 w.show()
 app.exec_()

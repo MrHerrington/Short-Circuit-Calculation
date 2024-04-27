@@ -46,13 +46,23 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
 
     """
 
-    def __init__(self, parent: ty.Optional[QtWidgets.QWidget] = None) -> None:
+    def __init__(self,
+                 parent: ty.Optional[QtWidgets.QWidget] = None,
+                 figure: matplotlib.figure.Figure = None,
+                 title: str = 'Viewer') -> None:
         super(CustomGraphicView, self).__init__(parent)
 
+        self._title = title
+        self._figure = figure
         self._scene = QtWidgets.QGraphicsScene()
-        self._canvas = FigCanvas(self.parent().figure)
+
+        if parent is not None:
+            self._figure = self.parent()._figure
+
+        self._canvas = FigCanvas(self._figure)
         self._scene.addWidget(self._canvas)
 
+        self.setWindowTitle(self._title)
         self.setScene(self._scene)
         self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
@@ -63,6 +73,16 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
         self._zoom = 0
         self._mousePressed = False
         self._drag_pos = None
+
+        self.save_model_action = QtWidgets.QAction(QtGui.QIcon(':/icons/resources/icons/file_save.svg'),
+                                                   'Save model as ...', self)
+        self.save_model_action.setIconVisibleInMenu(True)
+        self.save_model_action.triggered.connect(self.save_model)
+
+        self.save_fragment_action = QtWidgets.QAction(QtGui.QIcon(':/icons/resources/icons/save_part.svg'),
+                                                      'Save fragment as ...', self)
+        self.save_fragment_action.setIconVisibleInMenu(True)
+        self.save_fragment_action.triggered.connect(self.save_fragment)
 
     def mousePressEvent(self, event: QtCore.Qt.MouseButton.LeftButton) -> None:
         """Handle the mouse press event.
@@ -155,6 +175,36 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
         else:
             super(CustomGraphicView, self).wheelEvent(event)
 
+    def contextMenuEvent(self, event):
+        menu = QtWidgets.QMenu(self)
+        menu.addAction(self.save_model_action)
+        separator = QtWidgets.QAction(self)
+        separator.setSeparator(True)
+        menu.addAction(separator)
+        menu.addAction(self.save_fragment_action)
+        menu.exec(event.globalPos())
+
+    def save_model(self):
+        """Saves the current figure as an any graphical file."""
+        NavToolbar.save_figure(self._figure)
+
+    def save_fragment(self):
+        """Saves the current visible area widget as an image.
+
+        Note:
+            Saves the current visible area as an image without the scrollbars.
+
+        """
+        rect_region = QtCore.QRect(0, 0,
+                                   self.width() - self.verticalScrollBar().width(),
+                                   self.height() - self.horizontalScrollBar().height())
+        pixmap = self.grab(rect_region)
+        fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save fragment as ...', 'image.png',
+                                                      'Portable Network Graphics (*.png);;'
+                                                      'Joint Photographic Experts Group (*.jpeg *.jpg)')[0]
+        if fname:
+            pixmap.save(fname)
+
 
 class ViewerWidget(QtWidgets.QWidget):
     """Initializes a ViewerWidget object.
@@ -168,32 +218,17 @@ class ViewerWidget(QtWidgets.QWidget):
 
     """
 
-    def __init__(self, title: str = 'Viewer',
-                 figure: ty.Optional[matplotlib.figure.Figure] = None) -> None:
+    def __init__(self,
+                 figure: ty.Optional[matplotlib.figure.Figure],
+                 title: str = 'Viewer Window') -> None:
         super(ViewerWidget, self).__init__()
-        # self.figure definition before loadUi is necessarily!
-        self.figure = figure
+        # self._figure definition before loadUi is necessarily!
+        self._figure = figure
         uic.loadUi(GUI_DIR / 'viewer.ui', self)
         self.setWindowTitle(title)
 
-        self.allButton.setToolTip('Save whole page')
-        self.allButton.clicked.connect(lambda: NavToolbar.save_figure(self.figure))
-
-        self.partButton.setToolTip('Save part of page')
-        self.partButton.clicked.connect(self.save_image)
-
-    def save_image(self):
-        """Saves the current visible area widget as an image.
-
-        Note:
-            Saves the current visible area as an image without the scrollbars.
-
-        """
-        rect_region = QtCore.QRect(0, 0,
-                                   self.graphicsView.width() - self.graphicsView.verticalScrollBar().width(),
-                                   self.graphicsView.height() - self.graphicsView.horizontalScrollBar().height())
-        pixmap = self.graphicsView.grab(rect_region)
-        fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save as image', 'image.png',
-                                                      'PNG (*.png);;JPEG (*.jpg)')[0]
-        if fname:
-            pixmap.save(fname)
+        # self.allButton.setToolTip('Save whole page')
+        # self.allButton.clicked.connect(self.save_model)
+        #
+        # self.partButton.setToolTip('Save part of page')
+        # self.partButton.clicked.connect(self.save_fragment)
