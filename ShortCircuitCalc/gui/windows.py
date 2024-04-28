@@ -21,7 +21,7 @@ from matplotlib.backends.backend_qt5agg import (
 )
 
 
-__all__ = ('CustomGraphicView', 'ViewerWidget')
+__all__ = ('MainWindow', 'CustomGraphicView')
 
 
 # Select the backend used for rendering and GUI integration.
@@ -47,7 +47,7 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
     """
 
     def __init__(self,
-                 parent: ty.Optional[QtWidgets.QWidget] = None,
+                 parent: QtWidgets = None,
                  figure: matplotlib.figure.Figure = None,
                  title: str = 'Viewer') -> None:
         super(CustomGraphicView, self).__init__(parent)
@@ -57,13 +57,13 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
         self._scene = QtWidgets.QGraphicsScene()
 
         if parent is not None:
-            self._figure = self.parent()._figure
+            self._canvas = None
+        else:
+            self._canvas = FigCanvas(self._figure)
+            self._scene.addWidget(self._canvas)
 
-        self._canvas = FigCanvas(self._figure)
-        self._scene.addWidget(self._canvas)
-
-        self.setWindowTitle(self._title)
         self.setScene(self._scene)
+        self.setWindowTitle(self._title)
         self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
         # Start viewing position
@@ -83,6 +83,11 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
                                                       'Save fragment as ...', self)
         self.save_fragment_action.setIconVisibleInMenu(True)
         self.save_fragment_action.triggered.connect(self.save_fragment)
+
+    def set_model(self, model):
+        self._canvas = FigCanvas(model)
+        self._scene.addWidget(self._canvas)
+        self.setScene(self._scene)
 
     def mousePressEvent(self, event: QtCore.Qt.MouseButton.LeftButton) -> None:
         """Handle the mouse press event.
@@ -214,16 +219,12 @@ class ViewerWidget(QtWidgets.QWidget):
 
     Args:
         title (str): The title of the viewer widget.
-        figure (Optional[matplotlib.figure.Figure]): The matplotlib figure to display.
 
     """
 
-    def __init__(self,
-                 figure: ty.Optional[matplotlib.figure.Figure],
-                 title: str = 'Viewer Window') -> None:
+    def __init__(self, title: str = 'Viewer Window') -> None:
         super(ViewerWidget, self).__init__()
         # self._figure definition before loadUi is necessarily!
-        self._figure = figure
         uic.loadUi(GUI_DIR / 'viewer.ui', self)
         self.setWindowTitle(title)
 
@@ -232,3 +233,11 @@ class ViewerWidget(QtWidgets.QWidget):
         #
         # self.partButton.setToolTip('Save part of page')
         # self.partButton.clicked.connect(self.save_fragment)
+
+
+class MainWindow(QtWidgets.QMainWindow):
+    def __init__(self):
+        super(MainWindow, self).__init__()
+        uic.loadUi(GUI_DIR / 'main_window.ui', self)
+
+        self.switchButton.setChecked(True)

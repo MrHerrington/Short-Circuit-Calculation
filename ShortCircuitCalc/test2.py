@@ -2,7 +2,6 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 import numpy as np
-from ShortCircuitCalc.gui import ViewerWidget
 from ShortCircuitCalc.database import *
 
 

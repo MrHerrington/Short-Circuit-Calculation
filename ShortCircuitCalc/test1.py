@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from ShortCircuitCalc.tools import *
 from ShortCircuitCalc.config import GUI_DIR
-from ShortCircuitCalc.gui import ViewerWidget, CustomGraphicView
+from ShortCircuitCalc.gui import *
 from PyQt5 import QtWidgets
 import sys
 
@@ -102,6 +102,10 @@ plt.tight_layout()
 
 
 app = QtWidgets.QApplication(sys.argv)
-w = ViewerWidget(fig)
+# w = ViewerWidget()
+w = MainWindow()
+w.resultView.set_model(fig)
+tabBar = w.findChild(QtWidgets.QTabBar)
+tabBar.hide()
 w.show()
 app.exec_()

@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from PyQt5 import QtWidgets
 from tabulate import tabulate
 from ..tools import Base, engine, session_scope
-from ..gui import ViewerWidget
+from ..gui import CustomGraphicView
 
 
 __all__ = ('BaseMixin',)
@@ -130,7 +130,7 @@ class BaseMixin:
 
             # Creating GUI
             app = QtWidgets.QApplication(sys.argv)
-            window = ViewerWidget(cls.__tablename__.title(), fig)
+            window = CustomGraphicView(None, fig, cls.__tablename__.title())
             window.show()
             app.exec_()
 
