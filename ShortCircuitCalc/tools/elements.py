@@ -3,6 +3,7 @@
 and contacts, for programmatically inputting data related to these categories."""
 
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from decimal import Decimal
@@ -16,6 +17,9 @@ import ShortCircuitCalc.database as db
 
 
 __all__ = ('T', 'W', 'Q', 'QF', 'QS', 'R', 'Line', 'Arc', 'Calculator')
+
+
+logger = logging.getLogger(__name__)
 
 
 class Validator:
@@ -57,6 +61,7 @@ class Validator:
             except (TypeError, ValueError):
                 msg = (f"The type of the attribute '{type(obj).__name__}.{self._public_name}' "
                        f'must be {ty.get_type_hints(obj)[self._public_name]}.')
+                logger.error(msg)
                 raise TypeError(msg)
         setattr(obj, self._private_name, value)
 
@@ -70,7 +75,9 @@ class BaseElement(ABC):
         """The method searches in the database resistance R1."""
         query_val = self._sql_query('resistance_r1')
         if query_val is None:
-            raise ValueError('The resistance R1 is not found in the database!')
+            msg = 'The resistance R1 is not found in the database!'
+            logger.error(msg)
+            raise ValueError(msg)
         return query_val
 
     @property
@@ -78,7 +85,9 @@ class BaseElement(ABC):
         """The method searches in the database reactance X1."""
         query_val = self._sql_query('reactance_x1')
         if query_val is None:
-            raise ValueError('The reactance X1 is not found in the database!')
+            msg = 'The reactance X1 is not found in the database!'
+            logger.error(msg)
+            raise ValueError(msg)
         return query_val
 
     @property
@@ -86,7 +95,9 @@ class BaseElement(ABC):
         """The method searches in the database resistance R0."""
         query_val = self._sql_query('resistance_r0')
         if query_val is None:
-            raise ValueError('The resistance R0 is not found in the database!')
+            msg = 'The resistance R0 is not found in the database!'
+            logger.error(msg)
+            raise ValueError(msg)
         return query_val
 
     @property
@@ -94,7 +105,9 @@ class BaseElement(ABC):
         """The method searches in the database reactance X0."""
         query_val = self._sql_query('reactance_x0')
         if query_val is None:
-            raise ValueError('The reactance X0 is not found in the database!')
+            msg = 'The reactance X0 is not found in the database!'
+            logger.error(msg)
+            raise ValueError(msg)
         return query_val
 
     @abstractmethod

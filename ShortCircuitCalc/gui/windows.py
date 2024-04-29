@@ -32,7 +32,7 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
     """Initializes a CustomGraphicView object.
 
     Args:
-        parent (Optional[QtWidgets.QWidget], optional): The parent widget for the CustomGraphicView.
+        parent (Optional[QtWdgets.QWidget], optional): The parent widget for the CustomGraphicView.
         Defaults to None.
 
     Initializes the following instance variables:
@@ -241,3 +241,13 @@ class MainWindow(QtWidgets.QMainWindow):
         uic.loadUi(GUI_DIR / 'main_window.ui', self)
 
         self.switchButton.setChecked(True)
+
+    def closeEvent(self, event):
+        # Обработчик события закрытия окна
+        reply = QtWidgets.QMessageBox.question(self, 'Exit?', "Are you sure to quit?",
+                                               QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                               QtWidgets.QMessageBox.No)
+        if reply == QtWidgets.QMessageBox.Yes:
+            event.accept() # Принять событие закрытия
+        else:
+            event.ignore() # Игнорировать событие закрытия

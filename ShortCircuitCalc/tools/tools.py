@@ -3,6 +3,7 @@
 and utility tools for the main functionality of the program"""
 
 
+import logging
 import json
 from contextlib import contextmanager
 import re
@@ -13,6 +14,9 @@ from ..config import ROOT_DIR, CONFIG_DIR, CREDENTIALS_DIR, ENGINE_ECHO, SQLITE_
 
 
 __all__ = ('Base', 'engine', 'metadata', 'session_scope')
+
+
+logger = logging.getLogger(__name__)
 
 
 class Base(sa.orm.DeclarativeBase):
@@ -62,7 +66,7 @@ def config_manager(param: str, value: ty.Union[str, bool] = False) -> ty.Union[s
         config_file.truncate()
         config_file.write(updated_config_data)
         config_file.close()
-        print(f'Config params changed: now {param} = {value}!')
+        logger.warning(f'Config params changed: now {param} = {value}!')
 
 
 def db_access() -> str:
@@ -102,9 +106,9 @@ def db_access() -> str:
         path_link = ROOT_DIR / SQLITE_DB_NAME
         if path_link.is_file():
             path_link.unlink()
-            print(f"Existing SQLite database '{SQLITE_DB_NAME}' deleted!")
+            logger.warning(f"Existing SQLite database '{SQLITE_DB_NAME}' deleted!")
 
-        print('Connected to MySQL database.')
+        logger.info('Connected to MySQL database.')
 
         if config_manager('DB_EXISTING_CONNECTION') != 'MySQL':
             config_manager('DB_EXISTING_CONNECTION', 'MySQL')
@@ -120,7 +124,7 @@ def db_access() -> str:
             str: The SQLite engine string.
 
         """
-        print('Connected to SQLite database.')
+        logger.info('Connected to SQLite database.')
 
         if config_manager('DB_EXISTING_CONNECTION') != 'SQLite':
             config_manager('DB_EXISTING_CONNECTION', 'SQLite')
@@ -138,16 +142,16 @@ def db_access() -> str:
             str: The engine string for the accessed database connection.
 
         """
-        print('Existing connection not found!')
+        logger.warning('Existing connection not found!')
 
         try:
-            print('Accessing MySQL database...')
-            print('Credentials initializing...')
+            logger.info('Accessing MySQL database...')
+            logger.info('Credentials initializing...')
             engine_string = __mysql_access()
 
         except FileNotFoundError:
-            print('Credentials file for MySQL database not found!')
-            print('Accessing SQLite database...')
+            logger.warning('Credentials file for MySQL database not found!')
+            logger.info('Accessing SQLite database...')
             engine_string = __sqlite_access()
 
         return engine_string
@@ -167,8 +171,8 @@ def db_access() -> str:
 
         except FileNotFoundError:
             config_manager('DB_EXISTING_CONNECTION', 'False')
-            print("The config 'DB_EXISTING_CONNECTION' parameter has been reset. "
-                  "Retrying database connection...")
+            logger.warning("The config 'DB_EXISTING_CONNECTION' parameter has been reset. "
+                           "Retrying database connection...")
             db_access()
 
         return db_access.engine_string
@@ -199,6 +203,6 @@ def session_scope() -> None:
         session.commit()
     except Exception as err:
         session.rollback()
-        raise err from None
+        logger.exception(err, exc_info=True)
     finally:
         session.close()

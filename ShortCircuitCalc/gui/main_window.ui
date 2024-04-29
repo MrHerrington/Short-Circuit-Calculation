@@ -147,7 +147,7 @@
      </widget>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout_5">
+     <layout class="QVBoxLayout" name="verticalLayout_6">
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
@@ -206,7 +206,7 @@
          <enum>QTabWidget::North</enum>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <property name="documentMode">
          <bool>true</bool>
@@ -235,12 +235,8 @@
   background-size: cover;
 }</string>
          </property>
-         <attribute name="icon">
-          <iconset resource="resources.qrc">
-           <normaloff>:/icons/resources/icons/input.svg</normaloff>:/icons/resources/icons/input.svg</iconset>
-         </attribute>
          <attribute name="title">
-          <string>INPUT</string>
+          <string>Input</string>
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout">
           <item alignment="Qt::AlignHCenter">
@@ -358,16 +354,22 @@ border-radius: 20px;</string>
          </layout>
         </widget>
         <widget class="QWidget" name="resultTab">
-         <attribute name="icon">
-          <iconset>
-           <normaloff>resources/icons/result.svg</normaloff>resources/icons/result.svg</iconset>
-         </attribute>
          <attribute name="title">
-          <string>RESULT</string>
+          <string>Result</string>
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
            <widget class="CustomGraphicView" name="resultView"/>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="tab">
+         <attribute name="title">
+          <string>Catalog</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <item>
+           <widget class="CustomGraphicView" name="resultView_2"/>
           </item>
          </layout>
         </widget>

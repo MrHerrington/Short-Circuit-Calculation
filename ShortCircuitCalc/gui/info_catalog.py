@@ -113,6 +113,6 @@ background_ax.imshow(background_image, aspect='auto')  # show the backgroud imag
 
 # Showing GUI window
 app = QtWidgets.QApplication(sys.argv)
-window = ViewerWidget('Electrical product catalog', fig)
+window = CustomGraphicView(None, fig, 'Electrical product catalog')
 window.show()
 app.exec_()

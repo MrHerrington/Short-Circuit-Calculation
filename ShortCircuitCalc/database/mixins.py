@@ -3,6 +3,7 @@
 the functionality of the declarative base class 'Base'"""
 
 
+import logging
 import sys
 import typing as ty
 import pathlib
@@ -20,6 +21,9 @@ from ..gui import CustomGraphicView
 
 
 __all__ = ('BaseMixin',)
+
+
+logger = logging.getLogger(__name__)
 
 
 class BaseMixin:
@@ -68,9 +72,9 @@ class BaseMixin:
             cls.drop_table(cls.__tablename__)
         try:
             Base.metadata.tables[cls.__tablename__].create(engine)
-            print(f"Table '{cls.__tablename__}' has been created.")
+            logger.info(f"Table '{cls.__tablename__}' has been created.")
         except sa.exc.OperationalError as err:
-            print(f"{type(err)}: Table '{cls.__tablename__}' already exists!")
+            logger.warning(f"{type(err)}: Table '{cls.__tablename__}' already exists!")
 
     @classmethod
     def read_table(cls, filtrate: ty.Optional[str] = None, limit: ty.Optional[int] = None) -> pd.DataFrame:
@@ -114,7 +118,7 @@ class BaseMixin:
         """
         df = cls.read_table(filtrate=filtrate, limit=limit)
         if not gui:
-            print(tabulate(df, headers='keys', tablefmt='psql', numalign='center', showindex=indexes))
+            logger.info('\n' + tabulate(df, headers='keys', tablefmt='psql', numalign='center', showindex=indexes))
         else:
             # Creating fig in matplotlib
             df = cls.read_table()
@@ -153,12 +157,14 @@ class BaseMixin:
 
         """
         if all((data is None, from_csv is None)):
-            raise ValueError('Requires at least one not NoneType argument!')
+            msg = 'Requires at least one not NoneType argument!'
+            logger.error(msg)
+            raise ValueError(msg)
         if from_csv:
             data = BaseMixin.__csv_to_list_of_dicts(from_csv)
         with session_scope() as session:
             result = session.connection().execute(sa.insert(cls), data).rowcount
-            print(f"Table '{cls.__tablename__}' has been updated. {result} string(s) were inserted.")
+            logger.warning(f"Table '{cls.__tablename__}' has been updated. {result} string(s) were inserted.")
 
     @classmethod
     def update_table(cls, data: ty.Union[ty.List[dict], dict], options: ty.Optional[str] = 'primary_keys',
@@ -204,7 +210,7 @@ class BaseMixin:
             'where_condition': __where_condition
         }
 
-        print(f"Table '{cls.__tablename__}' has been updated. {methods[options]()} matches found!")
+        logger.warning(f"Table '{cls.__tablename__}' has been updated. {methods[options]()} matches found!")
 
     @classmethod
     def delete_table(cls, filtrate: ty.Optional[str] = None) -> None:
@@ -219,7 +225,7 @@ class BaseMixin:
         """
         with session_scope() as session:
             rows_deleted = session.connection().execute(sa.delete(cls).filter(sa.text(filtrate))).rowcount
-            print(f"Rows were deleted from table '{cls.__tablename__}'. {rows_deleted} matches found!")
+            logger.warning(f"Rows were deleted from table '{cls.__tablename__}'. {rows_deleted} matches found!")
 
     @classmethod
     def drop_table(cls, confirm: ty.Union[ty.Callable, str, None] = None, forced: bool = False) -> None:
@@ -237,7 +243,7 @@ class BaseMixin:
             if confirm == cls.__tablename__:
                 if not forced:
                     Base.metadata.tables[cls.__tablename__].drop(engine)
-                    print(f"Table '{cls.__tablename__}' has been deleted.")
+                    logger.warning(f"Table '{cls.__tablename__}' has been deleted.")
                 else:
 
                     # MySQL dialect
@@ -254,14 +260,15 @@ class BaseMixin:
                             session.execute(sa.text(f'DROP TABLE {cls.__tablename__};'))
                             session.execute(sa.text(f'PRAGMA FOREIGN_KEYS = ON'))
 
-                    print(f"Table '{cls.__tablename__}' has been forced deleted.")
+                    logger.warning(f"Table '{cls.__tablename__}' has been forced deleted.")
             else:
-                raise f"Table '{cls.__tablename__}' deletion not confirmed."
+                logger.error(f"Table '{cls.__tablename__}' has not been deleted. Deleting not confirmed.")
+                raise
         except sa.exc.OperationalError as err:
             if 'Unknown table' in err.orig.__str__() or 'no such table' in err.orig.__str__():
-                print(f"There is no need to delete the table '{cls.__tablename__}', it does not exist")
+                logger.info(f"There is no need to delete the table '{cls.__tablename__}', it does not exist")
             else:
-                raise err from None
+                logger.exception(err, exc_info=True)
 
     @classmethod
     def reset_id(cls) -> None:
@@ -274,13 +281,13 @@ class BaseMixin:
                 session.execute(
                     sa.text(f'UPDATE {cls.__tablename__} SET {cls.__tablename__}.id = @count:= @count + 1;'))
                 session.execute(sa.text(f'ALTER TABLE {cls.__tablename__} AUTO_INCREMENT = 1'))
-            print(f"id order for table '{cls.__tablename__}' has been reset!")
+            logger.warning(f"id order for table '{cls.__tablename__}' has been reset!")
 
         # SQLite dialect
         except sa.exc.OperationalError:
-            print('For SQLite basically without AUTOINCREMENT rowid is '
-                  'determined according to the highes existing rowid, '
-                  'so if none exist then the rowid will be 1')
+            logger.warning('For SQLite basically without AUTOINCREMENT rowid is '
+                           'determined according to the highes existing rowid, '
+                           'so if none exist then the rowid will be 1')
 
     _new_name: ty.ClassVar[ty.Optional[str]]
 
