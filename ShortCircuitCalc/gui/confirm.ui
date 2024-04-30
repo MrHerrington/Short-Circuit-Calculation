@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Confirmation</string>
   </property>
   <property name="styleSheet">
    <string notr="true">QDialog[objectName=&quot;ConfirmWindow&quot;] {
@@ -64,7 +64,7 @@
 color: rgb(255, 255, 255);
 padding-left: 20px;
 padding-right: 20 px;
-border-radius: 10px;</string>
+border-radius: 5px;</string>
        </property>
        <property name="text">
         <string>ARE YOU SURE?</string>
@@ -111,7 +111,7 @@ background-color: rgba(153, 153, 153, 0.8);
 color: rgb(255, 255, 255);
 padding-left: 30px;
 padding-right: 30 px;
-border-radius: 10px;
+border-radius: 5px;
 }
 
 QPushButton:hover {
@@ -119,7 +119,7 @@ background-color: rgba(100, 100, 153);
 color: rgb(255, 255, 255);
 padding-left: 30px;
 padding-right: 30 px;
-border-radius: 10px;
+border-radius: 5px;
 }
 
 QPushButton:pressed {
@@ -127,7 +127,7 @@ background-color: rgba(153, 153, 153);
 color: rgb(255, 255, 255);
 padding-left: 30px;
 padding-right: 30 px;
-border-radius: 10px;
+border-radius: 5px;
 }</string>
          </property>
          <property name="text">
@@ -161,7 +161,7 @@ background-color: rgba(153, 153, 153, 0.8);
 color: rgb(255, 255, 255);
 padding-left: 30px;
 padding-right: 30 px;
-border-radius: 10px;
+border-radius: 5px;
 }
 
 QPushButton:hover {
@@ -169,7 +169,7 @@ background-color: rgba(100, 100, 153);
 color: rgb(255, 255, 255);
 padding-left: 30px;
 padding-right: 30 px;
-border-radius: 10px;
+border-radius: 5px;
 }
 
 QPushButton:pressed {
@@ -177,7 +177,7 @@ background-color: rgba(153, 153, 153);
 color: rgb(255, 255, 255);
 padding-left: 30px;
 padding-right: 30 px;
-border-radius: 10px;
+border-radius: 5px;
 }</string>
          </property>
          <property name="text">
@@ -192,5 +192,38 @@ border-radius: 10px;
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>yesButton</sender>
+   <signal>clicked()</signal>
+   <receiver>ConfirmWindow</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>78</x>
+     <y>156</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>55</x>
+     <y>84</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>noButton</sender>
+   <signal>clicked()</signal>
+   <receiver>ConfirmWindow</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>319</x>
+     <y>156</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>351</x>
+     <y>81</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

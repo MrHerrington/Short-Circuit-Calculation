@@ -5,5 +5,5 @@ classes for various electrical elements such as transformers, cables and
 contacts, for programmatically inputting data related to these categories."""
 
 
-from .tools import *
-from .elements import *
+from ShortCircuitCalc.tools.tools import *
+from ShortCircuitCalc.tools.elements import *

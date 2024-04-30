@@ -22,4 +22,5 @@ from ShortCircuitCalc.database import *
 # w.show()
 # app.exec_()
 
-Cable.show_table()
+a = PowerNominal.read_table().loc[:, 'power']
+print(a)

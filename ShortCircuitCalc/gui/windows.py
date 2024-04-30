@@ -3,25 +3,24 @@
 Classes are based on ui files, developed by QtDesigner and customized."""
 
 
-import typing as ty
 import matplotlib
 # Need for figure matplotlib annotation
 # noinspection PyUnresolvedReferences
 import matplotlib.pyplot as plt
-# Need for correctly loading icons
-# noinspection PyUnresolvedReferences
-import ShortCircuitCalc.gui.resources
-from ..config import GUI_DIR
-
-from PyQt5 import QtWidgets, QtCore, QtGui, uic
-
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigCanvas,
     NavigationToolbar2QT as NavToolbar,
 )
+from PyQt5 import QtWidgets, QtCore, QtGui, uic
+
+# Need for correctly loading icons
+# noinspection PyUnresolvedReferences
+import ShortCircuitCalc.gui.resources
+from ShortCircuitCalc.gui.info_catalog import *
+from ShortCircuitCalc.config import GUI_DIR
 
 
-__all__ = ('MainWindow', 'CustomGraphicView')
+__all__ = ('MainWindow', 'ConfirmWindow', 'CustomGraphicView')
 
 
 # Select the backend used for rendering and GUI integration.
@@ -85,7 +84,8 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
         self.save_fragment_action.triggered.connect(self.save_fragment)
 
     def set_model(self, model):
-        self._canvas = FigCanvas(model)
+        self._figure = model
+        self._canvas = FigCanvas(self._figure)
         self._scene.addWidget(self._canvas)
         self.setScene(self._scene)
 
@@ -180,12 +180,26 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
         else:
             super(CustomGraphicView, self).wheelEvent(event)
 
-    def contextMenuEvent(self, event):
+    def contextMenuEvent(self, event: QtGui.QContextMenuEvent) -> None:
+        """Handle the context menu event.
+
+        Args:
+            event (QtGui.QContextMenuEvent): The context menu event.
+
+        This function is called when a context menu event is triggered. It creates a context menu
+        with actions to save model and save fragment. It then executes the menu at the global position
+        specified by the event.
+
+        """
+        # Creating context menu
         menu = QtWidgets.QMenu(self)
         menu.addAction(self.save_model_action)
+
+        # Creating / adding separator
         separator = QtWidgets.QAction(self)
         separator.setSeparator(True)
         menu.addAction(separator)
+
         menu.addAction(self.save_fragment_action)
         menu.exec(event.globalPos())
 
@@ -235,19 +249,60 @@ class ViewerWidget(QtWidgets.QWidget):
         # self.partButton.clicked.connect(self.save_fragment)
 
 
+class ConfirmWindow(QtWidgets.QDialog):
+    """Initializes a ConfirmWindow object."""
+    def __init__(self, parent=None):
+        super(ConfirmWindow, self).__init__(parent)
+        uic.loadUi(GUI_DIR / 'confirm.ui', self)
+        self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
+
+
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         uic.loadUi(GUI_DIR / 'main_window.ui', self)
 
-        self.switchButton.setChecked(True)
+        # Hiding tab bar for QTabWidget
+        self.findChild(QtWidgets.QTabBar).hide()
 
-    def closeEvent(self, event):
-        # Обработчик события закрытия окна
-        reply = QtWidgets.QMessageBox.question(self, 'Exit?', "Are you sure to quit?",
-                                               QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-                                               QtWidgets.QMessageBox.No)
-        if reply == QtWidgets.QMessageBox.Yes:
-            event.accept() # Принять событие закрытия
+        # Initial start interface
+        self.switchButton.setChecked(True)
+        self.logsButton.setChecked(True)
+
+        # Buttons config
+        self.inputButton.setToolTip('Set input console')
+        self.inputButton.clicked.connect(lambda: self.tabWidget.setCurrentIndex(0))
+
+        self.resultButton.setToolTip('Set results view')
+        self.resultButton.clicked.connect(lambda: self.tabWidget.setCurrentIndex(1))
+
+        self.catalogButton.setToolTip('Set catalog view')
+        self.catalogButton.clicked.connect(lambda: self.tabWidget.setCurrentIndex(2))
+
+        self.logsButton.setToolTip('Set logs terminal')
+
+        self.infoButton.setToolTip('Set info view')
+        self.infoButton.clicked.connect(lambda: self.tabWidget.setCurrentIndex(3))
+
+        self.set_info_catalog()
+
+    def set_info_catalog(self) -> None:
+        self.catalogView.set_model(info_catalog_figure())
+
+    def closeEvent(self, event: QtGui.QCloseEvent) -> None:
+        """Handle the close event of the window.
+
+        Args:
+            event (QtGui.QCloseEvent): The close event object.
+
+        This function is called when the user tries to close the window. It creates a confirmation window
+        and displays it to the user. If the user confirms the close action, the event is accepted and the
+        window is closed. Otherwise, the event is ignored and the window remains open.
+
+        """
+        confirm_window = ConfirmWindow(self)
+        confirm_window.exec_()
+        if confirm_window.result() == QtWidgets.QDialog.Accepted:
+            event.accept()
         else:
-            event.ignore() # Игнорировать событие закрытия
+            event.ignore()

@@ -5,12 +5,14 @@ and utility tools for the main functionality of the program"""
 
 import logging
 import json
-from contextlib import contextmanager
 import re
 import typing as ty
+from contextlib import contextmanager
+
 import sqlalchemy as sa
 import sqlalchemy.orm
-from ..config import ROOT_DIR, CONFIG_DIR, CREDENTIALS_DIR, ENGINE_ECHO, SQLITE_DB_NAME
+
+from ShortCircuitCalc.config import ROOT_DIR, CONFIG_DIR, CREDENTIALS_DIR, ENGINE_ECHO, SQLITE_DB_NAME
 
 
 __all__ = ('Base', 'engine', 'metadata', 'session_scope')
@@ -187,12 +189,13 @@ Session = sa.orm.sessionmaker(bind=engine, expire_on_commit=False)
 
 
 @contextmanager
-def session_scope() -> None:
+def session_scope(logs: bool = True) -> None:
     """Context manager provides a session for executing database operations.
 
     Yields:
         session: A session object for executing database operations.
-
+    Args:
+        logs (bool, optional): Whether to log errors. Defaults to True.
     Raises:
         Exception: If an error occurs during the execution of the database operations.
 
@@ -201,8 +204,10 @@ def session_scope() -> None:
     try:
         yield session
         session.commit()
-    except Exception as err:
+    except sa.exc.OperationalError as err:
         session.rollback()
-        logger.exception(err, exc_info=True)
+        if logs:
+            logger.error(err, exc_info=True)
+        raise err
     finally:
         session.close()

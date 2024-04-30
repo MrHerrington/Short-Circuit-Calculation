@@ -1,10 +1,11 @@
+import sys
 import pandas as pd
+
+from PyQt5 import QtWidgets
 import matplotlib.pyplot as plt
 from ShortCircuitCalc.tools import *
-from ShortCircuitCalc.config import GUI_DIR
 from ShortCircuitCalc.gui import *
-from PyQt5 import QtWidgets
-import sys
+from ShortCircuitCalc.config import GUI_DIR
 
 
 dct = {
@@ -105,7 +106,5 @@ app = QtWidgets.QApplication(sys.argv)
 # w = ViewerWidget()
 w = MainWindow()
 w.resultView.set_model(fig)
-tabBar = w.findChild(QtWidgets.QTabBar)
-tabBar.hide()
 w.show()
 app.exec_()

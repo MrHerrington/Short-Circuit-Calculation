@@ -2,4 +2,5 @@
 """This package provides tools for getting information from program through GUI."""
 
 
-from .windows import *
+from ShortCircuitCalc.gui.windows import *
+from ShortCircuitCalc.gui.info_catalog import *

@@ -5,19 +5,20 @@ the functionality of the declarative base class 'Base'"""
 
 import logging
 import sys
-import typing as ty
 import pathlib
 import re
 import csv
+import typing as ty
+
 import sqlalchemy as sa
-from sqlalchemy.orm import declared_attr
 import sqlalchemy.exc
+from sqlalchemy.orm import declared_attr
 import pandas as pd
 import matplotlib.pyplot as plt
 from PyQt5 import QtWidgets
 from tabulate import tabulate
-from ..tools import Base, engine, session_scope
-from ..gui import CustomGraphicView
+
+from ShortCircuitCalc.tools import Base, engine, session_scope
 
 
 __all__ = ('BaseMixin',)
@@ -120,6 +121,7 @@ class BaseMixin:
         if not gui:
             logger.info('\n' + tabulate(df, headers='keys', tablefmt='psql', numalign='center', showindex=indexes))
         else:
+            from ShortCircuitCalc.gui.windows import CustomGraphicView
             # Creating fig in matplotlib
             df = cls.read_table()
             figsize_x = len(df.columns) + 1
@@ -248,7 +250,7 @@ class BaseMixin:
 
                     # MySQL dialect
                     try:
-                        with session_scope() as session:
+                        with session_scope(False) as session:
                             session.execute(sa.text(f'SET FOREIGN_KEY_CHECKS = 0;'))
                             session.execute(sa.text(f'DROP TABLE {cls.__tablename__};'))
                             session.execute(sa.text(f'SET FOREIGN_KEY_CHECKS = 1'))
@@ -276,7 +278,7 @@ class BaseMixin:
 
         # MySQL dialect
         try:
-            with session_scope() as session:
+            with session_scope(False) as session:
                 session.execute(sa.text(f'SET @count = 0;'))
                 session.execute(
                     sa.text(f'UPDATE {cls.__tablename__} SET {cls.__tablename__}.id = @count:= @count + 1;'))
