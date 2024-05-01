@@ -15,7 +15,7 @@ import sqlalchemy.orm
 from ShortCircuitCalc.config import ROOT_DIR, CONFIG_DIR, CREDENTIALS_DIR, ENGINE_ECHO, SQLITE_DB_NAME
 
 
-__all__ = ('Base', 'engine', 'metadata', 'session_scope')
+__all__ = ('Base', 'engine', 'metadata', 'session_scope', 'config_manager')
 
 
 logger = logging.getLogger(__name__)

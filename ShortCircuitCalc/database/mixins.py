@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from PyQt5 import QtWidgets
 from tabulate import tabulate
 
-from ShortCircuitCalc.tools import Base, engine, session_scope
+from ShortCircuitCalc.tools import *
 
 
 __all__ = ('BaseMixin',)
@@ -243,21 +243,23 @@ class BaseMixin:
         """
         try:
             if confirm == cls.__tablename__:
+
                 if not forced:
                     Base.metadata.tables[cls.__tablename__].drop(engine)
                     logger.warning(f"Table '{cls.__tablename__}' has been deleted.")
+
                 else:
 
                     # MySQL dialect
-                    try:
+                    if config_manager('DB_EXISTING_CONNECTION') == 'MySQL':
                         with session_scope(False) as session:
                             session.execute(sa.text(f'SET FOREIGN_KEY_CHECKS = 0;'))
                             session.execute(sa.text(f'DROP TABLE {cls.__tablename__};'))
                             session.execute(sa.text(f'SET FOREIGN_KEY_CHECKS = 1'))
 
                     # SQLite dialect
-                    except sa.exc.OperationalError:
-                        with session_scope() as session:
+                    if config_manager('DB_EXISTING_CONNECTION') == 'SQLite':
+                        with session_scope(False) as session:
                             session.execute(sa.text(f'PRAGMA FOREIGN_KEYS = OFF;'))
                             session.execute(sa.text(f'DROP TABLE {cls.__tablename__};'))
                             session.execute(sa.text(f'PRAGMA FOREIGN_KEYS = ON'))
@@ -277,7 +279,7 @@ class BaseMixin:
         """The method reset id order for the table with updating in child tables."""
 
         # MySQL dialect
-        try:
+        if config_manager('DB_EXISTING_CONNECTION') == 'MySQL':
             with session_scope(False) as session:
                 session.execute(sa.text(f'SET @count = 0;'))
                 session.execute(
@@ -286,7 +288,7 @@ class BaseMixin:
             logger.warning(f"id order for table '{cls.__tablename__}' has been reset!")
 
         # SQLite dialect
-        except sa.exc.OperationalError:
+        if config_manager('DB_EXISTING_CONNECTION') == 'SQLite':
             logger.warning('For SQLite basically without AUTOINCREMENT rowid is '
                            'determined according to the highes existing rowid, '
                            'so if none exist then the rowid will be 1')

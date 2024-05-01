@@ -9,7 +9,7 @@ from ShortCircuitCalc.config import GUI_DIR
 
 
 dct = {
-    T: GUI_DIR / 'T.jpg',
+    T: GUI_DIR / f'{T.__name__}.jpg',
     QF: GUI_DIR / 'QF.jpg',
     QS: GUI_DIR / 'QS.jpg',
     W: GUI_DIR / 'W.jpg',
@@ -70,12 +70,12 @@ nrows = max(len(chain1), len(chain2), len(chain3), len(chain4), len(chain5))
 ncols = len((chain1, chain2, chain3, chain4, chain5))
 schem = (chain1, chain2, chain3, chain4, chain5)
 
-fig, ax = plt.subplots(nrows, ncols, figsize=(ncols * 3, nrows * 0.8))
+fig, ax = plt.subplots(nrows, ncols, figsize=(ncols * 5, nrows * 1))
+# fig, ax = plt.subplots(nrows, ncols, figsize=(25, 8))
 
 for idx, col in enumerate(schem):
     for col_pos in range(len(col)):
-        ax[col_pos][idx].set_aspect(2/10)
-        axx = ax[col_pos][idx].inset_axes([0, 0, 0.5, 1], anchor='SW')
+        axx = ax[col_pos][idx].inset_axes([0, 0, 0.2, 1], anchor='SW')
         axx.axis('off')
         img = plt.imread(dct[col[col_pos].__class__])
         axx.imshow(img, extent=[0, 1, 0, 1])
@@ -89,7 +89,7 @@ for idx, col in enumerate(schem):
 
         resistance_table = ax[col_pos][idx].table(
             cellText=resistance_df.values, colLabels=resistance_df.columns,
-            loc='center', cellLoc='center', bbox=[0.2, 0.5, 0.8, 0.5], fontsize='large',
+            loc='center', cellLoc='center', bbox=[0.2, 0.5, 0.8, 0.5], fontsize='small',
             colColours=('#9999FF',) * len(resistance_df.columns),
             cellColours=(('#CCCCFF',) * len(resistance_df.columns),) * len(resistance_df.index))
 
@@ -98,12 +98,10 @@ for idx, col in enumerate(schem):
     for col_pos in range(max(map(len, schem))):
         ax[col_pos][idx].axis('off')
 
-plt.subplots_adjust(hspace=0)
-plt.tight_layout()
+plt.subplots_adjust(wspace=0, hspace=0, left=0, right=1, bottom=0, top=1)
 
 
 app = QtWidgets.QApplication(sys.argv)
-# w = ViewerWidget()
 w = MainWindow()
 w.resultView.set_model(fig)
 w.show()

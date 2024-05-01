@@ -13,7 +13,7 @@ CREDENTIALS_DIR = ROOT_DIR / 'credentials.json'
 DATA_DIR = ROOT_DIR / 'data'
 GUI_DIR = ROOT_DIR / 'gui'
 ENGINE_ECHO = False
-DB_EXISTING_CONNECTION = 'SQLite'
+DB_EXISTING_CONNECTION = 'MySQL'
 DB_TABLES_CLEAR_INSTALL = True
 SQLITE_DB_NAME = 'electrical_product_catalog.db'
 
