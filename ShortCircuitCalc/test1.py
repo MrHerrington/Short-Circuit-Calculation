@@ -71,7 +71,6 @@ ncols = len((chain1, chain2, chain3, chain4, chain5))
 schem = (chain1, chain2, chain3, chain4, chain5)
 
 fig, ax = plt.subplots(nrows, ncols, figsize=(ncols * 5, nrows * 1))
-# fig, ax = plt.subplots(nrows, ncols, figsize=(25, 8))
 
 for idx, col in enumerate(schem):
     for col_pos in range(len(col)):
@@ -89,9 +88,21 @@ for idx, col in enumerate(schem):
 
         resistance_table = ax[col_pos][idx].table(
             cellText=resistance_df.values, colLabels=resistance_df.columns,
-            loc='center', cellLoc='center', bbox=[0.2, 0.5, 0.8, 0.5], fontsize='small',
+            loc='center', cellLoc='center', bbox=[0.2, 0.5, 0.8, 0.5], fontsize='large',
             colColours=('#9999FF',) * len(resistance_df.columns),
             cellColours=(('#CCCCFF',) * len(resistance_df.columns),) * len(resistance_df.index))
+
+        short_circuit_df = pd.DataFrame.from_dict({
+            'I_k(3)': [Calculator(col[:col_pos + 1]).three_phase_current_short_circuit],
+            'I_k(2)': [Calculator(col[:col_pos + 1]).two_phase_voltage_short_circuit],
+            'I_k(1)': [Calculator(col[:col_pos + 1]).one_phase_voltage_short_circuit]
+        })
+
+        short_circuit_table = ax[col_pos][idx].table(
+            cellText=short_circuit_df.values, colLabels=short_circuit_df.columns,
+            loc='center', cellLoc='center', bbox=[0.4, 0, 0.6, 0.5], fontsize='large',
+            colColours=('#FFCC99',) * len(short_circuit_df.columns),
+            cellColours=(('#FFE5CC',) * len(short_circuit_df.columns),) * len(short_circuit_df.index))
 
 # Turn off axis
 for idx, col in enumerate(schem):

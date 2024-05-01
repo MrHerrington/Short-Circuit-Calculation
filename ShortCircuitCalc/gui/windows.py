@@ -285,6 +285,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.infoButton.clicked.connect(lambda: self.tabWidget.setCurrentIndex(3))
 
         self.set_info_catalog()
+        self.window_auto_center()
+
+    def window_auto_center(self) -> None:
+        """Centers the window on the screen."""
+        desktop = QtWidgets.QDesktopWidget().screenGeometry()
+        screen_width = desktop.width()
+        screen_height = desktop.height()
+        x = int((screen_width - self.width()) / 2)
+        y = int((screen_height - self.height()) / 2)
+        self.move(x, y)
 
     def set_info_catalog(self) -> None:
         self.catalogView.set_model(info_catalog_figure())
