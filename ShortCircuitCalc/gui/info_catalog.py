@@ -45,7 +45,7 @@ def info_catalog_figure() -> matplotlib.figure.Figure:
                      len(current_breakers_df.columns), len(other_contacts_df.columns))) + 2
     figsize_y = (max((len(transformers_df.index), len(cables_df.index),
                       len(current_breakers_df.index), len(other_contacts_df.index))) + 1) * 0.4
-    fig = plt.figure(figsize=(figsize_x, figsize_y))
+    fig = plt.figure(figsize=(figsize_x, figsize_y), dpi=300)
     fig.patch.set_facecolor('#FFFFCC')
     spec = gridspec.GridSpec(nrows=1, ncols=9)
 

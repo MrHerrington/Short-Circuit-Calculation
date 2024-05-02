@@ -164,18 +164,22 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
 
         if modifiers == QtCore.Qt.KeyboardModifier.ControlModifier:
 
-            if event.angleDelta().y() > 0:
-                factor = 1.25
-                self._zoom += 1
-            else:
-                factor = 0.8
-                self._zoom -= 1
+            # if event.angleDelta().y() > 0:
+            #     factor = 1.25
+            #     self._zoom += 1
+            # else:
+            #     factor = 0.8
+            #     self._zoom -= 1
+            #
+            # if self._zoom > 0:
+            #     self.scale(factor, factor)
+            # else:
+            #     self._zoom = 0
+            #     self.resetTransform()
 
-            if self._zoom > 0:
-                self.scale(factor, factor)
-            else:
-                self._zoom = 0
-                self.resetTransform()
+            angle = event.angleDelta().y()
+            factor = 1 + (angle / 1000)
+            self.scale(factor, factor)
 
         else:
             super(CustomGraphicView, self).wheelEvent(event)

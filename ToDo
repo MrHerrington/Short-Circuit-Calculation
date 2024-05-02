@@ -1,4 +1,4 @@
-realize navtoolbar save_fig button in custom widgets
+reworked zoomMouseEvent, uncorrectly zoom coefficients
 add annotations to elements classes
 add pretty output into Calculator element for single chain
 add pretty output into Calculator element for multiply chain
