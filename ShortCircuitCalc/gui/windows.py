@@ -83,11 +83,17 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
         self.save_fragment_action.setIconVisibleInMenu(True)
         self.save_fragment_action.triggered.connect(self.save_fragment)
 
-    def set_model(self, model):
-        self._figure = model
+    def set_figure(self, figure):
+        self._figure = figure
         self._canvas = FigCanvas(self._figure)
         self._scene.addWidget(self._canvas)
         self.setScene(self._scene)
+        self.zoom_initialize()
+
+    def zoom_initialize(self) -> None:
+        fig_size_x_inches, fig_size_y_inches = self._figure.get_size_inches()
+        start_scale = int(min((self.width() / fig_size_x_inches, self.height() / fig_size_y_inches))) * 0.9
+        self.scale(1 / start_scale, 1 / start_scale)
 
     def mousePressEvent(self, event: QtCore.Qt.MouseButton.LeftButton) -> None:
         """Handle the mouse press event.
@@ -164,22 +170,23 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
 
         if modifiers == QtCore.Qt.KeyboardModifier.ControlModifier:
 
-            # if event.angleDelta().y() > 0:
-            #     factor = 1.25
-            #     self._zoom += 1
-            # else:
-            #     factor = 0.8
-            #     self._zoom -= 1
-            #
-            # if self._zoom > 0:
-            #     self.scale(factor, factor)
-            # else:
-            #     self._zoom = 0
-            #     self.resetTransform()
+            if event.angleDelta().y() > 0:
+                factor = 1.25
+                self._zoom += 1
+            else:
+                factor = 0.8
+                self._zoom -= 1
 
-            angle = event.angleDelta().y()
-            factor = 1 + (angle / 1000)
-            self.scale(factor, factor)
+            if self._zoom > -1:
+                self.scale(factor, factor)
+            else:
+                self._zoom = 0
+                # self.resetTransform()
+
+            # Alternative variant
+            # angle = event.angleDelta().y()
+            # factor = 1 + (angle / 1000)
+            # self.scale(factor, factor)
 
         else:
             super(CustomGraphicView, self).wheelEvent(event)
@@ -288,7 +295,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.infoButton.setToolTip('Set info view')
         self.infoButton.clicked.connect(lambda: self.tabWidget.setCurrentIndex(3))
 
-        self.set_info_catalog()
+        self.catalogView.set_figure(info_catalog_figure())
         self.window_auto_center()
 
     def window_auto_center(self) -> None:
@@ -299,9 +306,6 @@ class MainWindow(QtWidgets.QMainWindow):
         x = int((screen_width - self.width()) / 2)
         y = int((screen_height - self.height()) / 2)
         self.move(x, y)
-
-    def set_info_catalog(self) -> None:
-        self.catalogView.set_model(info_catalog_figure())
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         """Handle the close event of the window.

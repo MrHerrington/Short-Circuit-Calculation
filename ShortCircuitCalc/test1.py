@@ -8,13 +8,13 @@ add in PATH environment bin directory variables:
 
 
 import sys
+from io import BytesIO
 
 import pandas as pd
 import matplotlib.pyplot as plt
 from PyQt5 import QtWidgets
 import cairosvg
 from PIL import Image
-from io import BytesIO
 
 from ShortCircuitCalc.tools import *
 from ShortCircuitCalc.gui import *
@@ -22,12 +22,12 @@ from ShortCircuitCalc.config import GUI_DIR
 
 
 dct = {
-    T: GUI_DIR / 'T_star_one.svg',
-    QF: GUI_DIR / 'QF.jpg',
-    QS: GUI_DIR / 'QS.jpg',
-    W: GUI_DIR / 'W.jpg',
-    Line: GUI_DIR / 'Line.jpg',
-    Arc: GUI_DIR / 'Arc.jpg',
+    T: GUI_DIR / 'resources' / 'graphs' / 'T_star_three.svg',
+    QF: GUI_DIR / 'resources' / 'graphs' / 'QF_three.svg',
+    QS: GUI_DIR / 'resources' / 'graphs' / 'QS_three.svg',
+    W: GUI_DIR / 'resources' / 'graphs' / 'W_three.svg',
+    Line: GUI_DIR / 'resources' / 'graphs' / 'Line_three.svg',
+    Arc: GUI_DIR / 'resources' / 'graphs' / 'Arc_three.svg',
 }
 
 chain1 = [
@@ -83,17 +83,14 @@ nrows = max(len(chain1), len(chain2), len(chain3), len(chain4), len(chain5))
 ncols = len((chain1, chain2, chain3, chain4, chain5))
 schem = (chain1, chain2, chain3, chain4, chain5)
 
-fig, ax = plt.subplots(nrows, ncols, figsize=(ncols * 5, nrows * 1), dpi=300)
+fig, ax = plt.subplots(nrows, ncols, figsize=(ncols * 5, nrows * 1), dpi=240)
 
 for idx, col in enumerate(schem):
     for col_pos in range(len(col)):
         axx = ax[col_pos][idx].inset_axes([0, 0, 0.2, 1], anchor='SW')
         axx.axis('off')
-        if isinstance(col[col_pos], T):
-            img_png = cairosvg.svg2png(url=str(dct[col[col_pos].__class__]))
-            img = Image.open(BytesIO(img_png))
-        else:
-            img = plt.imread(dct[col[col_pos].__class__])
+        img_png = cairosvg.svg2png(url=str(dct[col[col_pos].__class__]))
+        img = Image.open(BytesIO(img_png))
         axx.imshow(img, extent=[0, 1, 0, 1])
 
         resistance_df = pd.DataFrame.from_dict({
@@ -131,6 +128,6 @@ plt.subplots_adjust(wspace=0, hspace=0, left=0, right=1, bottom=0, top=1)
 
 app = QtWidgets.QApplication(sys.argv)
 w = MainWindow()
-w.resultView.set_model(fig)
+w.resultView.set_figure(fig)
 w.show()
 app.exec_()
