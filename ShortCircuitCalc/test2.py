@@ -38,9 +38,10 @@ class Window(CustomGraphicView):
         self.check.on_clicked(self.is_click)
 
     def is_click(self, label):
-        index = self.labels.index(label)
-        self.lines[index].set_visible(not self.lines[index].get_visible())
-        self.canvas.draw()
+        # index = self.labels.index(label)
+        # self.lines[index].set_visible(not self.lines[index].get_visible())
+        # self.canvas.draw()
+        print('Button is pressed')
 
 
 def main():
