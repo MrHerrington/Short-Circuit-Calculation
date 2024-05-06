@@ -3,6 +3,9 @@
 Classes are based on ui files, developed by QtDesigner and customized."""
 
 
+from functools import singledispatchmethod
+
+import logging
 import matplotlib
 # Need for figure matplotlib annotation
 # noinspection PyUnresolvedReferences
@@ -17,10 +20,14 @@ from PyQt5 import QtWidgets, QtCore, QtGui, uic
 # noinspection PyUnresolvedReferences
 import ShortCircuitCalc.gui.resources
 from ShortCircuitCalc.gui.info_catalog import *
-from ShortCircuitCalc.config import GUI_DIR
+from ShortCircuitCalc.tools.elements import *
+from ShortCircuitCalc.config import GUI_DIR, GRAPHS_DIR
 
 
-__all__ = ('MainWindow', 'ConfirmWindow', 'CustomGraphicView')
+__all__ = ('MainWindow', 'ConfirmWindow', 'CustomGraphicView', 'Visualizer')
+
+
+logger = logging.getLogger(__name__)
 
 
 # Select the backend used for rendering and GUI integration.
@@ -52,19 +59,17 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
         super(CustomGraphicView, self).__init__(parent)
 
         self._title = title
-        self._figure = figure
-        self._scene = QtWidgets.QGraphicsScene()
-
-        if parent is not None:
-            self._canvas = None
-        else:
-            self._canvas = FigCanvas(self._figure)
-            self._scene.addWidget(self._canvas)
-
-        self.setScene(self._scene)
         self.setWindowTitle(self._title)
+
+        self._figure = figure
+        self._canvas = FigCanvas(self._figure)
+        self._scene = QtWidgets.QGraphicsScene()
+        self._scene.addWidget(self._canvas)
+        self.setScene(self._scene)
+
         self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
+
         # Start viewing position
         self.horizontalScrollBar().setSliderPosition(1)
         self.verticalScrollBar().setSliderPosition(1)
@@ -88,12 +93,13 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
         self._canvas = FigCanvas(self._figure)
         self._scene.addWidget(self._canvas)
         self.setScene(self._scene)
-        self.zoom_initialize()
+        # self.zoom_initialize()
 
-    def zoom_initialize(self) -> None:
-        fig_size_x_inches, fig_size_y_inches = self._figure.get_size_inches()
-        start_scale = int(min((self.width() / fig_size_x_inches, self.height() / fig_size_y_inches))) * 0.9
-        self.scale(1 / start_scale, 1 / start_scale)
+    # Need if fig dpi > default
+    # def zoom_initialize(self) -> None:
+    #     fig_size_x_inches, fig_size_y_inches = self._figure.get_size_inches()
+    #     start_scale = int(min((self.width() / fig_size_x_inches, self.height() / fig_size_y_inches))) * 0.9
+    #     self.scale(1 / start_scale, 1 / start_scale)
 
     def mousePressEvent(self, event: QtCore.Qt.MouseButton.LeftButton) -> None:
         """Handle the mouse press event.
@@ -216,7 +222,13 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
 
     def save_model(self):
         """Saves the current figure as an any graphical file."""
-        NavToolbar.save_figure(self._figure)
+        if self.parent() is None:
+            NavToolbar.save_figure(self._figure)
+        else:
+            viewers = self.parent().findChildren(QtWidgets.QGraphicsView)
+            for viewer in viewers:
+                if viewer == self:
+                    NavToolbar.save_figure(viewer._figure)
 
     def save_fragment(self):
         """Saves the current visible area widget as an image.
@@ -324,3 +336,52 @@ class MainWindow(QtWidgets.QMainWindow):
             event.accept()
         else:
             event.ignore()
+
+
+class Visualizer:
+    def __init__(self, element, phases_default):
+        self._element = element
+        self._phases_default = phases_default
+        self._graphs = {
+
+            (T, 3, 'У/Ун-0'): GRAPHS_DIR / 'T_star_three.svg',
+            (T, 1, 'У/Ун-0'): GRAPHS_DIR / 'T_star_one.svg',
+            (T, 3, 'Д/Ун-11'): GRAPHS_DIR / 'T_triangle_three.svg',
+            (T, 1, 'Д/Ун-11'): GRAPHS_DIR / 'T_triangle_one.svg',
+
+            (Q, 3): GRAPHS_DIR / 'Q_three.svg',
+            (Q, 1): GRAPHS_DIR / 'Q_one.svg',
+            (QF, 3): GRAPHS_DIR / 'QF_three.svg',
+            (QF, 1): GRAPHS_DIR / 'QF_one.svg',
+            (QS, 3): GRAPHS_DIR / 'QS_three.svg',
+            (QS, 1): GRAPHS_DIR / 'QS_one.svg',
+
+            (W, 3): GRAPHS_DIR / 'W_three.svg',
+            (W, 1): GRAPHS_DIR / 'W_one.svg',
+
+            (R, 3): GRAPHS_DIR / 'R_three.svg',
+            (R, 1): GRAPHS_DIR / 'R_one.svg',
+            (Line, 3): GRAPHS_DIR / 'Line_three.svg',
+            (Line, 1): GRAPHS_DIR / 'Line_one.svg',
+            (Arc, 3): GRAPHS_DIR / 'Arc_three.svg',
+            (Arc, 1): GRAPHS_DIR / 'Arc_one.svg',
+
+        }
+
+    @singledispatchmethod
+    def _display_element(self, element=None):
+        logger.error(f'Unknown type of element: {type(self._element)}')
+        raise NotImplementedError
+
+    @_display_element.register(T)
+    def _(self, element):
+        return self._graphs[element.__class__, self._phases_default, self._element.vector_group]
+
+    @_display_element.register(Q)
+    @_display_element.register(W)
+    @_display_element.register(R)
+    def _(self, element):
+        return self._graphs[element.__class__, self._phases_default]
+
+    def __repr__(self):
+        return f'{self._display_element(self._element)}'

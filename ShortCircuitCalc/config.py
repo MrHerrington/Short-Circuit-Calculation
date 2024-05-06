@@ -7,11 +7,16 @@ from decimal import Decimal
 
 
 # Program settings
+
+# Dirs paths
 ROOT_DIR = Path(__file__).resolve().parent
 CONFIG_DIR = ROOT_DIR / 'config.py'
 CREDENTIALS_DIR = ROOT_DIR / 'credentials.json'
 DATA_DIR = ROOT_DIR / 'data'
 GUI_DIR = ROOT_DIR / 'gui'
+GRAPHS_DIR = GUI_DIR / 'resources' / 'graphs'
+
+# Database settings
 ENGINE_ECHO = False
 DB_EXISTING_CONNECTION = 'SQLite'
 DB_TABLES_CLEAR_INSTALL = True

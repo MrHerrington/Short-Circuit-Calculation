@@ -5,9 +5,8 @@ electrical equipment presented in the program database."""
 
 import pandas as pd
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib import gridspec
+from matplotlib import gridspec, figure
 
 from ShortCircuitCalc.database import *
 from ShortCircuitCalc.config import GUI_DIR
@@ -16,7 +15,7 @@ from ShortCircuitCalc.config import GUI_DIR
 __all__ = ('info_catalog_figure',)
 
 
-def info_catalog_figure() -> matplotlib.figure.Figure:
+def info_catalog_figure() -> figure.Figure:
     background_image = plt.imread(GUI_DIR / 'resources' / 'images' / 'info_catalog_back.jpg')
     table_transparency = 0.7
 
@@ -45,7 +44,7 @@ def info_catalog_figure() -> matplotlib.figure.Figure:
                      len(current_breakers_df.columns), len(other_contacts_df.columns))) + 2
     figsize_y = (max((len(transformers_df.index), len(cables_df.index),
                       len(current_breakers_df.index), len(other_contacts_df.index))) + 1) * 0.4
-    fig = plt.figure(figsize=(figsize_x, figsize_y), dpi=240)
+    fig = plt.figure(figsize=(figsize_x, figsize_y))
     fig.patch.set_facecolor('#FFFFCC')
     spec = gridspec.GridSpec(nrows=1, ncols=9)
 

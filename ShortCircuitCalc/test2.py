@@ -33,7 +33,6 @@ class Window(CustomGraphicView):
                                                    ax.get_position().width / 2, ax.get_position().height / 2],
                                                   frameon=False)
                 rax.set_alpha(0.1)
-                # rax = ax.inset_axes([0.05, 0.4, 0.1, 0.15])
                 (l0,) = ax.plot(t, s0, visible=False, lw=2, color="k", label="2 Hz")
                 (l1,) = ax.plot(t, s1, lw=2, color="r", label="4 Hz")
                 (l2,) = ax.plot(t, s2, lw=2, color="g", label="6 Hz")
