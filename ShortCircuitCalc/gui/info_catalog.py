@@ -55,7 +55,7 @@ def info_catalog_figure() -> figure.Figure:
 
     transformers_table = ax0.table(
         cellText=transformers_df.values, colLabels=transformers_df.columns,
-        loc='center', cellLoc='center', bbox=[0, 0, 1, 1], fontsize='large',
+        loc='center', cellLoc='center', bbox=[0, 0, 1, 1],
         colColours=('#9999FF',) * len(transformers_df.columns),
         cellColours=(('#CCCCFF',) * len(transformers_df.columns),) * len(transformers_df.index))
 
@@ -68,7 +68,7 @@ def info_catalog_figure() -> figure.Figure:
 
     cables_table = ax1.table(
         cellText=cables_df.values, colLabels=cables_df.columns,
-        loc='center', cellLoc='center', bbox=[0, 0, 1, 1], fontsize='large',
+        loc='center', cellLoc='center', bbox=[0, 0, 1, 1],
         colColours=('#FF9999',) * len(cables_df.columns),
         cellColours=(('#FFCCCC',) * len(cables_df.columns),) * len(cables_df.index))
 
@@ -81,7 +81,7 @@ def info_catalog_figure() -> figure.Figure:
 
     current_breakers_table = ax2.table(
         cellText=current_breakers_df.values, colLabels=current_breakers_df.columns,
-        loc='center', cellLoc='center', bbox=[0, 0, 1, 1], fontsize='large',
+        loc='center', cellLoc='center', bbox=[0, 0, 1, 1],
         colColours=('#FFCC99',) * len(current_breakers_df.columns),
         cellColours=(('#FFE5CC',) * len(current_breakers_df.columns),) * len(current_breakers_df.index))
 
@@ -94,7 +94,7 @@ def info_catalog_figure() -> figure.Figure:
 
     other_contacts_table = ax3.table(
         cellText=other_contacts_df.values, colLabels=other_contacts_df.columns,
-        loc='center', cellLoc='center', bbox=[0, 0.5, 1, 0.5], fontsize='large',
+        loc='center', cellLoc='center', bbox=[0, 0.5, 1, 0.5],
         colColours=('#CCFF99',) * len(other_contacts_df.columns),
         cellColours=(('#E5FFCC',) * len(other_contacts_df.columns),) * len(other_contacts_df.index))
 

@@ -339,6 +339,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 class Visualizer:
+    __PHASES_LIST = (1, 3)
+
     def __init__(self, element, phases_default):
         self._element = element
         self._phases_default = phases_default
@@ -382,6 +384,14 @@ class Visualizer:
     @_display_element.register(R)
     def _(self, element):
         return self._graphs[element.__class__, self._phases_default]
+
+    @property
+    def create_invert(self):
+        if self._phases_default == Visualizer.__PHASES_LIST[1]:
+            __phases = Visualizer.__PHASES_LIST[0]
+        else:
+            __phases = Visualizer.__PHASES_LIST[1]
+        return Visualizer(self._element, __phases)
 
     def __repr__(self):
         return f'{self._display_element(self._element)}'
