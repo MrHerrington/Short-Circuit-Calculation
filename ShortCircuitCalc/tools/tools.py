@@ -6,8 +6,10 @@ and utility tools for the main functionality of the program"""
 import logging
 import json
 import re
+import ast
 import typing as ty
 from contextlib import contextmanager
+from decimal import Decimal
 
 import sqlalchemy as sa
 import sqlalchemy.orm
@@ -26,15 +28,16 @@ class Base(sa.orm.DeclarativeBase):
     pass
 
 
-def config_manager(param: str, value: ty.Union[str, bool] = False) -> ty.Union[str, bool]:
+def config_manager(param: str, value: ty.Any = False, as_string: bool = False) -> ty.Any:
     """A function that manages configuration parameters.
 
     Args:
         param (str): The name of the configuration parameter to manage.
         value (str, optional): The new value for the configuration parameter. Defaults to False.
+        as_string (bool, optional): Whether to return the value as a string. Defaults to False.
 
     Returns:
-        str or False: The current value of the configuration parameter if value is not provided,
+        Any: The current value of the configuration parameter if value is not provided,
                      or False if the configuration parameter does not exist.
 
     Raises:
@@ -55,26 +58,28 @@ def config_manager(param: str, value: ty.Union[str, bool] = False) -> ty.Union[s
     current_config_data = config_file.read()
     matched_param = re.search(pattern, current_config_data)
 
-    keys = {
-        'True': True,
-        'False': False
-    }
-
     if not value:
-
-        keys = {
-            'True': True,
-            'False': False
-        }
-
-        config_file.close()
-        try:
-            return keys[matched_param.group('value')]
-        except KeyError:
-            return matched_param.group('value').strip("'")
+        match = re.search(r"Decimal\('([^']+)'\)", matched_param.group('value'))
+        if match:
+            if not as_string:
+                return Decimal(match.group(1))
+            else:
+                return match.group(0)
+        if not as_string:
+            return ast.literal_eval(matched_param.group('value'))
+        else:
+            return matched_param.group('value')
 
     else:
-        value = value if value in keys else value.replace(value, f"'{value}'")
+        match = re.search(r"Decimal\('([^']+)'\)", value)
+        if match:
+            value = f"Decimal('{match.group(1)}')"
+        else:
+            try:
+                value = ast.literal_eval(value)
+            except ValueError:
+                value = ast.literal_eval(value.replace(value, f"'{value}'"))
+                value = value.replace(value, f"'{value}'")
         updated_config_data = current_config_data.replace(
             f"{matched_param.group('name')} = {matched_param.group('value')}",
             f"{matched_param.group('name')} = {value}", 1)

@@ -361,31 +361,32 @@ class MainWindow(QtWidgets.QMainWindow):
                 False, config_manager('ENGINE_ECHO'), [True, False]),
 
             # Calculations settings
-            # self.settingsBox5: BoxParams(False, (3, 1)),                            # System phases
-            # self.settingsBox6: BoxParams(False, (Decimal('0.4'),)),                 # System voltage
-            # self.settingsBox7: BoxParams(False, (3, 1)),                            # Calc. accuracy
+            self.settingsBox5: BoxParams(
+                False, config_manager('SYSTEM_PHASES'), [3, 1]),
+
+            self.settingsBox6: BoxParams(
+                False, config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS'), [Decimal('0.4')]),
+
+            self.settingsBox7: BoxParams(
+                True, config_manager('CALCULATIONS_ACCURACY'), [3])
         }
 
         for box in box_config:
+            # Creating the options list
             default = box_config[box].default
             others = box_config[box].values
             others.remove(default)
             default = [default]
             default.extend(others)
-            print(default)
+            for i in range(len(default)):
+                default[i] = str(default[i])
 
-            # try:
-            #     default_list = box_config[box].default.split()
-            # except (TypeError, AttributeError):
-            #     default_list = [box_config[box].default]
-            #
-            # print(default, type(default), box_config[box].values)
-
+            # GUI for options list
             box.addItems(default)
-            box.setEditable(box_config[box].editable)
+            box.setEditable(True)
             line_edit = box.lineEdit()
             line_edit.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-            line_edit.setReadOnly(box_config[box].editable)
+            line_edit.setReadOnly(not box_config[box].editable)
             box.setStyleSheet('font: italic bold 11pt')
 
     def window_auto_center(self) -> None:
