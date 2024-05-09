@@ -20,6 +20,7 @@ from PIL import Image
 
 from ShortCircuitCalc.tools import *
 from ShortCircuitCalc.gui import *
+from ShortCircuitCalc.config import SYSTEM_PHASES
 
 
 def results_figure():
@@ -76,7 +77,6 @@ def results_figure():
     ncols = len((chain1, chain2, chain3, chain4, chain5))
     schem = (chain1, chain2, chain3, chain4, chain5)
 
-    __PHASES = 3
     fig = figure.Figure(figsize=(ncols * 5, nrows * 1))
     ax = fig.canvas.figure.subplots(nrows, ncols)
     fig.subplots_adjust(wspace=0, hspace=0, left=0, right=1, bottom=0, top=1)
@@ -101,10 +101,10 @@ def results_figure():
 
             images = [
                 Image.open(BytesIO(
-                    cairosvg.svg2png(url=str(Visualizer(row[col], __PHASES))))
+                    cairosvg.svg2png(url=str(Visualizer(row[col], SYSTEM_PHASES))))
                 ),
                 Image.open(BytesIO(
-                    cairosvg.svg2png(url=str(Visualizer(row[col], __PHASES).create_invert)))
+                    cairosvg.svg2png(url=str(Visualizer(row[col], SYSTEM_PHASES).create_invert)))
                 )
             ]
             axx.imshow(images[0])
@@ -138,11 +138,11 @@ def results_figure():
 
             short_circuit_table = [
                 switch_and_draw_table(
-                    ax, col, idx, short_circuit_df, __PHASES != 3
+                    ax, col, idx, short_circuit_df, SYSTEM_PHASES != 3
                 )
             ]
 
-            check = CheckButtons(rax, ['3ph'], [__PHASES == 3])
+            check = CheckButtons(rax, ['3ph'], [SYSTEM_PHASES == 3])
             check.on_clicked(lambda label, i=col, j=idx: callback(label, i, j))
             Button = namedtuple('Button', ('check', 'ax', 'images', 'sc_table', 'sc_df'))
             checks[col, idx] = Button(check, ax[col, idx], images, short_circuit_table, short_circuit_df)

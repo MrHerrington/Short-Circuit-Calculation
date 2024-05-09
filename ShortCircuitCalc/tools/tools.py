@@ -56,8 +56,17 @@ def config_manager(param: str, value: ty.Union[str, bool] = False) -> ty.Union[s
     matched_param = re.search(pattern, current_config_data)
 
     if not value:
+
+        keys = {
+            'True': True,
+            'False': False
+        }
+
         config_file.close()
-        return False if matched_param.group('value') == 'False' else matched_param.group('value').strip("'")
+        try:
+            return keys[matched_param.group('value')]
+        except KeyError:
+            return matched_param.group('value').strip("'")
 
     else:
         value = value if value == 'False' else value.replace(value, f"'{value}'")

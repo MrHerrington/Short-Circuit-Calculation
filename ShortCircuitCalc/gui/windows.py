@@ -3,6 +3,7 @@
 Classes are based on ui files, developed by QtDesigner and customized."""
 
 
+from collections import namedtuple
 from functools import singledispatchmethod
 
 import logging
@@ -20,8 +21,8 @@ from PyQt5 import QtWidgets, QtCore, QtGui, uic
 # noinspection PyUnresolvedReferences
 import ShortCircuitCalc.gui.resources
 from ShortCircuitCalc.gui.info_catalog import *
-from ShortCircuitCalc.tools.elements import *
-from ShortCircuitCalc.config import GUI_DIR, GRAPHS_DIR
+from ShortCircuitCalc.tools import *
+from ShortCircuitCalc.config import *
 
 
 __all__ = ('MainWindow', 'ConfirmWindow', 'CustomGraphicView', 'Visualizer')
@@ -57,22 +58,11 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
                  figure: matplotlib.figure.Figure = None,
                  title: str = 'Viewer') -> None:
         super(CustomGraphicView, self).__init__(parent)
-
         self._title = title
-        self.setWindowTitle(self._title)
 
         self._figure = figure
         self._canvas = FigCanvas(self._figure)
         self._scene = QtWidgets.QGraphicsScene()
-        self._scene.addWidget(self._canvas)
-        self.setScene(self._scene)
-
-        self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
-        self.setResizeAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
-
-        # Start viewing position
-        self.horizontalScrollBar().setSliderPosition(1)
-        self.verticalScrollBar().setSliderPosition(1)
 
         self._zoom = 0
         self._mousePressed = False
@@ -80,12 +70,34 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
 
         self.save_model_action = QtWidgets.QAction(QtGui.QIcon(':/icons/resources/icons/file_save.svg'),
                                                    'Save model as ...', self)
-        self.save_model_action.setIconVisibleInMenu(True)
-        self.save_model_action.triggered.connect(self.save_model)
-
         self.save_fragment_action = QtWidgets.QAction(QtGui.QIcon(':/icons/resources/icons/save_part.svg'),
                                                       'Save fragment as ...', self)
+
+        self.init_gui()
+
+    def init_gui(self):
+        # Set title
+        self.setWindowTitle(self._title)
+
+        # Scene settings
+        self._scene.addWidget(self._canvas)
+        self.setScene(self._scene)
+
+        # Anchor settings
+        self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
+        self.setResizeAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
+
+        # Start viewing position
+        self.horizontalScrollBar().setSliderPosition(1)
+        self.verticalScrollBar().setSliderPosition(1)
+
+        # Context menu actions settings
+        self.save_model_action.setIconVisibleInMenu(True)
+        # noinspection PyUnresolvedReferences
+        self.save_model_action.triggered.connect(self.save_model)
+
         self.save_fragment_action.setIconVisibleInMenu(True)
+        # noinspection PyUnresolvedReferences
         self.save_fragment_action.triggered.connect(self.save_fragment)
 
     def set_figure(self, figure):
@@ -228,6 +240,8 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
             viewers = self.parent().findChildren(QtWidgets.QGraphicsView)
             for viewer in viewers:
                 if viewer == self:
+                    # noinspection PyUnresolvedReferences
+                    # noinspection PyProtectedMember
                     NavToolbar.save_figure(viewer._figure)
 
     def save_fragment(self):
@@ -248,28 +262,28 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
             pixmap.save(fname)
 
 
-class ViewerWidget(QtWidgets.QWidget):
-    """Initializes a ViewerWidget object.
-
-    ViewerWidget is a QWidget that displays a matplotlib figure in a QGraphicsView widget.
-    Also allows saving the figure as any graphical format or saving part of the figure as an image.
-
-    Args:
-        title (str): The title of the viewer widget.
-
-    """
-
-    def __init__(self, title: str = 'Viewer Window') -> None:
-        super(ViewerWidget, self).__init__()
-        # self._figure definition before loadUi is necessarily!
-        uic.loadUi(GUI_DIR / 'viewer.ui', self)
-        self.setWindowTitle(title)
-
-        # self.allButton.setToolTip('Save whole page')
-        # self.allButton.clicked.connect(self.save_model)
-        #
-        # self.partButton.setToolTip('Save part of page')
-        # self.partButton.clicked.connect(self.save_fragment)
+# class ViewerWidget(QtWidgets.QWidget):
+#     """Initializes a ViewerWidget object.
+#
+#     ViewerWidget is a QWidget that displays a matplotlib figure in a QGraphicsView widget.
+#     Also allows saving the figure as any graphical format or saving part of the figure as an image.
+#
+#     Args:
+#         title (str): The title of the viewer widget.
+#
+#     """
+#
+#     def __init__(self, title: str = 'Viewer Window') -> None:
+#         super(ViewerWidget, self).__init__()
+#         # self._figure definition before loadUi is necessarily!
+#         uic.loadUi(GUI_DIR / 'viewer.ui', self)
+#         self.setWindowTitle(title)
+#
+#         self.allButton.setToolTip('Save whole page')
+#         self.allButton.clicked.connect(self.save_model)
+#
+#         self.partButton.setToolTip('Save part of page')
+#         self.partButton.clicked.connect(self.save_fragment)
 
 
 class ConfirmWindow(QtWidgets.QDialog):
@@ -277,6 +291,7 @@ class ConfirmWindow(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(ConfirmWindow, self).__init__(parent)
         uic.loadUi(GUI_DIR / 'confirm.ui', self)
+        # noinspection PyUnresolvedReferences
         self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
 
 
@@ -284,7 +299,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         uic.loadUi(GUI_DIR / 'main_window.ui', self)
+        self.init_gui()
 
+    def init_gui(self):
         # Hiding tab bar for QTabWidget
         self.findChild(QtWidgets.QTabBar).hide()
 
@@ -292,23 +309,84 @@ class MainWindow(QtWidgets.QMainWindow):
         self.switchButton.setChecked(True)
         self.logsButton.setChecked(True)
 
-        # Buttons config
-        self.inputButton.setToolTip('Set input console')
+        # Set window position in the center of the screen
+        self.window_auto_center()
+
+        ###########################
+        # Side panel buttons config
+        ###########################
+
+        self.inputButton.setToolTip('Show input console')
         self.inputButton.clicked.connect(lambda: self.tabWidget.setCurrentIndex(0))
 
-        self.resultButton.setToolTip('Set results view')
+        self.resultButton.setToolTip('Show calculation results')
         self.resultButton.clicked.connect(lambda: self.tabWidget.setCurrentIndex(1))
 
-        self.catalogButton.setToolTip('Set catalog view')
+        self.catalogButton.setToolTip('Show electrical catalog')
         self.catalogButton.clicked.connect(lambda: self.tabWidget.setCurrentIndex(2))
 
-        self.logsButton.setToolTip('Set logs terminal')
+        self.logsButton.setToolTip('Show logs terminal')
 
-        self.infoButton.setToolTip('Set info view')
-        self.infoButton.clicked.connect(lambda: self.tabWidget.setCurrentIndex(3))
+        self.settingsButton.setToolTip('Show settings')
+        self.settingsButton.clicked.connect(lambda: self.tabWidget.setCurrentIndex(3))
+
+        self.infoButton.setToolTip('Show info')
+        self.infoButton.clicked.connect(lambda: self.tabWidget.setCurrentIndex(4))
+
+        ######################
+        # Catalog tab settings
+        ######################
 
         self.catalogView.set_figure(info_catalog_figure())
-        self.window_auto_center()
+
+        #########################
+        # "Settings" tab settings
+        #########################
+
+        BoxParams = namedtuple('BoxParams', ('editable', 'default', 'values'))
+
+        box_config = {
+
+            # Database settings
+            self.settingsBox: BoxParams(
+                True, config_manager('SQLITE_DB_NAME'), ['electrical_product_catalog.db']),
+
+            self.settingsBox2: BoxParams(
+                False, config_manager('DB_EXISTING_CONNECTION'), [False, 'MySQL', 'SQLite']),
+
+            self.settingsBox3: BoxParams(
+                False, config_manager('DB_TABLES_CLEAR_INSTALL'), [True, False]),
+
+            self.settingsBox4: BoxParams(
+                False, config_manager('ENGINE_ECHO'), [True, False]),
+
+            # Calculations settings
+            # self.settingsBox5: BoxParams(False, (3, 1)),                            # System phases
+            # self.settingsBox6: BoxParams(False, (Decimal('0.4'),)),                 # System voltage
+            # self.settingsBox7: BoxParams(False, (3, 1)),                            # Calc. accuracy
+        }
+
+        for box in box_config:
+            default = box_config[box].default
+            others = box_config[box].values
+            others.remove(default)
+            default = [default]
+            default.extend(others)
+            print(default)
+
+            # try:
+            #     default_list = box_config[box].default.split()
+            # except (TypeError, AttributeError):
+            #     default_list = [box_config[box].default]
+            #
+            # print(default, type(default), box_config[box].values)
+
+            box.addItems(default)
+            box.setEditable(box_config[box].editable)
+            line_edit = box.lineEdit()
+            line_edit.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+            line_edit.setReadOnly(box_config[box].editable)
+            box.setStyleSheet('font: italic bold 11pt')
 
     def window_auto_center(self) -> None:
         """Centers the window on the screen."""
@@ -371,8 +449,8 @@ class Visualizer:
         }
 
     @singledispatchmethod
-    def _display_element(self, element=None):
-        logger.error(f'Unknown type of element: {type(self._element)}')
+    def _display_element(self, element):
+        logger.error(f'Unknown type of element: {type(element)}')
         raise NotImplementedError
 
     @_display_element.register(T)

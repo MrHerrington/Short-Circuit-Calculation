@@ -17,11 +17,12 @@ GUI_DIR = ROOT_DIR / 'gui'
 GRAPHS_DIR = GUI_DIR / 'resources' / 'graphs'
 
 # Database settings
-ENGINE_ECHO = False
+SQLITE_DB_NAME = 'electrical_product_catalog.db'
 DB_EXISTING_CONNECTION = 'SQLite'
 DB_TABLES_CLEAR_INSTALL = True
-SQLITE_DB_NAME = 'electrical_product_catalog.db'
+ENGINE_ECHO = False
 
 # Calculations settings
+SYSTEM_PHASES = 3
 SYSTEM_VOLTAGE_IN_KILOVOLTS = Decimal('0.4')
 CALCULATIONS_ACCURACY = 3

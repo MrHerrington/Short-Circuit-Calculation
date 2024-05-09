@@ -4,6 +4,7 @@
     <file>resources/images/main_back.jpg</file>
   </qresource>
   <qresource prefix="icons">
+    <file>resources/icons/settings.svg</file>
     <file>resources/icons/catalog.svg</file>
     <file>resources/icons/switch.svg</file>
     <file>resources/icons/help.svg</file>
