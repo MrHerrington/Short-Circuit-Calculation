@@ -9,7 +9,7 @@ import re
 import ast
 import typing as ty
 from contextlib import contextmanager
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 import sqlalchemy as sa
 import sqlalchemy.orm
@@ -17,7 +17,7 @@ import sqlalchemy.orm
 from ShortCircuitCalc.config import ROOT_DIR, CONFIG_DIR, CREDENTIALS_DIR, ENGINE_ECHO, SQLITE_DB_NAME
 
 
-__all__ = ('Base', 'engine', 'metadata', 'session_scope', 'config_manager')
+__all__ = ('Base', 'engine', 'metadata', 'session_scope', 'TypesManager', 'config_manager')
 
 
 logger = logging.getLogger(__name__)
@@ -28,17 +28,149 @@ class Base(sa.orm.DeclarativeBase):
     pass
 
 
-def config_manager(param: str, value: ty.Any = False, as_string: bool = False) -> ty.Any:
+# noinspection PyUnresolvedReferences
+class TypesManager:
+    """The class-wrapper for the conversion of the value to the needed type.
+
+    Create and return a new instance of the class.
+
+    Args:
+        value: The value to be converted to the needed type.
+        as_decimal (bool, optional): Whether to convert the value to Decimal type. Defaults to False.
+        as_string (bool, optional): Whether to convert the value to string type. Defaults to False.
+        quoting (bool, optional): Whether to quote the value. Defaults to False.
+
+    Returns:
+        The converted value of the same type as the original value, or None if the value is None.
+
+    """
+    def __new__(cls, value: ty.Any, as_decimal: bool = False, as_string: bool = False, quoting: bool = False):
+        __new_val = _TypesHandler(value, as_decimal, as_string, quoting)
+        if __new_val.value is not None:
+            return type(__new_val.value)(__new_val.value)
+        else:
+            return None
+
+
+class _TypesHandler:
+    """The class handles the conversion of the value to the needed type."""
+    def __init__(self, __value: ty.Any, __as_decimal: bool = False, __as_string: bool = False, __quoting: bool = False):
+        self.__value = __value
+        self.__as_decimal = __as_decimal
+        self.__as_string = __as_string
+        self.__quoting = __quoting
+
+        self.__types_converting()
+
+    @property
+    def value(self):
+        return self.__value
+
+    @value.setter
+    def value(self, value: ty.Any):
+        self.__value = value
+
+    def __types_converting(self):
+        """The method converts the value to the needed type."""
+        if isinstance(self.__value, str):
+            self.__type_parser()
+
+        __conversions_options = {
+            # dec    str    quot
+            (False, False, False): lambda: self,
+
+            (True, False, False): lambda: self.__to_decimal(),
+            (False, True, False): lambda: self.__to_string(),
+            (False, False, True): lambda: self.__quote(),
+
+            (True, True, False): lambda: self.__to_decimal().__to_string(),
+            (False, True, True): lambda: self.__to_string().__quote(),
+            (True, False, True): lambda: self.__to_decimal().__quote(),
+
+            (True, True, True): lambda: self.__to_decimal().__to_string().__quote(),
+
+        }
+
+        __conversions_options[self.__as_decimal, self.__as_string, self.__quoting]()
+
+        return self
+
+    def __type_parser(self):
+        """The method parses the value from string to basic Python type."""
+        if isinstance(self.__value, str):
+            match = re.search(r"Decimal\('([^']+)'\)", self.__value)
+            if match:
+                self.__value = Decimal(match.group(1))  # decimals parser
+            else:
+                try:
+                    self.__value = ast.literal_eval(self.__value)  # others types parser
+                except ValueError:
+                    pass
+
+        else:
+            msg = f"Cannot parse non-string ({self.__value}, {type(self.__value)})."
+            logger.error(msg)
+            raise TypeError(msg) from None
+
+        return self
+
+    def __to_decimal(self):
+        """The method converts the value to Decimal type."""
+        try:
+            if isinstance(self.__value, float):
+                self.__value = Decimal(str(self.__value))
+            else:
+                self.__value = Decimal(self.__value)
+        except InvalidOperation:
+            msg = f'Cannot convert ({self.__value}, {type(self.__value)}) to Decimal.'
+            logger.error(msg)
+            raise TypeError(msg) from None
+
+        return self
+
+    def __to_string(self):
+        """The method converts the value to string type."""
+        __type_to_string = {
+            str: self.__value,
+            Decimal: f"Decimal('{self.__value}')",
+        }
+
+        try:
+            self.__value = __type_to_string[type(self.__value)]
+        except KeyError:
+            self.__value = str(self.__value)
+
+        return self
+
+    def __quote(self):
+        """The method quotes the value.
+
+        Also, if the value is already quoted, method returns double-quoted value.
+
+        """
+        try:
+            if "\'" in self.__value:
+                self.__value = f'"{self.__value}"'
+            else:
+                self.__value = f"'{self.__value}'"
+        except TypeError:
+            msg = f"Cannot quoting ({self.__value}, {type(self.__value)}), use also 'to_string' option."
+            logger.error(msg)
+            raise TypeError(msg) from None
+
+        return self
+
+
+def config_manager(param: str, new_val: ty.Any = None) -> ty.Any:
     """A function that manages configuration parameters.
 
     Args:
         param (str): The name of the configuration parameter to manage.
-        value (str, optional): The new value for the configuration parameter. Defaults to False.
-        as_string (bool, optional): Whether to return the value as a string. Defaults to False.
+        new_val (str, optional): The new value for the configuration parameter. Defaults to False.
 
     Returns:
-        Any: The current value of the configuration parameter if value is not provided,
-                     or False if the configuration parameter does not exist.
+        Any: The current value of the configuration parameter if value is provided,
+        or None if the configuration parameter does not exist.
 
     Raises:
         FileNotFoundError: If the configuration file specified by CONFIG_DIR does not exist.
@@ -58,36 +190,28 @@ def config_manager(param: str, value: ty.Any = False, as_string: bool = False) -
     current_config_data = config_file.read()
     matched_param = re.search(pattern, current_config_data)
 
-    if not value:
-        match = re.search(r"Decimal\('([^']+)'\)", matched_param.group('value'))
-        if match:
-            if not as_string:
-                return Decimal(match.group(1))
-            else:
-                return match.group(0)
-        if not as_string:
-            return ast.literal_eval(matched_param.group('value'))
-        else:
-            return matched_param.group('value')
-
+    if matched_param is not None and new_val is None:
+        return TypesManager(matched_param.group('value'))
+    elif matched_param is None:
+        return None
     else:
-        match = re.search(r"Decimal\('([^']+)'\)", value)
-        if match:
-            value = f"Decimal('{match.group(1)}')"
-        else:
-            try:
-                value = ast.literal_eval(value)
-            except ValueError:
-                value = ast.literal_eval(value.replace(value, f"'{value}'"))
-                value = value.replace(value, f"'{value}'")
+        __formats = {
+            str: lambda: TypesManager(new_val, quoting=True),
+            Decimal: lambda: TypesManager(new_val, as_string=True)
+        }
+
+        if type(new_val) in __formats:
+            new_val = __formats[type(new_val)]()
+
+        # noinspection PyUnresolvedReferences
         updated_config_data = current_config_data.replace(
             f"{matched_param.group('name')} = {matched_param.group('value')}",
-            f"{matched_param.group('name')} = {value}", 1)
+            f"{matched_param.group('name')} = {new_val}", 1)
         config_file.seek(0)
         config_file.truncate()
         config_file.write(updated_config_data)
         config_file.close()
-        logger.warning(f'Config params changed: now {param} = {value}!')
+        logger.warning(f'Config params changed: now {param} = {new_val}!')
 
 
 def db_access() -> str:
@@ -191,7 +315,7 @@ def db_access() -> str:
                 db_access.engine_string = connection_types[config_manager('DB_EXISTING_CONNECTION')]()
 
         except FileNotFoundError:
-            config_manager('DB_EXISTING_CONNECTION', 'False')
+            config_manager('DB_EXISTING_CONNECTION', False)
             logger.warning("The config 'DB_EXISTING_CONNECTION' parameter has been reset. "
                            "Retrying database connection...")
             db_access()
