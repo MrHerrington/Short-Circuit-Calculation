@@ -2,7 +2,6 @@
 """The module contains GUI windows templates, using PyQt5 and Matplotlib.
 Classes are based on ui files, developed by QtDesigner and customized."""
 
-
 from collections import namedtuple
 from functools import singledispatchmethod
 
@@ -24,12 +23,9 @@ from ShortCircuitCalc.gui.info_catalog import *
 from ShortCircuitCalc.tools import *
 from ShortCircuitCalc.config import *
 
-
-__all__ = ('MainWindow', 'ConfirmWindow', 'CustomGraphicView', 'Visualizer')
-
+__all__ = ('MainWindow', 'ConfirmWindow', 'CustomGraphicView', 'Visualizer', 'BlitManager')
 
 logger = logging.getLogger(__name__)
-
 
 # Select the backend used for rendering and GUI integration.
 matplotlib.use('Qt5Agg')
@@ -288,6 +284,7 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
 
 class ConfirmWindow(QtWidgets.QDialog):
     """Initializes a ConfirmWindow object."""
+
     def __init__(self, parent=None):
         super(ConfirmWindow, self).__init__(parent)
         uic.loadUi(GUI_DIR / 'confirm.ui', self)
@@ -343,36 +340,50 @@ class MainWindow(QtWidgets.QMainWindow):
         # "Settings" tab settings
         #########################
 
-        BoxParams = namedtuple('BoxParams', ('editable', 'default', 'values'))
+        BoxParams = namedtuple('BoxParams', ('editable', 'values', 'default', 'update'))
 
         box_config = {
 
             # Database settings
             self.settingsBox: BoxParams(
-                True, config_manager('SQLITE_DB_NAME'), ['electrical_product_catalog.db']),
+                True, [config_manager('SQLITE_DB_NAME')], config_manager('SQLITE_DB_NAME'),
+                lambda x: config_manager('SQLITE_DB_NAME', x)
+            ),
 
             self.settingsBox2: BoxParams(
-                False, config_manager('DB_EXISTING_CONNECTION'), [False, 'MySQL', 'SQLite']),
+                False, [False, 'MySQL', 'SQLite'], config_manager('DB_EXISTING_CONNECTION'),
+                lambda x: config_manager('DB_EXISTING_CONNECTION', x)
+            ),
 
             self.settingsBox3: BoxParams(
-                False, config_manager('DB_TABLES_CLEAR_INSTALL'), [True, False]),
+                False, [True, False], config_manager('DB_TABLES_CLEAR_INSTALL'),
+                lambda x: config_manager('DB_TABLES_CLEAR_INSTALL', x)
+            ),
 
             self.settingsBox4: BoxParams(
-                False, config_manager('ENGINE_ECHO'), [True, False]),
+                False, [True, False], config_manager('ENGINE_ECHO'),
+                lambda x: config_manager('ENGINE_ECHO', x)
+            ),
 
             # Calculations settings
             self.settingsBox5: BoxParams(
-                False, config_manager('SYSTEM_PHASES'), [3, 1]),
+                False, [3, 1], config_manager('SYSTEM_PHASES'),
+                lambda x: config_manager('SYSTEM_PHASES', x)
+            ),
 
             self.settingsBox6: BoxParams(
-                False, config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS'), [Decimal('0.4')]),
+                False, [Decimal('0.4')], config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS'),
+                lambda x: config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS', x)
+            ),
 
             self.settingsBox7: BoxParams(
-                True, config_manager('CALCULATIONS_ACCURACY'), [3])
+                True, [config_manager('CALCULATIONS_ACCURACY')], config_manager('CALCULATIONS_ACCURACY'),
+                lambda x: config_manager('CALCULATIONS_ACCURACY', x)
+            )
         }
 
         for box in box_config:
-            # Creating the options list
+            # Creating combo box options list
             default = box_config[box].default
             others = box_config[box].values
             others.remove(default)
@@ -381,13 +392,39 @@ class MainWindow(QtWidgets.QMainWindow):
             for i in range(len(default)):
                 default[i] = str(default[i])
 
-            # GUI for options list
+            # Creating GUI for combo box options list
             box.addItems(default)
             box.setEditable(True)
             line_edit = box.lineEdit()
             line_edit.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
             line_edit.setReadOnly(not box_config[box].editable)
-            box.setStyleSheet('font: italic bold 11pt')
+            if box_config[box].editable:
+                box.setStyleSheet('font: italic bold 11pt')
+            else:
+                box.setStyleSheet('font: italic bold 11pt; background-color: lightgray')
+
+        # Actions if combo boxes changed
+        self.settingsBox.currentIndexChanged.connect(
+            lambda: box_config[self.settingsBox].update(self.settingsBox.currentText())
+        )
+        self.settingsBox2.currentIndexChanged.connect(
+            lambda: box_config[self.settingsBox2].update(self.settingsBox2.currentText())
+        )
+        self.settingsBox3.currentIndexChanged.connect(
+            lambda: box_config[self.settingsBox3].update(self.settingsBox3.currentText())
+        )
+        self.settingsBox4.currentIndexChanged.connect(
+            lambda: box_config[self.settingsBox4].update(self.settingsBox4.currentText())
+        )
+        self.settingsBox5.currentIndexChanged.connect(
+            lambda: box_config[self.settingsBox5].update(self.settingsBox5.currentText())
+        )
+        self.settingsBox6.currentIndexChanged.connect(
+            lambda: box_config[self.settingsBox6].update(self.settingsBox6.currentText())
+        )
+        self.settingsBox7.currentIndexChanged.connect(
+            lambda: box_config[self.settingsBox7].update(self.settingsBox7.currentText())
+        )
 
     def window_auto_center(self) -> None:
         """Centers the window on the screen."""
@@ -474,3 +511,51 @@ class Visualizer:
 
     def __repr__(self):
         return f'{self._display_element(self._element)}'
+
+
+class BlitManager:
+    def __init__(self, canvas, animated_artists=()):
+        self.canvas = canvas
+        self._artists = []
+        self._bg = None
+
+        for a in animated_artists:
+            self.add_artist(a)
+
+        self.cid = canvas.mpl_connect("draw_event", self.on_draw)
+
+    def on_draw(self, event):
+        """Callback to register with 'draw_event'."""
+        if event is not None:
+            if event.canvas != self.canvas:
+                raise RuntimeError
+        self._bg = self.canvas.copy_from_bbox(self.canvas.figure.bbox)
+        self._draw_animated()
+
+    def _draw_animated(self):
+        """Draw all of the animated artists."""
+        fig = self.canvas.figure
+        for a in self._artists:
+            fig.draw_artist(a)
+
+    def add_artist(self, art):
+        """Add a new Artist object to the Blit Manager"""
+        if art.figure != self.canvas.figure:
+            raise RuntimeError
+        art.set_animated(True)
+        self._artists.append(art)
+
+    def update(self):
+        """Update the screen with animated artists."""
+
+        if self._bg is None:
+            self.on_draw(None)
+        else:
+            # restore the background
+            self.canvas.restore_region(self._bg)
+            # draw all of the animated artists
+            self._draw_animated()
+            # update the GUI state
+            self.canvas.blit(self.canvas.figure.bbox)
+        # let the GUI event loop process anything it has to do
+        self.canvas.flush_events()

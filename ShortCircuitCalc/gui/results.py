@@ -147,14 +147,24 @@ def results_figure():
             Button = namedtuple('Button', ('check', 'ax', 'images', 'sc_table', 'sc_df'))
             checks[col, idx] = Button(check, ax[col, idx], images, short_circuit_table, short_circuit_df)
 
+    # Turn off axis
+    for idx, row in enumerate(schem):
+        for col in range(max(map(len, schem))):
+            ax[col][idx].axis('off')
+
     # noinspection PyUnusedLocal
     def callback(label, i, j):
         # Replace graph
         temp_axx = [c for c in checks[i, j].ax.get_children() if isinstance(c, axes.Axes)][0]
-        temp_img = checks[i, j].images.pop()
-        checks[i, j].images.insert(0, temp_img)
-        temp_axx.images[0].set_data(temp_img)
+        temp_axx.images[0].remove()
+        temp_axx.redraw_in_frame()
+        # temp_axx.images[0].set_data(temp_img)
 
+        bm = BlitManager(fig.canvas, [checks[i, j].ax])
+        # temp_img = checks[i, j].images.pop()
+        # checks[i, j].images.insert(0, temp_img)
+        bm.update()
+        print('good')
         # Replace table view
         ax_objects = checks[i, j].ax.get_children()
         ax_objects[ax_objects.index(checks[i, j].sc_table[0])].remove()
@@ -164,13 +174,7 @@ def results_figure():
         )
         ax_objects.append(new_table)
         checks[i, j].sc_table.append(new_table)
-
-        fig.canvas.draw()
-
-    # Turn off axis
-    for idx, row in enumerate(schem):
-        for col in range(max(map(len, schem))):
-            ax[col][idx].axis('off')
+        bm.update()
 
     fig.subplots_adjust(wspace=0, hspace=0, left=0, right=1, bottom=0, top=1)
 

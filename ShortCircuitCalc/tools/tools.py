@@ -197,11 +197,13 @@ def config_manager(param: str, new_val: ty.Any = None) -> ty.Any:
     else:
         __formats = {
             str: lambda: TypesManager(new_val, quoting=True),
-            Decimal: lambda: TypesManager(new_val, as_string=True)
         }
 
-        if type(new_val) in __formats:
+        try:
+            new_val = TypesManager(new_val)
             new_val = __formats[type(new_val)]()
+        except KeyError:
+            new_val = TypesManager(new_val, as_string=True)
 
         # noinspection PyUnresolvedReferences
         updated_config_data = current_config_data.replace(

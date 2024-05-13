@@ -58,25 +58,55 @@ class TestConfigManager(unittest.TestCase):
         self.assertEqual(self.cm_set23, False)
         self.assertEqual(self.cm_set25, True)
 
-        self.cm_set31 = config_manager('SYSTEM_PHASES')
-        self.cm_set32 = config_manager('SYSTEM_PHASES', 1)
-        self.cm_set33 = config_manager('SYSTEM_PHASES')
-        self.cm_set34 = config_manager('SYSTEM_PHASES', 3)
-        self.cm_set35 = config_manager('SYSTEM_PHASES')
+        self.cm_set31 = config_manager('ENGINE_ECHO')
+        self.cm_set32 = config_manager('ENGINE_ECHO', 'True')
+        self.cm_set33 = config_manager('ENGINE_ECHO')
+        self.cm_set34 = config_manager('ENGINE_ECHO', 'False')
+        self.cm_set35 = config_manager('ENGINE_ECHO')
 
-        self.assertEqual(self.cm_set31, 3)
-        self.assertEqual(self.cm_set33, 1)
-        self.assertEqual(self.cm_set35, 3)
+        self.assertEqual(self.cm_set31, False)
+        self.assertEqual(self.cm_set33, True)
+        self.assertEqual(self.cm_set35, False)
 
-        self.cm_set41 = config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS')
-        self.cm_set42 = config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS', 0.4)
-        self.cm_set43 = config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS')
-        self.cm_set44 = config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS', Decimal('0.4'))
-        self.cm_set45 = config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS')
+        self.cm_set41 = config_manager('SYSTEM_PHASES')
+        self.cm_set42 = config_manager('SYSTEM_PHASES', 1)
+        self.cm_set43 = config_manager('SYSTEM_PHASES')
+        self.cm_set44 = config_manager('SYSTEM_PHASES', 3)
+        self.cm_set45 = config_manager('SYSTEM_PHASES')
 
-        self.assertEqual(self.cm_set41, Decimal('0.4'))
-        self.assertEqual(self.cm_set43, 0.4)
-        self.assertEqual(self.cm_set45, Decimal('0.4'))
+        self.assertEqual(self.cm_set41, 3)
+        self.assertEqual(self.cm_set43, 1)
+        self.assertEqual(self.cm_set45, 3)
+
+        self.cm_set51 = config_manager('CALCULATIONS_ACCURACY')
+        self.cm_set52 = config_manager('CALCULATIONS_ACCURACY', '1')
+        self.cm_set53 = config_manager('CALCULATIONS_ACCURACY')
+        self.cm_set54 = config_manager('CALCULATIONS_ACCURACY', '3')
+        self.cm_set55 = config_manager('CALCULATIONS_ACCURACY')
+
+        self.assertEqual(self.cm_set51, 3)
+        self.assertEqual(self.cm_set53, 1)
+        self.assertEqual(self.cm_set55, 3)
+
+        self.cm_set61 = config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS')
+        self.cm_set62 = config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS', 0.4)
+        self.cm_set63 = config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS')
+        self.cm_set64 = config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS', Decimal('0.4'))
+        self.cm_set65 = config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS')
+
+        self.assertEqual(self.cm_set61, Decimal('0.4'))
+        self.assertEqual(self.cm_set63, 0.4)
+        self.assertEqual(self.cm_set65, Decimal('0.4'))
+
+        self.cm_set71 = config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS')
+        self.cm_set72 = config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS', '0.4')
+        self.cm_set73 = config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS')
+        self.cm_set74 = config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS', "Decimal('0.4')")
+        self.cm_set75 = config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS')
+
+        self.assertEqual(self.cm_set71, Decimal('0.4'))
+        self.assertEqual(self.cm_set73, 0.4)
+        self.assertEqual(self.cm_set75, Decimal('0.4'))
 
 
 if __name__ == '__main__':
