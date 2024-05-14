@@ -23,7 +23,7 @@ from ShortCircuitCalc.gui.info_catalog import *
 from ShortCircuitCalc.tools import *
 from ShortCircuitCalc.config import *
 
-__all__ = ('MainWindow', 'ConfirmWindow', 'CustomGraphicView', 'Visualizer', 'BlitManager')
+__all__ = ('MainWindow', 'ConfirmWindow', 'CustomGraphicView', 'Visualizer')
 
 logger = logging.getLogger(__name__)
 
@@ -533,7 +533,7 @@ class BlitManager:
         self._draw_animated()
 
     def _draw_animated(self):
-        """Draw all of the animated artists."""
+        """Draw all the animated artists."""
         fig = self.canvas.figure
         for a in self._artists:
             fig.draw_artist(a)
@@ -553,9 +553,10 @@ class BlitManager:
         else:
             # restore the background
             self.canvas.restore_region(self._bg)
-            # draw all of the animated artists
+            # draw all the animated artists
             self._draw_animated()
             # update the GUI state
             self.canvas.blit(self.canvas.figure.bbox)
         # let the GUI event loop process anything it has to do
         self.canvas.flush_events()
+        print(self._bg)

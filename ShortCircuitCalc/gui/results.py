@@ -1,6 +1,5 @@
 """Module text
 
-
 For correctly working cairosvg first install and
 add in PATH environment bin directory variables:
     - gtk3-runtime-3.24.31-2022-01-04-ts-win64.exe;
@@ -14,6 +13,7 @@ from collections import namedtuple
 import pandas as pd
 from matplotlib import figure, axes
 from matplotlib.widgets import CheckButtons
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from PyQt5 import QtWidgets
 import cairosvg
 from PIL import Image
@@ -78,6 +78,7 @@ def results_figure():
     schem = (chain1, chain2, chain3, chain4, chain5)
 
     fig = figure.Figure(figsize=(ncols * 5, nrows * 1))
+    fig.canvas = FigureCanvasQTAgg(fig)
     ax = fig.canvas.figure.subplots(nrows, ncols)
     fig.subplots_adjust(wspace=0, hspace=0, left=0, right=1, bottom=0, top=1)
 
@@ -99,16 +100,6 @@ def results_figure():
                                frameon=False)
             rax.axis('off')
 
-            images = [
-                Image.open(BytesIO(
-                    cairosvg.svg2png(url=str(Visualizer(row[col], SYSTEM_PHASES))))
-                ),
-                Image.open(BytesIO(
-                    cairosvg.svg2png(url=str(Visualizer(row[col], SYSTEM_PHASES).create_invert)))
-                )
-            ]
-            axx.imshow(images[0])
-
             resistance_df = pd.DataFrame.from_dict({
                 'r1': [row[col].resistance_r1],
                 'x1': [row[col].reactance_x1],
@@ -122,6 +113,18 @@ def results_figure():
                 loc='center', cellLoc='center', bbox=[0.2, 0.5, 0.8, 0.5],
                 colColours=('#9999FF',) * len(resistance_df.columns),
                 cellColours=(('#CCCCFF',) * len(resistance_df.columns),) * len(resistance_df.index))
+
+            background = fig.canvas.copy_from_bbox(ax[col][idx].bbox)
+
+            images = [
+                Image.open(BytesIO(
+                    cairosvg.svg2png(url=str(Visualizer(row[col], SYSTEM_PHASES))))
+                ),
+                Image.open(BytesIO(
+                    cairosvg.svg2png(url=str(Visualizer(row[col], SYSTEM_PHASES).create_invert)))
+                )
+            ]
+            axx.imshow(images[0])
 
             short_circuit_df = [
                 pd.DataFrame.from_dict({
@@ -142,29 +145,23 @@ def results_figure():
                 )
             ]
 
-            check = CheckButtons(rax, ['3ph'], [SYSTEM_PHASES == 3])
+            check = CheckButtons(rax, ['3ph'], [SYSTEM_PHASES == 3], label_props={'color': 'red'})
             check.on_clicked(lambda label, i=col, j=idx: callback(label, i, j))
-            Button = namedtuple('Button', ('check', 'ax', 'images', 'sc_table', 'sc_df'))
-            checks[col, idx] = Button(check, ax[col, idx], images, short_circuit_table, short_circuit_df)
-
-    # Turn off axis
-    for idx, row in enumerate(schem):
-        for col in range(max(map(len, schem))):
-            ax[col][idx].axis('off')
+            Button = namedtuple(
+                'Button', ('check', 'ax', 'rax', 'images', 'sc_df', 'sc_table', 'back')
+            )
+            checks[col, idx] = Button(
+                check, ax[col, idx], rax, images, short_circuit_df, short_circuit_table, background
+            )
 
     # noinspection PyUnusedLocal
     def callback(label, i, j):
         # Replace graph
         temp_axx = [c for c in checks[i, j].ax.get_children() if isinstance(c, axes.Axes)][0]
-        temp_axx.images[0].remove()
-        temp_axx.redraw_in_frame()
-        # temp_axx.images[0].set_data(temp_img)
+        temp_img = checks[i, j].images.pop()
+        checks[i, j].images.insert(0, temp_img)
+        temp_axx.images[0].set_data(temp_img)
 
-        bm = BlitManager(fig.canvas, [checks[i, j].ax])
-        # temp_img = checks[i, j].images.pop()
-        # checks[i, j].images.insert(0, temp_img)
-        bm.update()
-        print('good')
         # Replace table view
         ax_objects = checks[i, j].ax.get_children()
         ax_objects[ax_objects.index(checks[i, j].sc_table[0])].remove()
@@ -174,7 +171,18 @@ def results_figure():
         )
         ax_objects.append(new_table)
         checks[i, j].sc_table.append(new_table)
-        bm.update()
+
+        # Blitting / fast refreshing fig
+        fig.canvas.restore_region(checks[i, j].back)
+        fig.draw_artist(checks[i, j].ax)
+        fig.draw_artist(checks[i, j].rax)
+        fig.canvas.blit(checks[i, j].ax.bbox)
+        fig.canvas.flush_events()
+
+    # Turn off axis
+    for idx, row in enumerate(schem):
+        for col in range(max(map(len, schem))):
+            ax[col][idx].axis('off')
 
     fig.subplots_adjust(wspace=0, hspace=0, left=0, right=1, bottom=0, top=1)
 
