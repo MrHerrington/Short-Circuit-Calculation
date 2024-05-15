@@ -1,9 +1,6 @@
-add settings tab in GUI
+develop ChainsSystem class
 add annotations to elements classes
-add pretty output into Calculator element for single chain
-add pretty output into Calculator element for multiply chain
 replace eval на getattr in run
 add console entry_points methods
-add Redis in database request system
 Add # -*- coding: utf-8 -*- in files
 Using Sphinx write doc for project

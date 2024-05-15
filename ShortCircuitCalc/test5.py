@@ -1,28 +1,50 @@
-import matplotlib.pyplot as plt
-import numpy as np
-import time
-from ShortCircuitCalc.gui.windows import BlitManager
+from ShortCircuitCalc.tools import *
 
-# Generate data
-x = []
-y = []
 
-x2 = np.random.rand(100)
-y2 = np.random.rand(100)
+print(T(160, 'Д/Ун-11'))
+print(repr(T(160, 'Д/Ун-11')))
 
-# make a new figure
-fig, ax = plt.subplots()
-scatter = ax.scatter(x, y)
+print(W('ВВГ', 5, 1, 1000))
+print(repr(W('ВВГ', 5, 1, 1000)))
 
-bm = BlitManager(fig.canvas, [scatter])
-plt.axis([0, 1, 0, 1])
-# plt.show(block=False)
-# plt.pause(.1)
+print(Q(160))
+print(repr(Q(160, 'Пускатель')))
 
-for i in range(100):
-    x = np.append(x, np.random.rand())
-    y = np.append(y, np.random.rand())
-    scatter.set_offsets(np.c_[x, y])
-    bm.update()
+print(QF(40))
+print(repr(QF(40)))
 
-plt.show()
+print(QS(63))
+print(repr(QS(63)))
+
+print(R())
+print(repr(R()))
+
+print(Line())
+print(repr(Line()))
+
+print(Arc())
+print(repr(Arc()))
+
+
+chain1 = ElemChain(
+    [
+        T(160, 'Д/Ун-11'),
+        W('ВВГ', 5, 120, 1000),
+        QS(100),
+        QF(40)
+    ]
+)
+
+chain2 = ElemChain(
+    {
+        'TCH': T(160, 'Д/Ун-11'),
+        'w1': W('ВВГ', 5, 120, 1000),
+        'QS1': QS(100),
+        'QF1': QF(40)
+    }
+)
+# print(chain1.one_phase_current_short_circuit)
+# print(repr(chain1))
+# print(*(f'{k}: {v}' for k, v in chain2[1].items()))
+# print(chain2[1])
+# print(repr(chain2))

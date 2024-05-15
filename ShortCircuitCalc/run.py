@@ -15,7 +15,7 @@ def main():
     args = parser.parse_args()
     parsing_args = list(map(lambda x: eval(x.group(0)), re.finditer(r'\w+([^)])*[)]', args.arg)))
 
-    logger.info(Calculator(parsing_args).three_phase_current_short_circuit)
+    logger.info(ElemChain(parsing_args).three_phase_current_short_circuit)
 
 
 if __name__ == '__main__':

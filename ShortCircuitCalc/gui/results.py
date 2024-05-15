@@ -80,7 +80,7 @@ def results_figure():
     fig = figure.Figure(figsize=(ncols * 5, nrows * 1))
     fig.canvas = FigureCanvasQTAgg(fig)
     ax = fig.canvas.figure.subplots(nrows, ncols)
-    fig.subplots_adjust(wspace=0, hspace=0, left=0, right=1, bottom=0, top=1)
+    fig.subplots_adjust(wspace=0.01, hspace=0, left=0, right=1, bottom=0, top=1)
 
     def switch_and_draw_table(axe, h_pos, v_pos, df, switch_bool):
         return axe[h_pos][v_pos].table(
@@ -128,14 +128,14 @@ def results_figure():
 
             short_circuit_df = [
                 pd.DataFrame.from_dict({
-                    'I_k(3)': [Calculator(row[:col + 1]).three_phase_current_short_circuit],
-                    'I_k(2)': [Calculator(row[:col + 1]).two_phase_voltage_short_circuit],
-                    'I_k(1)': [Calculator(row[:col + 1]).one_phase_voltage_short_circuit]
+                    'I_k(3)': [ElemChain(row[:col + 1]).three_phase_current_short_circuit],
+                    'I_k(2)': [ElemChain(row[:col + 1]).two_phase_current_short_circuit],
+                    'I_k(1)': [ElemChain(row[:col + 1]).one_phase_current_short_circuit]
                 }),
                 pd.DataFrame.from_dict({
                     'I_k(3)': ['-----'],
                     'I_k(2)': ['-----'],
-                    'I_k(1)': [Calculator(row[:col + 1]).one_phase_voltage_short_circuit]
+                    'I_k(1)': [ElemChain(row[:col + 1]).one_phase_current_short_circuit]
                 })
             ]
 
@@ -184,7 +184,7 @@ def results_figure():
         for col in range(max(map(len, schem))):
             ax[col][idx].axis('off')
 
-    fig.subplots_adjust(wspace=0, hspace=0, left=0, right=1, bottom=0, top=1)
+    fig.subplots_adjust(wspace=0.01, hspace=0, left=0, right=1, bottom=0, top=1)
 
     return fig
 

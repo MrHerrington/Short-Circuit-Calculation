@@ -2,7 +2,6 @@
 """This module contains classes for various electrical elements such as transformers, cables
 and contacts, for programmatically inputting data related to these categories."""
 
-
 import logging
 import math
 import typing as ty
@@ -17,9 +16,7 @@ from ShortCircuitCalc.database import *
 from ShortCircuitCalc.tools import session_scope
 from ShortCircuitCalc.config import SYSTEM_VOLTAGE_IN_KILOVOLTS, CALCULATIONS_ACCURACY
 
-
-__all__ = ('T', 'W', 'Q', 'QF', 'QS', 'R', 'Line', 'Arc', 'Calculator')
-
+__all__ = ('T', 'W', 'Q', 'QF', 'QS', 'R', 'Line', 'Arc', 'ElemChain')
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +37,7 @@ class Validator:
         print(type(Person('10').age)) -> <class 'float'>
 
     """
+
     def __init__(self, arg=None) -> None:
         self._arg = arg
 
@@ -77,7 +75,7 @@ class BaseElement(ABC):
         """The method searches in the database resistance R1."""
         query_val = self._sql_query('resistance_r1')
         if query_val is None:
-            msg = 'The resistance R1 is not found in the database!'
+            msg = f"The resistance R1 for '{self}' is not found in the database!"
             logger.error(msg)
             raise ValueError(msg)
         return query_val
@@ -87,7 +85,7 @@ class BaseElement(ABC):
         """The method searches in the database reactance X1."""
         query_val = self._sql_query('reactance_x1')
         if query_val is None:
-            msg = 'The reactance X1 is not found in the database!'
+            msg = f"The reactance X1 for '{self}' is not found in the database!"
             logger.error(msg)
             raise ValueError(msg)
         return query_val
@@ -97,7 +95,7 @@ class BaseElement(ABC):
         """The method searches in the database resistance R0."""
         query_val = self._sql_query('resistance_r0')
         if query_val is None:
-            msg = 'The resistance R0 is not found in the database!'
+            msg = f"The resistance R0 for '{self}' is not found in the database!"
             logger.error(msg)
             raise ValueError(msg)
         return query_val
@@ -107,7 +105,7 @@ class BaseElement(ABC):
         """The method searches in the database reactance X0."""
         query_val = self._sql_query('reactance_x0')
         if query_val is None:
-            msg = 'The reactance X0 is not found in the database!'
+            msg = f"The reactance X0 for '{self}' is not found in the database!"
             logger.error(msg)
             raise ValueError(msg)
         return query_val
@@ -135,13 +133,18 @@ class T(BaseElement):
 
     def _sql_query(self, attr_name) -> Decimal:
         with session_scope() as session:
-            return session.execute(sa.select(getattr(Transformer, attr_name)).
-                                   join(PowerNominal, Transformer.power_id == PowerNominal.id).
-                                   join(VoltageNominal, Transformer.voltage_id == VoltageNominal.id).
-                                   join(Scheme, Transformer.vector_group_id == Scheme.id).
-                                   where(sa.and_(PowerNominal.power == self.power,
-                                                 VoltageNominal.voltage == self.voltage),
-                                         Scheme.vector_group == self.vector_group)).scalar()
+            return session.execute(
+                sa.select(getattr(Transformer, attr_name)).
+                join(PowerNominal, Transformer.power_id == PowerNominal.id).
+                join(VoltageNominal, Transformer.voltage_id == VoltageNominal.id).
+                join(Scheme, Transformer.vector_group_id == Scheme.id).
+                where(sa.and_(PowerNominal.power == self.power,
+                              VoltageNominal.voltage == self.voltage),
+                      Scheme.vector_group == self.vector_group)
+            ).scalar()
+
+    def __str__(self):
+        return f'T {self.power}/{float(self.voltage)} ({self.vector_group})'
 
 
 @dataclass
@@ -157,14 +160,22 @@ class W(BaseElement):
     def _sql_query(self, attr_name) -> Decimal:
         """Returns the resistance value for the specified length."""
         with session_scope() as session:
-            query_val = session.execute(sa.select(getattr(Cable, attr_name)).
-                                        join(Mark, Cable.mark_name_id == Mark.id).
-                                        join(Amount, Cable.multicore_amount_id == Amount.id).
-                                        join(RangeVal, Cable.cable_range_id == RangeVal.id).
-                                        where(sa.and_(Mark.mark_name == self.mark,
-                                                      Amount.multicore_amount == self.amount,
-                                                      RangeVal.cable_range == self.range_val))).scalar()
+            query_val = session.execute(
+                sa.select(getattr(Cable, attr_name)).
+                join(Mark, Cable.mark_name_id == Mark.id).
+                join(Amount, Cable.multicore_amount_id == Amount.id).
+                join(RangeVal, Cable.cable_range_id == RangeVal.id).
+                where(sa.and_(Mark.mark_name == self.mark,
+                              Amount.multicore_amount == self.amount,
+                              RangeVal.cable_range == self.range_val))
+            ).scalar()
         return query_val / 1000 * self.length
+
+    def __str__(self):
+        if int(self.range_val) == float(self.range_val):
+            return f'{self.mark} {self.amount}х{int(self.range_val)} {self.length}m'
+        else:
+            return f'{self.mark} {self.amount}х{self.range_val} {self.length}m'
 
 
 @dataclass
@@ -175,11 +186,16 @@ class Q(BaseElement):
 
     def _sql_query(self, attr_name) -> Decimal:
         with session_scope() as session:
-            return session.execute(sa.select(getattr(CurrentBreaker, attr_name)).
-                                   join(Device, CurrentBreaker.device_type_id == Device.id).
-                                   join(CurrentNominal, CurrentBreaker.current_value_id == CurrentNominal.id).
-                                   where(sa.and_(Device.device_type == self.device_type,
-                                                 CurrentNominal.current_value == self.current_value))).scalar()
+            return session.execute(
+                sa.select(getattr(CurrentBreaker, attr_name)).
+                join(Device, CurrentBreaker.device_type_id == Device.id).
+                join(CurrentNominal, CurrentBreaker.current_value_id == CurrentNominal.id).
+                where(sa.and_(Device.device_type == self.device_type,
+                              CurrentNominal.current_value == self.current_value))
+            ).scalar()
+
+    def __str__(self):
+        return f'Q {self.current_value}A'
 
 
 @dataclass
@@ -187,11 +203,17 @@ class QF(Q):
     def __post_init__(self):
         self.device_type = 'Автомат'
 
+    def __str__(self):
+        return f'QF {self.current_value}A'
+
 
 @dataclass
 class QS(Q):
     def __post_init__(self):
         self.device_type = 'Рубильник'
+
+    def __str__(self):
+        return f'QS {self.current_value}A'
 
 
 @dataclass
@@ -204,11 +226,17 @@ class R(BaseElement):
             return session.execute(sa.select(getattr(OtherContact, attr_name)).
                                    where(OtherContact.contact_type == self.contact_type)).scalar()
 
+    def __str__(self):
+        return 'R'
+
 
 @dataclass
 class Line(R):
     def __post_init__(self):
         self.contact_type = 'РУ'
+
+    def __str__(self):
+        return f'{self.contact_type}'
 
 
 @dataclass
@@ -216,15 +244,18 @@ class Arc(R):
     def __post_init__(self):
         self.contact_type = 'Дуга'
 
+    def __str__(self):
+        return f'{self.contact_type}'
 
-class Calculator:
-    """The class for short circuit calculations"""
 
-    def __init__(self, obj: ty.Sequence[BaseElement]) -> None:
+class ElemChain(ty.Sequence):
+    """The class describes the chain of elements."""
+
+    def __init__(self, obj: ty.Union[ty.Sequence, dict]) -> None:
         self._obj = obj
 
     @property
-    def obj(self) -> ty.Sequence[BaseElement]:
+    def obj(self) -> ty.Union[ty.Sequence, dict]:
         return self._obj
 
     @property
@@ -244,7 +275,7 @@ class Calculator:
             CALCULATIONS_ACCURACY)
 
     @property
-    def two_phase_voltage_short_circuit(self) -> Decimal:
+    def two_phase_current_short_circuit(self) -> Decimal:
         """Calculates the two-phase current during a short circuit.
 
         Returns:
@@ -259,7 +290,7 @@ class Calculator:
             CALCULATIONS_ACCURACY)
 
     @property
-    def one_phase_voltage_short_circuit(self) -> Decimal:
+    def one_phase_current_short_circuit(self) -> Decimal:
         """Calculates the one-phase current during a short circuit.
 
         Returns:
@@ -274,6 +305,15 @@ class Calculator:
             Decimal(math.sqrt(3)) * SYSTEM_VOLTAGE_IN_KILOVOLTS / self.__one_phase_summary_resistance(),
             CALCULATIONS_ACCURACY)
 
+    @property
+    def last_project_name(self) -> str:
+        if isinstance(self.obj, dict):
+            return tuple(self[-1])[0]
+        else:
+            msg = f"Chain '{self}' does not have project names!"
+            logger.error(msg)
+            raise TypeError(msg)
+
     def __three_phase_summary_resistance(self) -> Decimal:
         """
         Service function, calculates three-phase summary resistance.
@@ -286,11 +326,28 @@ class Calculator:
         :math:`x_1` - reactance value reactance_x1.
 
         """
-        return Decimal(math.sqrt(math.pow(
-            reduce(lambda x, y: x + y, (
-                i.resistance_r1 for i in self.obj)), 2) + math.pow(
-            reduce(lambda x, y: x + y, (
-                i.reactance_x1 for i in self.obj)), 2)))
+
+        def __summary_resistance(obj):
+            return Decimal(
+                math.sqrt(
+                    math.pow(
+                        reduce(
+                            lambda x, y: x + y, (i.resistance_r1 for i in obj)
+                        ), 2
+                    ) +
+                    math.pow(
+                        reduce(
+                            lambda x, y: x + y, (i.reactance_x1 for i in obj)
+                        ), 2
+                    )
+                )
+            )
+
+        if isinstance(self.obj, ty.Sequence):
+            return __summary_resistance(self.obj)
+
+        if isinstance(self.obj, dict):
+            return __summary_resistance(self.obj.values())
 
     def __one_phase_summary_resistance(self) -> Decimal:
         """
@@ -306,10 +363,61 @@ class Calculator:
         :math:`x_0` - reactance value reactance_x0.
 
         """
-        return Decimal(math.sqrt(
-            math.pow(
-                2 * reduce(lambda x, y: x + y, (i.resistance_r1 for i in self.obj)) +
-                reduce(lambda x, y: x + y, (i.resistance_r0 for i in self.obj)), 2) +
-            math.pow(
-                2 * reduce(lambda x, y: x + y, (i.reactance_x1 for i in self.obj)) +
-                reduce(lambda x, y: x + y, (i.reactance_x0 for i in self.obj)), 2)))
+        def __summary_resistance(obj):
+            return Decimal(
+                math.sqrt(
+                    math.pow(
+                        2 * reduce(
+                            lambda x, y: x + y, (i.resistance_r1 for i in obj)
+                        ) +
+                        reduce(
+                            lambda x, y: x + y, (i.resistance_r0 for i in obj)
+                        ), 2
+                    ) +
+                    math.pow(
+                        2 * reduce(
+                            lambda x, y: x + y, (i.reactance_x1 for i in obj)
+                        ) +
+                        reduce(
+                            lambda x, y: x + y, (i.reactance_x0 for i in obj)
+                        ), 2
+                    )
+                )
+            )
+
+        if isinstance(self.obj, ty.Sequence):
+            return __summary_resistance(self.obj)
+
+        if isinstance(self.obj, dict):
+            return __summary_resistance(self.obj.values())
+
+    def __getitem__(self, key):
+        if isinstance(self.obj, ty.Sequence):
+            if isinstance(key, slice):
+                return ElemChain(self.obj[key])
+            else:
+                return self.obj[key]
+
+        if isinstance(self.obj, dict):
+            if isinstance(key, slice):
+                return ElemChain(dict(tuple(self.obj.items())[key]))
+            else:
+                return dict((tuple(self.obj.items())[key],))
+
+    def __len__(self):
+        return len(self.obj)
+
+    def __str__(self):
+        if isinstance(self.obj, ty.Sequence):
+            return f"{' -> '.join(map(str, self.obj))}"
+
+        if isinstance(self.obj, dict):
+            return f"{' -> '.join('%s: %s' % (key, value) for key, value in zip(self.obj.keys(), self.obj.values()))}"
+
+    def __repr__(self):
+        return f"ElemChain{self.obj}"
+
+
+class ChainsSystem:
+    ###TODO###
+    pass
