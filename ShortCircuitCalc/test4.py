@@ -1,5 +1,6 @@
 import logging
 from ShortCircuitCalc.database import *
+import ShortCircuitCalc.tools as tools
 
 
 # logging.basicConfig(level=logging.INFO)
@@ -10,4 +11,8 @@ from ShortCircuitCalc.database import *
 # logging.getLogger().addHandler(handler)
 
 
-Cable.show_table()
+# Cable.show_table()
+
+
+a = getattr(tools, 'T')('1600', 'У/Ун-0')
+print(a)

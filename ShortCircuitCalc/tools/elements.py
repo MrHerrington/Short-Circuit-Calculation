@@ -4,6 +4,7 @@ and contacts, for programmatically inputting data related to these categories.""
 
 import logging
 import math
+import re
 import typing as ty
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -16,7 +17,7 @@ from ShortCircuitCalc.database import *
 from ShortCircuitCalc.tools import session_scope
 from ShortCircuitCalc.config import SYSTEM_VOLTAGE_IN_KILOVOLTS, CALCULATIONS_ACCURACY
 
-__all__ = ('T', 'W', 'Q', 'QF', 'QS', 'R', 'Line', 'Arc', 'ElemChain')
+__all__ = ('T', 'W', 'Q', 'QF', 'QS', 'R', 'Line', 'Arc', 'ElemChain', 'ChainsSystem')
 
 logger = logging.getLogger(__name__)
 
@@ -363,6 +364,7 @@ class ElemChain(ty.Sequence):
         :math:`x_0` - reactance value reactance_x0.
 
         """
+
         def __summary_resistance(obj):
             return Decimal(
                 math.sqrt(
@@ -418,6 +420,57 @@ class ElemChain(ty.Sequence):
         return f"ElemChain{self.obj}"
 
 
-class ChainsSystem:
-    ###TODO###
-    pass
+class ChainsSystem(ty.Iterable):
+    def __init__(self, obj):
+        self.obj = obj
+        if isinstance(self.obj, str):
+            self.__parse_obj__()
+
+    def __parse_obj__(self):
+        # regex patterns
+        delimiter_pattern = r';\s*(?![^(]*\))'
+        iterable_pattern = r'(?P<type>[A-Z]+)\((?P<args>[^)]*)\)'
+        mapping_pattern = r'((?P<name>\w+):)\s*(?P<type>\w+)\((?P<args>.*?)\)'
+
+        # split chains
+        chains = re.split(delimiter_pattern, self.obj)
+
+        for n in range(len(chains)):
+            chain = tuple(re.finditer(mapping_pattern, chains[n]))
+            if chain:
+                chains[n] = ElemChain(
+                    dict(
+                        map(
+                            lambda elem: (
+                                elem.group('name'), globals()[elem.group('type')](
+                                    *[x.strip('\'\"') for x in elem.group('args').split(', ')]
+                                )
+                            ), chain
+                        )
+                    )
+                )
+            else:
+                chain = tuple(re.finditer(iterable_pattern, chains[n]))
+                chains[n] = ElemChain(
+                    tuple(
+                        map(
+                            lambda elem: globals()[elem.group('type')](
+                                *[x.strip('\'\"') for x in elem.group('args').split(', ')]
+                            ),
+                            chain
+                        )
+                    )
+                )
+        self.obj = chains
+
+    def __iter__(self):
+        return iter(self.obj)
+
+    def __len__(self):
+        return len(self.obj)
+
+    def __str__(self):
+        return f"<ChainsSystem of {len(self.obj)} chains / {sum(map(len, self.obj))} elements>"
+
+    def __repr__(self):
+        return f'ChainsSystem{self.obj}'
