@@ -3,7 +3,6 @@
 Classes are based on ui files, developed by QtDesigner and customized."""
 
 from collections import namedtuple
-from functools import singledispatchmethod
 
 import logging
 import matplotlib
@@ -23,7 +22,7 @@ from ShortCircuitCalc.gui.info_catalog import *
 from ShortCircuitCalc.tools import *
 from ShortCircuitCalc.config import *
 
-__all__ = ('MainWindow', 'ConfirmWindow', 'CustomGraphicView', 'Visualizer')
+__all__ = ('MainWindow', 'ConfirmWindow', 'CustomGraphicView')
 
 logger = logging.getLogger(__name__)
 
@@ -452,111 +451,3 @@ class MainWindow(QtWidgets.QMainWindow):
             event.accept()
         else:
             event.ignore()
-
-
-class Visualizer:
-    __PHASES_LIST = (1, 3)
-
-    def __init__(self, element, phases_default):
-        self._element = element
-        self._phases_default = phases_default
-        self._graphs = {
-
-            (T, 3, 'У/Ун-0'): GRAPHS_DIR / 'T_star_three.svg',
-            (T, 1, 'У/Ун-0'): GRAPHS_DIR / 'T_star_one.svg',
-            (T, 3, 'Д/Ун-11'): GRAPHS_DIR / 'T_triangle_three.svg',
-            (T, 1, 'Д/Ун-11'): GRAPHS_DIR / 'T_triangle_one.svg',
-
-            (Q, 3): GRAPHS_DIR / 'Q_three.svg',
-            (Q, 1): GRAPHS_DIR / 'Q_one.svg',
-            (QF, 3): GRAPHS_DIR / 'QF_three.svg',
-            (QF, 1): GRAPHS_DIR / 'QF_one.svg',
-            (QS, 3): GRAPHS_DIR / 'QS_three.svg',
-            (QS, 1): GRAPHS_DIR / 'QS_one.svg',
-
-            (W, 3): GRAPHS_DIR / 'W_three.svg',
-            (W, 1): GRAPHS_DIR / 'W_one.svg',
-
-            (R, 3): GRAPHS_DIR / 'R_three.svg',
-            (R, 1): GRAPHS_DIR / 'R_one.svg',
-            (Line, 3): GRAPHS_DIR / 'Line_three.svg',
-            (Line, 1): GRAPHS_DIR / 'Line_one.svg',
-            (Arc, 3): GRAPHS_DIR / 'Arc_three.svg',
-            (Arc, 1): GRAPHS_DIR / 'Arc_one.svg',
-
-        }
-
-    @singledispatchmethod
-    def _display_element(self, element):
-        logger.error(f'Unknown type of element: {type(element)}')
-        raise NotImplementedError
-
-    @_display_element.register(T)
-    def _(self, element):
-        return self._graphs[element.__class__, self._phases_default, self._element.vector_group]
-
-    @_display_element.register(Q)
-    @_display_element.register(W)
-    @_display_element.register(R)
-    def _(self, element):
-        return self._graphs[element.__class__, self._phases_default]
-
-    @property
-    def create_invert(self):
-        if self._phases_default == Visualizer.__PHASES_LIST[1]:
-            __phases = Visualizer.__PHASES_LIST[0]
-        else:
-            __phases = Visualizer.__PHASES_LIST[1]
-        return Visualizer(self._element, __phases)
-
-    def __repr__(self):
-        return f'{self._display_element(self._element)}'
-
-
-class BlitManager:
-    def __init__(self, canvas, animated_artists=()):
-        self.canvas = canvas
-        self._artists = []
-        self._bg = None
-
-        for a in animated_artists:
-            self.add_artist(a)
-
-        self.cid = canvas.mpl_connect("draw_event", self.on_draw)
-
-    def on_draw(self, event):
-        """Callback to register with 'draw_event'."""
-        if event is not None:
-            if event.canvas != self.canvas:
-                raise RuntimeError
-        self._bg = self.canvas.copy_from_bbox(self.canvas.figure.bbox)
-        self._draw_animated()
-
-    def _draw_animated(self):
-        """Draw all the animated artists."""
-        fig = self.canvas.figure
-        for a in self._artists:
-            fig.draw_artist(a)
-
-    def add_artist(self, art):
-        """Add a new Artist object to the Blit Manager"""
-        if art.figure != self.canvas.figure:
-            raise RuntimeError
-        art.set_animated(True)
-        self._artists.append(art)
-
-    def update(self):
-        """Update the screen with animated artists."""
-
-        if self._bg is None:
-            self.on_draw(None)
-        else:
-            # restore the background
-            self.canvas.restore_region(self._bg)
-            # draw all the animated artists
-            self._draw_animated()
-            # update the GUI state
-            self.canvas.blit(self.canvas.figure.bbox)
-        # let the GUI event loop process anything it has to do
-        self.canvas.flush_events()
-        print(self._bg)

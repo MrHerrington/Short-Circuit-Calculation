@@ -987,7 +987,7 @@ border-radius: 20px;</string>
                </item>
               </layout>
              </widget>
-             <widget class="QWidget" name="resultTab">
+             <widget class="QWidget" name="resultsTab">
               <attribute name="title">
                <string>Result</string>
               </attribute>
@@ -1008,7 +1008,7 @@ border-radius: 20px;</string>
                 <number>0</number>
                </property>
                <item>
-                <widget class="CustomGraphicView" name="resultView"/>
+                <widget class="CustomGraphicView" name="resultsView"/>
                </item>
               </layout>
              </widget>
