@@ -18,7 +18,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui, uic
 # Need for correctly loading icons
 # noinspection PyUnresolvedReferences
 import ShortCircuitCalc.gui.resources
-from ShortCircuitCalc.gui.info_catalog import *
+from ShortCircuitCalc.gui.figures import *
 from ShortCircuitCalc.tools import *
 from ShortCircuitCalc.config import *
 
@@ -333,7 +333,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # Catalog tab settings
         ######################
 
-        self.catalogView.set_figure(info_catalog_figure())
+        self.catalogView.set_figure(GetFigure())
 
         #########################
         # "Settings" tab settings

@@ -3,5 +3,4 @@
 
 
 from ShortCircuitCalc.gui.windows import *
-from ShortCircuitCalc.gui.info_catalog import *
 from ShortCircuitCalc.gui.figures import *

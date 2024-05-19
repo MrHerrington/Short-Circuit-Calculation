@@ -17,7 +17,7 @@ from ShortCircuitCalc.database import *
 from ShortCircuitCalc.tools import session_scope
 from ShortCircuitCalc.config import SYSTEM_VOLTAGE_IN_KILOVOLTS, CALCULATIONS_ACCURACY
 
-__all__ = ('T', 'W', 'Q', 'QF', 'QS', 'R', 'Line', 'Arc', 'ElemChain', 'ChainsSystem')
+__all__ = ('BaseElement', 'T', 'W', 'Q', 'QF', 'QS', 'R', 'Line', 'Arc', 'ElemChain', 'ChainsSystem')
 
 logger = logging.getLogger(__name__)
 
@@ -249,7 +249,7 @@ class Arc(R):
         return f'{self.contact_type}'
 
 
-class ElemChain(ty.Sequence):
+class ElemChain(ty.Sequence, ty.Mapping):
     """The class describes the chain of elements."""
 
     def __init__(self, obj: ty.Union[ty.Sequence, dict]) -> None:
@@ -305,15 +305,6 @@ class ElemChain(ty.Sequence):
         return round(
             Decimal(math.sqrt(3)) * SYSTEM_VOLTAGE_IN_KILOVOLTS / self.__one_phase_summary_resistance(),
             CALCULATIONS_ACCURACY)
-
-    @property
-    def last_project_name(self) -> str:
-        if isinstance(self.obj, dict):
-            return tuple(self[-1])[0]
-        else:
-            msg = f"Chain '{self}' does not have project names!"
-            logger.error(msg)
-            raise TypeError(msg)
 
     def __three_phase_summary_resistance(self) -> Decimal:
         """
@@ -429,7 +420,7 @@ class ChainsSystem(ty.Iterable):
     def __parse_obj__(self):
         # regex patterns
         delimiter_pattern = r';\s*(?![^(]*\))'
-        iterable_pattern = r'(?P<type>[A-Z]+)\((?P<args>[^)]*)\)'
+        iterable_pattern = r'(?P<type>\w+)\((?P<args>.*?)\)'
         mapping_pattern = r'((?P<name>\w+):)\s*(?P<type>\w+)\((?P<args>.*?)\)'
 
         # split chains
