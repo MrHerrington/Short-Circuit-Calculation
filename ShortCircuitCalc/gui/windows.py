@@ -2,6 +2,7 @@
 """The module contains GUI windows templates, using PyQt5 and Matplotlib.
 Classes are based on ui files, developed by QtDesigner and customized."""
 
+
 from collections import namedtuple
 
 import logging
@@ -22,9 +23,12 @@ from ShortCircuitCalc.gui.figures import *
 from ShortCircuitCalc.tools import *
 from ShortCircuitCalc.config import *
 
+
 __all__ = ('MainWindow', 'ConfirmWindow', 'CustomGraphicView')
 
+
 logger = logging.getLogger(__name__)
+
 
 # Select the backend used for rendering and GUI integration.
 matplotlib.use('Qt5Agg')
@@ -82,10 +86,6 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
         self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
 
-        # Start viewing position
-        self.horizontalScrollBar().setSliderPosition(1)
-        self.verticalScrollBar().setSliderPosition(1)
-
         # Context menu actions settings
         self.save_model_action.setIconVisibleInMenu(True)
         # noinspection PyUnresolvedReferences
@@ -98,8 +98,14 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
     def set_figure(self, figure):
         self._figure = figure
         self._canvas = FigCanvas(self._figure)
+        self._scene = QtWidgets.QGraphicsScene()
         self._scene.addWidget(self._canvas)
         self.setScene(self._scene)
+
+        # Start viewing position
+        self.horizontalScrollBar().setSliderPosition(1)
+        self.verticalScrollBar().setSliderPosition(1)
+
         # self.zoom_initialize()
 
     # Need if fig dpi > default
@@ -329,6 +335,18 @@ class MainWindow(QtWidgets.QMainWindow):
         self.infoButton.setToolTip('Show info')
         self.infoButton.clicked.connect(lambda: self.tabWidget.setCurrentIndex(4))
 
+        ####################
+        # Input tab settings
+        ####################
+
+        self.consoleInput.installEventFilter(self)
+
+        ###################
+        # Result tab settings
+        ###################
+
+        pass
+
         ######################
         # Catalog tab settings
         ######################
@@ -424,6 +442,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.settingsBox7.currentIndexChanged.connect(
             lambda: box_config[self.settingsBox7].update(self.settingsBox7.currentText())
         )
+
+    # noinspection PyUnresolvedReferences
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.KeyPress and obj is self.consoleInput:
+            text = self.consoleInput.toPlainText()
+            if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Return:
+                try:
+                    self.resultsView.set_figure(GetFigure(ChainsSystem(text)))
+                except Exception as e:
+                    logger.error(e)
+        return super().eventFilter(obj, event)
 
     def window_auto_center(self) -> None:
         """Centers the window on the screen."""

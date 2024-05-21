@@ -123,9 +123,7 @@ class _ResultsFigure:
         self.fig = figure.Figure(figsize=(self.ncols * 5, self.nrows * 1))
         self.fig.canvas = FigureCanvasQTAgg(self.fig)
 
-        self.ax = self.fig.canvas.figure.subplots(self.nrows, self.ncols)
-        if len(self.schem) == 1:
-            self.ax = self.ax.reshape(-1, 1)
+        self.ax = self.fig.canvas.figure.subplots(self.nrows, self.ncols, squeeze=False)
 
         self.checks = dict()
 

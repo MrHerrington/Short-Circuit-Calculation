@@ -958,7 +958,7 @@ border-radius: 5px;</string>
                 </widget>
                </item>
                <item>
-                <widget class="QTextEdit" name="consoleInput">
+                <widget class="QPlainTextEdit" name="consoleInput">
                  <property name="enabled">
                   <bool>true</bool>
                  </property>
@@ -974,11 +974,13 @@ border-radius: 5px;</string>
                   </font>
                  </property>
                  <property name="styleSheet">
-                  <string notr="true">background-color: rgba(153, 153, 153, 0.7);
+                  <string notr="true">QPlainTextEdit[objectName=&quot;consoleInput&quot;] {
+background-color: rgba(153, 153, 153, 0.9);
 color: rgb(255, 255, 255);
 padding-left: 10px;
 padding-right: 10 px;
-border-radius: 20px;</string>
+border-radius: 20px;
+}</string>
                  </property>
                  <property name="verticalScrollBarPolicy">
                   <enum>Qt::ScrollBarAsNeeded</enum>
@@ -1402,11 +1404,13 @@ border-radius: 5px;</string>
            </font>
           </property>
           <property name="styleSheet">
-           <string notr="true">background-color: rgba(153, 153, 153, 0.7);
+           <string notr="true">QTextBrowser[objectName=&quot;logsOutput&quot;] {
+background-color: rgba(153, 153, 153, 0.7);
 color: rgb(255, 255, 255);
 padding-left: 10px;
 padding-right: 10 px;
-border-radius: 20px;</string>
+border-radius: 20px;
+}</string>
           </property>
          </widget>
         </item>
