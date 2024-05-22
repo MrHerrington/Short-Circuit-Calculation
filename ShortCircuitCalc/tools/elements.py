@@ -135,13 +135,21 @@ class T(BaseElement):
     def _sql_query(self, attr_name) -> Decimal:
         with session_scope() as session:
             return session.execute(
-                sa.select(getattr(Transformer, attr_name)).
-                join(PowerNominal, Transformer.power_id == PowerNominal.id).
-                join(VoltageNominal, Transformer.voltage_id == VoltageNominal.id).
-                join(Scheme, Transformer.vector_group_id == Scheme.id).
-                where(sa.and_(PowerNominal.power == self.power,
-                              VoltageNominal.voltage == self.voltage),
-                      Scheme.vector_group == self.vector_group)
+                sa.select(
+                    getattr(Transformer, attr_name)
+                ).join(
+                    PowerNominal, Transformer.power_id == PowerNominal.id
+                ).join(
+                    VoltageNominal, Transformer.voltage_id == VoltageNominal.id
+                ).join(
+                    Scheme, Transformer.vector_group_id == Scheme.id
+                ).where(
+                    sa.and_(
+                        PowerNominal.power == self.power,
+                        VoltageNominal.voltage == self.voltage,
+                        Scheme.vector_group == self.vector_group
+                    )
+                )
             ).scalar()
 
     def __str__(self):
@@ -162,13 +170,21 @@ class W(BaseElement):
         """Returns the resistance value for the specified length."""
         with session_scope() as session:
             query_val = session.execute(
-                sa.select(getattr(Cable, attr_name)).
-                join(Mark, Cable.mark_name_id == Mark.id).
-                join(Amount, Cable.multicore_amount_id == Amount.id).
-                join(RangeVal, Cable.cable_range_id == RangeVal.id).
-                where(sa.and_(Mark.mark_name == self.mark,
-                              Amount.multicore_amount == self.amount,
-                              RangeVal.cable_range == self.range_val))
+                sa.select(
+                    getattr(Cable, attr_name)
+                ).join(
+                    Mark, Cable.mark_name_id == Mark.id
+                ).join(
+                    Amount, Cable.multicore_amount_id == Amount.id
+                ).join(
+                    RangeVal, Cable.cable_range_id == RangeVal.id
+                ).where(
+                    sa.and_(
+                        Mark.mark_name == self.mark,
+                        Amount.multicore_amount == self.amount,
+                        RangeVal.cable_range == self.range_val
+                    )
+                )
             ).scalar()
         return query_val / 1000 * self.length
 
@@ -188,11 +204,18 @@ class Q(BaseElement):
     def _sql_query(self, attr_name) -> Decimal:
         with session_scope() as session:
             return session.execute(
-                sa.select(getattr(CurrentBreaker, attr_name)).
-                join(Device, CurrentBreaker.device_type_id == Device.id).
-                join(CurrentNominal, CurrentBreaker.current_value_id == CurrentNominal.id).
-                where(sa.and_(Device.device_type == self.device_type,
-                              CurrentNominal.current_value == self.current_value))
+                sa.select(
+                    getattr(CurrentBreaker, attr_name)
+                ).join(
+                    Device, CurrentBreaker.device_type_id == Device.id
+                ).join(
+                    CurrentNominal, CurrentBreaker.current_value_id == CurrentNominal.id
+                ).where(
+                    sa.and_(
+                        Device.device_type == self.device_type,
+                        CurrentNominal.current_value == self.current_value
+                    )
+                )
             ).scalar()
 
     def __str__(self):
@@ -224,8 +247,13 @@ class R(BaseElement):
 
     def _sql_query(self, attr_name) -> Decimal:
         with session_scope() as session:
-            return session.execute(sa.select(getattr(OtherContact, attr_name)).
-                                   where(OtherContact.contact_type == self.contact_type)).scalar()
+            return session.execute(
+                sa.select(
+                    getattr(OtherContact, attr_name)
+                ).where(
+                    OtherContact.contact_type == self.contact_type
+                )
+            ).scalar()
 
     def __str__(self):
         return 'R'
@@ -461,7 +489,7 @@ class ChainsSystem(ty.Iterable):
         return len(self.obj)
 
     def __str__(self):
-        return f"<ChainsSystem of {len(self.obj)} chains / {sum(map(len, self.obj))} elements>"
+        return f"[ChainsSystem of {len(self.obj)} chains / {sum(map(len, self.obj))} elements]"
 
     def __repr__(self):
         return f'ChainsSystem{self.obj}'

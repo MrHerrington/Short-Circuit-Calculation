@@ -974,7 +974,7 @@ border-radius: 5px;</string>
                   </font>
                  </property>
                  <property name="styleSheet">
-                  <string notr="true">QPlainTextEdit[objectName=&quot;consoleInput&quot;] {
+                  <string notr="true">QPlainTextEdit {
 background-color: rgba(153, 153, 153, 0.9);
 color: rgb(255, 255, 255);
 padding-left: 10px;
@@ -1385,7 +1385,7 @@ border-radius: 5px;</string>
          </widget>
         </item>
         <item>
-         <widget class="QTextBrowser" name="logsOutput">
+         <widget class="QPlainTextEditLogger" name="logsOutput">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
@@ -1400,16 +1400,16 @@ border-radius: 5px;</string>
           </property>
           <property name="font">
            <font>
-            <pointsize>14</pointsize>
+            <pointsize>10</pointsize>
            </font>
           </property>
           <property name="styleSheet">
-           <string notr="true">QTextBrowser[objectName=&quot;logsOutput&quot;] {
-background-color: rgba(153, 153, 153, 0.7);
+           <string notr="true">QPlainTextEdit {
+background-color: rgba(153, 153, 153, 0.5);
 color: rgb(255, 255, 255);
 padding-left: 10px;
 padding-right: 10 px;
-border-radius: 20px;
+border-radius: 20px
 }</string>
           </property>
          </widget>
@@ -1425,6 +1425,11 @@ border-radius: 20px;
   <customwidget>
    <class>CustomGraphicView</class>
    <extends>QGraphicsView</extends>
+   <header>ShortCircuitCalc.gui.windows</header>
+  </customwidget>
+  <customwidget>
+   <class>QPlainTextEditLogger</class>
+   <extends>QPlainTextEdit</extends>
    <header>ShortCircuitCalc.gui.windows</header>
   </customwidget>
  </customwidgets>

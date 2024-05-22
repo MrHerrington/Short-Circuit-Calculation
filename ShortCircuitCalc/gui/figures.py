@@ -132,6 +132,8 @@ class _ResultsFigure:
         self.__off_axis()
         self.fig.subplots_adjust(wspace=0.01, hspace=0, left=0, right=1, bottom=0, top=1)
 
+        logger.info('Results system successfully created %s' % self.schem)
+
     def __draw_figure(self) -> None:
         """Draw all elements in the figure."""
         for idx, row in enumerate(self.schem):

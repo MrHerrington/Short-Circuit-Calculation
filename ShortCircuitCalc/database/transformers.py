@@ -5,8 +5,9 @@ of the category 'transformers'"""
 
 import sqlalchemy as sa
 import sqlalchemy.orm
+import pandas as pd
 
-from ShortCircuitCalc.tools import Base
+from ShortCircuitCalc.tools import Base, session_scope
 from ShortCircuitCalc.database.mixins import BaseMixin
 
 
@@ -61,3 +62,34 @@ class Transformer(BaseMixin, Base):
     power_nominals = sa.orm.relationship('PowerNominal', back_populates='transformers')
     voltage_nominals = sa.orm.relationship('VoltageNominal', back_populates='transformers')
     schemes = sa.orm.relationship('Scheme', back_populates='transformers')
+
+    @classmethod
+    def read_joined_table(cls) -> pd.DataFrame:
+        with session_scope() as session:
+            query = session.query(
+                PowerNominal.power,
+                VoltageNominal.voltage,
+                Scheme.vector_group,
+                cls.power_short_circuit,
+                cls.voltage_short_circuit,
+                cls.resistance_r1,
+                cls.reactance_x1,
+                cls.resistance_r0,
+                cls.reactance_x0
+            ).select_from(
+                cls
+            ).join(
+                PowerNominal, cls.power_id == PowerNominal.id
+            ).join(
+                VoltageNominal, cls.voltage_id == VoltageNominal.id
+            ).join(
+                Scheme, cls.vector_group_id == Scheme.id
+            ).order_by(
+                PowerNominal.power,
+                VoltageNominal.voltage,
+                Scheme.vector_group
+            )
+
+            df = pd.read_sql(query.statement, session.bind, dtype=object)
+            df.insert(0, 'id', pd.Series(range(1, len(df) + 1)))
+            return df

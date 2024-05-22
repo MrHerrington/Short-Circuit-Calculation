@@ -297,6 +297,24 @@ class ConfirmWindow(QtWidgets.QDialog):
         self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
 
 
+class QPlainTextEditLogger(QtWidgets.QPlainTextEdit, logging.Handler):
+    def __init__(self, parent):
+        super(QPlainTextEditLogger, self).__init__(parent)
+        self.setReadOnly(True)
+
+    def emit(self, record):
+        msg = self.format(record)
+
+        if "DEBUG" in msg or "INFO" in msg:
+            msg = f"""<span style='color:#000000;'>{msg}</span>"""
+        elif "WARNING" in msg:
+            msg = f"""<span style='color:#00fff7;'>{msg}</span>"""
+        elif "ERROR" in msg or "CRITICAL" in msg:
+            msg = f"""<span style='color:#ff0000;'>{msg}</span>"""
+
+        self.appendHtml(msg)
+
+
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -309,7 +327,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Initial start interface
         self.switchButton.setChecked(True)
-        self.logsButton.setChecked(True)
+        self.logsButton.setChecked(False)
 
         # Set window position in the center of the screen
         self.window_auto_center()
@@ -341,9 +359,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.consoleInput.installEventFilter(self)
 
-        ###################
+        #####################
         # Result tab settings
-        ###################
+        #####################
 
         pass
 
@@ -352,6 +370,14 @@ class MainWindow(QtWidgets.QMainWindow):
         ######################
 
         self.catalogView.set_figure(GetFigure())
+
+        #######################
+        # Logger frame settings
+        #######################
+
+        self.logsOutput.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s]: %(message)s'))
+        logging.getLogger().addHandler(self.logsOutput)
+        logging.getLogger().setLevel(logging.INFO)
 
         #########################
         # "Settings" tab settings
