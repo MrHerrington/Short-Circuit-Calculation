@@ -3,8 +3,11 @@
 of the category 'transformers'"""
 
 
+from collections import namedtuple
+
 import sqlalchemy as sa
 import sqlalchemy.orm
+from sqlalchemy.inspection import inspect
 import pandas as pd
 
 from ShortCircuitCalc.tools import Base, session_scope
@@ -45,6 +48,9 @@ class Transformer(BaseMixin, Base):
     powers and voltages, resistance and reactance of forward and reverse sequences.
 
     """
+
+    SUBTABLES = PowerNominal, VoltageNominal, Scheme
+
     power_id = sa.orm.mapped_column(
         sa.Integer, sa.ForeignKey(PowerNominal.id, ondelete='CASCADE', onupdate='CASCADE'), sort_order=10)
     voltage_id = sa.orm.mapped_column(
@@ -93,3 +99,52 @@ class Transformer(BaseMixin, Base):
             df = pd.read_sql(query.statement, session.bind, dtype=object)
             df.insert(0, 'id', pd.Series(range(1, len(df) + 1)))
             return df
+
+    @classmethod
+    def insert_joined_table(cls, data) -> None:
+
+        def __temp_row(tab, attr: str) -> None:
+            session.connection().execute(sa.insert(
+                tab
+            ), [
+                {attr: row[attr]}
+            ])
+
+        with session_scope() as session:
+            for row in data:
+
+                attrs = {}
+
+                for table in cls.SUBTABLES:
+                    non_keys_cols = [
+                        col for col in inspect(table).columns.keys() if
+                        col not in [key.name for key in inspect(table).primary_key]
+                    ]
+
+                    Link = namedtuple('Link', ('table', 'attr'))
+                    link = Link(table, *non_keys_cols)
+
+                    try:
+                        __temp_row(link.table, link.attr)
+                        __temp_row.unique = True
+                    except sa.exc.IntegrityError as err:
+                        if 'Duplicate entry' in err.orig.__str__():
+                            pass
+
+                    attrs[link.attr + '_id'] = session.query(table).filter(
+                        getattr(table, link.attr) == row[link.attr]
+                    ).first().id
+
+                if hasattr(__temp_row, 'unique'):
+                    result = session.connection().execute(sa.insert(
+                        cls
+                    ), [
+                        {
+                            **attrs,
+                            **{k: v for k, v in row.items() if k not in attrs}
+                        }
+                    ]).rowcount
+                    print(f"Joined table '{cls.__tablename__}' has been updated. {result} string(s) were inserted.")
+
+                else:
+                    print(f"Joined table '{cls.__tablename__}' not updated. 0 unique string or another problem.")

@@ -18,7 +18,7 @@ GRAPHS_DIR = GUI_DIR / 'resources' / 'graphs'
 
 # Database settings
 SQLITE_DB_NAME = 'electrical_product_catalog.db'
-DB_EXISTING_CONNECTION = 'SQLite'
+DB_EXISTING_CONNECTION = 'MySQL'
 DB_TABLES_CLEAR_INSTALL = True
 ENGINE_ECHO = False
 

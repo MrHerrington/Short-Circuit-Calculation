@@ -154,8 +154,10 @@ class BaseMixin:
             from_csv (Union[str, pathlib.WindowsPath]): Path to the CSV-file.
 
         Sample:
-            PowerNominals.insert_table({'id': 1, 'power': 25}, {'id':9, 'power': 1000}) or
-            PowerNominals.insert_table(DATA_DIR/'power')
+            PowerNominal.insert_table([
+                {'id': 1, 'power': 25}, {'id':9, 'power': 1000}
+            ]) or
+            PowerNominal.insert_table(DATA_DIR/'power')
 
         """
         if all((data is None, from_csv is None)):
