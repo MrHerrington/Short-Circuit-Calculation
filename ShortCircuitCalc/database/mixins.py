@@ -13,6 +13,7 @@ import typing as ty
 import sqlalchemy as sa
 import sqlalchemy.exc
 from sqlalchemy.orm import declared_attr
+from sqlalchemy.inspection import inspect
 import pandas as pd
 import matplotlib.pyplot as plt
 from PyQt5 import QtWidgets
@@ -21,7 +22,7 @@ from tabulate import tabulate
 from ShortCircuitCalc.tools import *
 
 
-__all__ = ('BaseMixin',)
+__all__ = ('BaseMixin', 'JoinedMixin')
 
 
 logger = logging.getLogger(__name__)
@@ -295,6 +296,82 @@ class BaseMixin:
                            'determined according to the highes existing rowid, '
                            'so if none exist then the rowid will be 1')
 
+    @classmethod
+    def get_all_keys(cls, as_str: bool = True):
+
+        all_keys = tuple(inspect(cls).columns.keys())
+
+        if as_str:
+            return all_keys
+        else:
+            return tuple(map(lambda x: getattr(cls, x), all_keys))
+
+    @classmethod
+    def get_primary_key(cls, as_str: bool = True):
+
+        primary_key = next(key.name for key in inspect(cls).primary_key)
+
+        if as_str:
+            return primary_key
+        else:
+            return getattr(cls, primary_key)
+
+    @classmethod
+    def get_foreign_keys(cls, on_side: bool = False, as_str: bool = True):
+
+        foreign_keys = None
+
+        if not on_side:
+            foreign_keys = tuple(
+                key['constrained_columns'][0] for key
+                in inspect(engine).get_foreign_keys(cls.__tablename__)
+            )
+
+        else:
+            for table in Base.metadata.tables:
+                for key in inspect(engine).get_foreign_keys(table):
+                    if key['referred_table'] == cls.__tablename__ \
+                            and key['referred_columns'][0] == cls.get_primary_key():
+                        foreign_keys = key['constrained_columns'][0]
+
+        if foreign_keys is None:
+            return tuple()
+
+        if as_str:
+            return foreign_keys
+
+        else:
+            if isinstance(foreign_keys, str):
+                for table in Base.metadata.tables:
+                    table_class = cls.get_class_from_tablename(table)
+                    if hasattr(table_class, foreign_keys):
+                        return getattr(table_class, foreign_keys)
+
+            if isinstance(foreign_keys, tuple):
+                for table in Base.metadata.tables:
+                    table_class = cls.get_class_from_tablename(table)
+                    if all(map(lambda x: hasattr(table_class, x), foreign_keys)):
+                        return tuple(map(lambda x: getattr(table_class, x), foreign_keys))
+
+    @classmethod
+    def get_non_keys(cls, as_str: bool = True):
+
+        non_keys = tuple(
+            col for col in cls.get_all_keys() if
+            col not in ((cls.get_primary_key(),) + cls.get_foreign_keys())
+        )
+
+        if as_str:
+            return non_keys
+        else:
+            return tuple(getattr(cls, key) for key in non_keys)
+
+    @staticmethod
+    def get_class_from_tablename(tablename) -> Base.metadata:
+        for c in Base.__subclasses__():
+            if c.__tablename__ == tablename:
+                return c
+
     _new_name: ty.ClassVar[ty.Optional[str]]
 
     @classmethod
@@ -349,3 +426,80 @@ class BaseMixin:
             except ValueError:
                 continue
         return val
+
+
+class JoinedMixin:
+
+    __tablename__: ty.ClassVar
+    SUBTABLES: ty.ClassVar
+    get_non_keys: ty.ClassVar
+
+    @classmethod
+    def read_joined_table(cls) -> pd.DataFrame:
+
+        joined_tables_non_keys = tuple(
+            map(lambda x: x.get_non_keys(as_str=False)[0], cls.SUBTABLES)
+        )
+
+        chosen_cols = (
+            *joined_tables_non_keys, *cls.get_non_keys(as_str=False)
+        )
+
+        join_stmt = sa.join(cls, cls.SUBTABLES[0])
+        for table in cls.SUBTABLES[1:]:
+            join_stmt = join_stmt.join(table)
+
+        with session_scope() as session:
+            query = session.query(
+                *chosen_cols
+            ).select_from(
+                join_stmt
+            ).order_by(
+                *joined_tables_non_keys
+            )
+
+            df = pd.read_sql(query.statement, session.bind, dtype=object)
+            df.insert(0, 'id', pd.Series(range(1, len(df) + 1)))
+            return df
+
+    @classmethod
+    def insert_joined_table(cls, data) -> None:
+
+        def __temp_insert(tab, attr: str) -> None:
+            session.connection().execute(sa.insert(
+                tab
+            ), [
+                {attr: row[attr]}
+            ])
+
+        with session_scope() as session:
+            for row in data:
+
+                attrs = {}
+
+                for table in cls.SUBTABLES:
+                    for col_name in table.get_non_keys():
+                        try:
+                            __temp_insert(table, col_name)
+                            __temp_insert.unique = True
+                        except sa.exc.IntegrityError as err:
+                            if 'Duplicate entry' in err.orig.__str__():
+                                pass
+
+                        attrs[table.get_foreign_keys(on_side=True)] = session.query(table).filter(
+                            getattr(table, col_name) == row[col_name]
+                        ).first().id
+
+                if hasattr(__temp_insert, 'unique'):
+                    result = session.connection().execute(sa.insert(
+                        cls
+                    ), [
+                        {
+                            **attrs,
+                            **{k: v for k, v in row.items() if k not in attrs}
+                        }
+                    ]).rowcount
+                    print(f"Joined table '{cls.__tablename__}' has been updated. {result} string(s) were inserted.")
+
+                else:
+                    print(f"Joined table '{cls.__tablename__}' not updated. 0 unique string or another problem.")

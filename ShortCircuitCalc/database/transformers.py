@@ -3,15 +3,12 @@
 of the category 'transformers'"""
 
 
-from collections import namedtuple
-
 import sqlalchemy as sa
 import sqlalchemy.orm
-from sqlalchemy.inspection import inspect
 import pandas as pd
 
 from ShortCircuitCalc.tools import Base, session_scope
-from ShortCircuitCalc.database.mixins import BaseMixin
+from ShortCircuitCalc.database.mixins import BaseMixin, JoinedMixin
 
 
 __all__ = ('PowerNominal', 'VoltageNominal', 'Scheme', 'Transformer')
@@ -41,7 +38,7 @@ class Scheme(BaseMixin, Base):
     transformers = sa.orm.relationship('Transformer', back_populates='schemes')
 
 
-class Transformer(BaseMixin, Base):
+class Transformer(BaseMixin, JoinedMixin, Base):
     """The class describes a table of communication by transformers.
 
     Describes a table of communication by transformers, values of short circuit current
@@ -69,8 +66,9 @@ class Transformer(BaseMixin, Base):
     voltage_nominals = sa.orm.relationship('VoltageNominal', back_populates='transformers')
     schemes = sa.orm.relationship('Scheme', back_populates='transformers')
 
+
     @classmethod
-    def read_joined_table(cls) -> pd.DataFrame:
+    def read_joined_table1(cls) -> pd.DataFrame:
         with session_scope() as session:
             query = session.query(
                 PowerNominal.power,
@@ -85,12 +83,14 @@ class Transformer(BaseMixin, Base):
             ).select_from(
                 cls
             ).join(
-                PowerNominal, cls.power_id == PowerNominal.id
+                PowerNominal
             ).join(
-                VoltageNominal, cls.voltage_id == VoltageNominal.id
+                VoltageNominal
             ).join(
-                Scheme, cls.vector_group_id == Scheme.id
-            ).order_by(
+                Scheme
+            )
+
+            query = getattr(query, 'order_by')(
                 PowerNominal.power,
                 VoltageNominal.voltage,
                 Scheme.vector_group
@@ -100,51 +100,13 @@ class Transformer(BaseMixin, Base):
             df.insert(0, 'id', pd.Series(range(1, len(df) + 1)))
             return df
 
-    @classmethod
-    def insert_joined_table(cls, data) -> None:
-
-        def __temp_row(tab, attr: str) -> None:
-            session.connection().execute(sa.insert(
-                tab
-            ), [
-                {attr: row[attr]}
-            ])
-
-        with session_scope() as session:
-            for row in data:
-
-                attrs = {}
-
-                for table in cls.SUBTABLES:
-                    non_keys_cols = [
-                        col for col in inspect(table).columns.keys() if
-                        col not in [key.name for key in inspect(table).primary_key]
-                    ]
-
-                    Link = namedtuple('Link', ('table', 'attr'))
-                    link = Link(table, *non_keys_cols)
-
-                    try:
-                        __temp_row(link.table, link.attr)
-                        __temp_row.unique = True
-                    except sa.exc.IntegrityError as err:
-                        if 'Duplicate entry' in err.orig.__str__():
-                            pass
-
-                    attrs[link.attr + '_id'] = session.query(table).filter(
-                        getattr(table, link.attr) == row[link.attr]
-                    ).first().id
-
-                if hasattr(__temp_row, 'unique'):
-                    result = session.connection().execute(sa.insert(
-                        cls
-                    ), [
-                        {
-                            **attrs,
-                            **{k: v for k, v in row.items() if k not in attrs}
-                        }
-                    ]).rowcount
-                    print(f"Joined table '{cls.__tablename__}' has been updated. {result} string(s) were inserted.")
-
-                else:
-                    print(f"Joined table '{cls.__tablename__}' not updated. 0 unique string or another problem.")
+        # print(PowerNominal.power,
+        #         VoltageNominal.voltage,
+        #         Scheme.vector_group,
+        #         cls.power_short_circuit,
+        #         cls.voltage_short_circuit,
+        #         cls.resistance_r1,
+        #         cls.reactance_x1,
+        #         cls.resistance_r0,
+        #         cls.reactance_x0)
+        pass
