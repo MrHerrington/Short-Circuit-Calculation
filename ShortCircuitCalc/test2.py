@@ -1,5 +1,6 @@
 from ShortCircuitCalc.database import *
 import sqlalchemy as sa
+from tools import session_scope
 
 
 # Transformer.read_joined_table()
@@ -20,4 +21,8 @@ import sqlalchemy as sa
 # print(PowerNominal.get_primary_key(as_str=False))
 # print(Transformer.get_foreign_keys(on_side=False, as_str=True))
 # print(Transformer.get_non_keys(as_str=False)[0])
-print(Transformer.read_joined_table())
+# print(Transformer.read_joined_table())
+# print(Transformer.update_joined_table(row_id=15))
+# print(Transformer.reset_id())
+print(PowerNominal.update_table([{'id': 1, 'power': 5000}]))
+print(Transformer.show_table())

@@ -7,7 +7,7 @@ import sqlalchemy as sa
 import sqlalchemy.orm
 
 from ShortCircuitCalc.tools import Base
-from ShortCircuitCalc.database.mixins import BaseMixin
+from ShortCircuitCalc.database.mixins import BaseMixin, JoinedMixin
 
 
 __all__ = ('Mark', 'Amount', 'RangeVal', 'Cable')
@@ -37,13 +37,16 @@ class RangeVal(BaseMixin, Base):
     cables = sa.orm.relationship('Cable', back_populates='ranges')
 
 
-class Cable(BaseMixin, Base):
+class Cable(BaseMixin, JoinedMixin, Base):
     """The class describes a table of communication by cables.
 
     Describes a table of communication by cables, permissible values of long-term flowing
     current, resistance and reactance of forward and reverse sequences.
 
     """
+
+    SUBTABLES = Mark, Amount, RangeVal
+
     mark_name_id = sa.orm.mapped_column(
         sa.Integer, sa.ForeignKey(Mark.id, ondelete='CASCADE', onupdate='CASCADE'), sort_order=10)
     multicore_amount_id = sa.orm.mapped_column(

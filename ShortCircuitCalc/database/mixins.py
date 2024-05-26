@@ -2,7 +2,6 @@
 """The module presents class BaseMixin, which extends
 the functionality of the declarative base class 'Base'"""
 
-
 import logging
 import sys
 import pathlib
@@ -21,9 +20,7 @@ from tabulate import tabulate
 
 from ShortCircuitCalc.tools import *
 
-
 __all__ = ('BaseMixin', 'JoinedMixin')
-
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +71,7 @@ class BaseMixin:
             cls.drop_table(cls.__tablename__)
         try:
             Base.metadata.tables[cls.__tablename__].create(engine)
-            logger.info(f"Table '{cls.__tablename__}' has been created.")
+            logger.warning(f"Table '{cls.__tablename__}' has been created.")
         except sa.exc.OperationalError as err:
             logger.warning(f"{type(err)}: Table '{cls.__tablename__}' already exists!")
 
@@ -196,6 +193,7 @@ class BaseMixin:
                 Transformer.update_table({'power': 630}, options='where_condition', attr='power', criteria=[250, 400])
 
         """
+
         def __primary_keys():
             with session_scope() as session:
                 return session.execute(sa.update(cls), data).rowcount
@@ -229,6 +227,7 @@ class BaseMixin:
 
         """
         with session_scope() as session:
+            session.execute(sa.text('PRAGMA FOREIGN_KEYS = ON;'))
             rows_deleted = session.connection().execute(sa.delete(cls).filter(sa.text(filtrate))).rowcount
             logger.warning(f"Rows were deleted from table '{cls.__tablename__}'. {rows_deleted} matches found!")
 
@@ -271,6 +270,7 @@ class BaseMixin:
             else:
                 logger.error(f"Table '{cls.__tablename__}' has not been deleted. Deleting not confirmed.")
                 raise
+
         except sa.exc.OperationalError as err:
             if 'Unknown table' in err.orig.__str__() or 'no such table' in err.orig.__str__():
                 logger.info(f"There is no need to delete the table '{cls.__tablename__}', it does not exist")
@@ -288,13 +288,27 @@ class BaseMixin:
                 session.execute(
                     sa.text(f'UPDATE {cls.__tablename__} SET {cls.__tablename__}.id = @count:= @count + 1;'))
                 session.execute(sa.text(f'ALTER TABLE {cls.__tablename__} AUTO_INCREMENT = 1'))
+
             logger.warning(f"id order for table '{cls.__tablename__}' has been reset!")
 
         # SQLite dialect
         if config_manager('DB_EXISTING_CONNECTION') == 'SQLite':
-            logger.warning('For SQLite basically without AUTOINCREMENT rowid is '
-                           'determined according to the highes existing rowid, '
-                           'so if none exist then the rowid will be 1')
+            with session_scope(False) as session:
+                select_cols = session.query(
+                    *cls.get_non_keys(as_str=False, allow_foreign=True)
+                ).statement
+
+                df = pd.read_sql(select_cols, session.bind, dtype=object)
+                # session.execute(sa.text(f'PRAGMA FOREIGN_KEYS = ON;'))
+                session.execute(sa.text(f'DELETE FROM {cls.__tablename__};'))
+                # need for create SQLITE_SEQUENCE in DB
+                session.execute(sa.text("CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT);"))
+                session.execute(sa.text("DROP TABLE test;"))
+                session.execute(sa.text(f"UPDATE SQLITE_SEQUENCE SET seq = 0 WHERE name = '{cls.__tablename__}';"))
+
+            df.to_sql(f'{cls.__tablename__}', engine, if_exists='append', index=False)
+
+            logger.warning(f"id order for table '{cls.__tablename__}' has been reset!")
 
     @classmethod
     def get_all_keys(cls, as_str: bool = True):
@@ -354,12 +368,19 @@ class BaseMixin:
                         return tuple(map(lambda x: getattr(table_class, x), foreign_keys))
 
     @classmethod
-    def get_non_keys(cls, as_str: bool = True):
+    def get_non_keys(cls, as_str: bool = True, allow_foreign: bool = False):
 
-        non_keys = tuple(
-            col for col in cls.get_all_keys() if
-            col not in ((cls.get_primary_key(),) + cls.get_foreign_keys())
-        )
+        if allow_foreign:
+            non_keys = tuple(
+                col for col in cls.get_all_keys() if
+                col not in cls.get_primary_key()
+            )
+
+        else:
+            non_keys = tuple(
+                col for col in cls.get_all_keys() if
+                col not in ((cls.get_primary_key(),) + cls.get_foreign_keys())
+            )
 
         if as_str:
             return non_keys
@@ -428,14 +449,19 @@ class BaseMixin:
         return val
 
 
-class JoinedMixin:
+BT = ty.TypeVar('BT', bound=Base)
 
-    __tablename__: ty.ClassVar
-    SUBTABLES: ty.ClassVar
-    get_non_keys: ty.ClassVar
+
+class JoinedMixin:
+    @classmethod
+    def get_join_stmt(cls: BT):
+        join_stmt = sa.join(cls, cls.SUBTABLES[0])
+        for table in cls.SUBTABLES[1:]:
+            join_stmt = join_stmt.join(table)
+        return join_stmt
 
     @classmethod
-    def read_joined_table(cls) -> pd.DataFrame:
+    def read_joined_table(cls: BT) -> pd.DataFrame:
 
         joined_tables_non_keys = tuple(
             map(lambda x: x.get_non_keys(as_str=False)[0], cls.SUBTABLES)
@@ -445,9 +471,7 @@ class JoinedMixin:
             *joined_tables_non_keys, *cls.get_non_keys(as_str=False)
         )
 
-        join_stmt = sa.join(cls, cls.SUBTABLES[0])
-        for table in cls.SUBTABLES[1:]:
-            join_stmt = join_stmt.join(table)
+        join_stmt = cls.get_join_stmt()
 
         with session_scope() as session:
             query = session.query(
@@ -463,7 +487,7 @@ class JoinedMixin:
             return df
 
     @classmethod
-    def insert_joined_table(cls, data) -> None:
+    def insert_joined_table(cls: BT, data) -> None:
 
         def __temp_insert(tab, attr: str) -> None:
             session.connection().execute(sa.insert(
@@ -503,3 +527,51 @@ class JoinedMixin:
 
                 else:
                     print(f"Joined table '{cls.__tablename__}' not updated. 0 unique string or another problem.")
+
+    @classmethod
+    def update_joined_table(cls: BT,
+                            row_id=None,
+                            old_source_data=None,
+                            new_source_data=None,
+                            target_row_data=None
+                            ) -> None:
+
+        # Update one string
+        # if row_id or all(old_source_data.values()) and any(target_row_data.values()):
+
+        joined_tables_non_keys = tuple(
+            map(lambda x: x.get_non_keys(as_str=False)[0], cls.SUBTABLES)
+        )
+
+        chosen_cols = (
+            *joined_tables_non_keys, *cls.get_non_keys(as_str=False)
+        )
+
+        join_stmt = cls.get_join_stmt()
+
+        with session_scope() as session:
+            session.query(
+                join_stmt
+            ).filter(
+                sa.or_(
+                    cls.id == row_id,
+                    sa.and_(
+                        getattr(cls.get_class_from_tablename(
+                            [i.table.name for i in join_stmt.columns if i.name == 'power'][0]
+                        ), 'power') == 1600,
+                        getattr(cls.get_class_from_tablename(
+                            [i.table.name for i in join_stmt.columns if i.name == 'voltage'][0]
+                        ), 'voltage') == 0.4,
+                        getattr(cls.get_class_from_tablename(
+                            [i.table.name for i in join_stmt.columns if i.name == 'vector_group'][0]
+                        ), 'vector_group') == 'У/Ун-0'
+                    )
+                )
+            ).update(
+                {cls.resistance_r1: 3.333, cls.reactance_x1: 5.555}
+            )
+
+    # Update source tables strings
+    # if old_source_data and new_source_data:
+    #     if set({k: v for k, v in old_source_data.items() if v}.keys()) == set(new_source_data.keys()):
+    #         pass
