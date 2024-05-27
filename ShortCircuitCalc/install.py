@@ -5,6 +5,8 @@ of basic lookup tables and their filling from equipment parameter catalogs"""
 import typing as ty
 from pathlib import Path
 
+import sqlalchemy as sa
+
 from ShortCircuitCalc.database import *
 from ShortCircuitCalc.tools import *
 from ShortCircuitCalc.config import DATA_DIR, DB_TABLES_CLEAR_INSTALL
@@ -51,6 +53,11 @@ def install(clear: bool = False) -> None:
 
 def installer():
     install(clear=DB_TABLES_CLEAR_INSTALL)
+    if config_manager('DB_EXISTING_CONNECTION') == 'SQLite':
+        with session_scope() as session:
+            # need for create SQLITE_SEQUENCE in DB
+            session.execute(sa.text("CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT);"))
+            session.execute(sa.text("DROP TABLE test;"))
 
 
 if __name__ == '__main__':

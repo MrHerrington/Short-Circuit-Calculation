@@ -37,7 +37,7 @@ class RangeVal(BaseMixin, Base):
     cables = sa.orm.relationship('Cable', back_populates='ranges')
 
 
-class Cable(BaseMixin, JoinedMixin, Base):
+class Cable(JoinedMixin, BaseMixin, Base):
     """The class describes a table of communication by cables.
 
     Describes a table of communication by cables, permissible values of long-term flowing

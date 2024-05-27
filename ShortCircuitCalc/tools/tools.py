@@ -347,6 +347,8 @@ def session_scope(logs: bool = True) -> None:
     """
     session = Session()
     try:
+        if config_manager('DB_EXISTING_CONNECTION') == 'SQLite':
+            session.execute(sa.text("PRAGMA foreign_keys = ON;"))
         yield session
         session.commit()
     except sa.exc.OperationalError as err:

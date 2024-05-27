@@ -185,7 +185,10 @@ class BaseMixin:
 
         Samples:
             for 'primary_keys' method:
-                PowerNominals.update_table({'id': 1, 'power': 25}, {'id':9, 'power': 1000})
+                PowerNominals.update_table([
+                    {'id': 1, 'power': 25}, {'id':9, 'power': 1000}]
+                )
+
             for 'with_alias' method:
                 Transformer.update_table({'vol_id': 2, 'power_id': 10}, options='with_alias',
                                             attr='voltage_id', alias='vol_id')
@@ -196,7 +199,9 @@ class BaseMixin:
 
         def __primary_keys():
             with session_scope() as session:
-                return session.execute(sa.update(cls), data).rowcount
+                session.execute(sa.update(cls), data)
+
+            return len(data)
 
         def __with_alias():
             with session_scope() as session:
@@ -227,7 +232,6 @@ class BaseMixin:
 
         """
         with session_scope() as session:
-            session.execute(sa.text('PRAGMA FOREIGN_KEYS = ON;'))
             rows_deleted = session.connection().execute(sa.delete(cls).filter(sa.text(filtrate))).rowcount
             logger.warning(f"Rows were deleted from table '{cls.__tablename__}'. {rows_deleted} matches found!")
 
@@ -286,29 +290,21 @@ class BaseMixin:
             with session_scope(False) as session:
                 session.execute(sa.text(f'SET @count = 0;'))
                 session.execute(
-                    sa.text(f'UPDATE {cls.__tablename__} SET {cls.__tablename__}.id = @count:= @count + 1;'))
+                    sa.text(
+                        f'UPDATE {cls.__tablename__} SET {cls.__tablename__}.id = @count:= @count + 1;')
+                )
                 session.execute(sa.text(f'ALTER TABLE {cls.__tablename__} AUTO_INCREMENT = 1'))
 
-            logger.warning(f"id order for table '{cls.__tablename__}' has been reset!")
+            logger.warning(f"Id order for table '{cls.__tablename__}' has been reset!")
 
         # SQLite dialect
-        if config_manager('DB_EXISTING_CONNECTION') == 'SQLite':
-            with session_scope(False) as session:
-                select_cols = session.query(
-                    *cls.get_non_keys(as_str=False, allow_foreign=True)
-                ).statement
-
-                df = pd.read_sql(select_cols, session.bind, dtype=object)
-                # session.execute(sa.text(f'PRAGMA FOREIGN_KEYS = ON;'))
-                session.execute(sa.text(f'DELETE FROM {cls.__tablename__};'))
-                # need for create SQLITE_SEQUENCE in DB
-                session.execute(sa.text("CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT);"))
-                session.execute(sa.text("DROP TABLE test;"))
-                session.execute(sa.text(f"UPDATE SQLITE_SEQUENCE SET seq = 0 WHERE name = '{cls.__tablename__}';"))
-
-            df.to_sql(f'{cls.__tablename__}', engine, if_exists='append', index=False)
-
-            logger.warning(f"id order for table '{cls.__tablename__}' has been reset!")
+        if config_manager('DB_EXISTING_CONNECTION') == 'SQLite' and JoinedMixin not in cls.__mro__:
+            print(cls.__mro__)
+            logger.error(
+                f"In 'SQLite' DB resetting the parent table's ('{cls.__tablename__}') "
+                'primary key is not available due to future relationship breakdowns '
+                'between the parent and child tables. Use only child tables.'
+            )
 
     @classmethod
     def get_all_keys(cls, as_str: bool = True):
@@ -547,31 +543,82 @@ class JoinedMixin:
             *joined_tables_non_keys, *cls.get_non_keys(as_str=False)
         )
 
+        cls.reset_id()
         join_stmt = cls.get_join_stmt()
 
-        with session_scope() as session:
-            session.query(
-                join_stmt
-            ).filter(
-                sa.or_(
-                    cls.id == row_id,
-                    sa.and_(
-                        getattr(cls.get_class_from_tablename(
-                            [i.table.name for i in join_stmt.columns if i.name == 'power'][0]
-                        ), 'power') == 1600,
-                        getattr(cls.get_class_from_tablename(
-                            [i.table.name for i in join_stmt.columns if i.name == 'voltage'][0]
-                        ), 'voltage') == 0.4,
-                        getattr(cls.get_class_from_tablename(
-                            [i.table.name for i in join_stmt.columns if i.name == 'vector_group'][0]
-                        ), 'vector_group') == 'У/Ун-0'
+        if config_manager('DB_EXISTING_CONNECTION') == 'MySQL':
+            with session_scope() as session:
+                session.query(
+                    join_stmt
+                ).filter(
+                    sa.or_(
+                        cls.id == row_id,
+                        sa.and_(
+                            getattr(cls.get_class_from_tablename(
+                                [col.table.name for col in join_stmt.columns if col.name == 'power'][0]
+                            ), 'power') == 1600,
+                            getattr(cls.get_class_from_tablename(
+                                [col.table.name for col in join_stmt.columns if col.name == 'voltage'][0]
+                            ), 'voltage') == 0.4,
+                            getattr(cls.get_class_from_tablename(
+                                [col.table.name for col in join_stmt.columns if col.name == 'vector_group'][0]
+                            ), 'vector_group') == 'У/Ун-0'
+                        )
                     )
+                ).update(
+                    {cls.resistance_r1: 3.333, cls.reactance_x1: 5.555}
                 )
-            ).update(
-                {cls.resistance_r1: 3.333, cls.reactance_x1: 5.555}
-            )
+
+        if config_manager('DB_EXISTING_CONNECTION') == 'SQLite':
+            with session_scope() as session:
+                options = tuple(
+                    getattr(table, attr) == old_source_data[attr]
+                    for table in cls.SUBTABLES
+                    for attr in old_source_data
+                    if hasattr(table, attr)
+                )
+
+                primary_key_queries = (
+                    session.query(table.id).filter(options[idx])
+                    for idx, table in enumerate(cls.SUBTABLES)
+                )
+
+                session.query(
+                    cls
+                ).filter(
+                    sa.or_(
+                        cls.id == row_id,
+                        sa.and_(
+                            key == query.as_scalar()
+                            for key, query in zip(
+                                cls.get_foreign_keys(as_str=False), primary_key_queries
+                            )
+                        )
+                    )
+                ).update(
+                    {cls.resistance_r1: 3.333, cls.reactance_x1: 5.555}
+                )
 
     # Update source tables strings
     # if old_source_data and new_source_data:
     #     if set({k: v for k, v in old_source_data.items() if v}.keys()) == set(new_source_data.keys()):
     #         pass
+
+    @classmethod
+    def reset_id(cls: BT) -> None:
+        super(JoinedMixin, cls).reset_id()
+        # SQL dialect
+        if config_manager('DB_EXISTING_CONNECTION') == 'SQLite':
+            with session_scope(False) as session:
+                select_cols = session.query(
+                    *cls.get_non_keys(as_str=False, allow_foreign=True)
+                ).statement
+
+                df = pd.read_sql(select_cols, session.bind, dtype=object)
+
+                session.execute(sa.text(f'DELETE FROM {cls.__tablename__};'))
+                session.execute(sa.text(f"UPDATE SQLITE_SEQUENCE SET seq = 0 WHERE name = '{cls.__tablename__}';"))
+
+            df.to_sql(f'{cls.__tablename__}', engine, if_exists='append', index=False)
+
+            logger.warning(f"Id order for table '{cls.__tablename__}' has been reset!")

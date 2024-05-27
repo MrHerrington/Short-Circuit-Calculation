@@ -38,7 +38,7 @@ class Scheme(BaseMixin, Base):
     transformers = sa.orm.relationship('Transformer', back_populates='schemes')
 
 
-class Transformer(BaseMixin, JoinedMixin, Base):
+class Transformer(JoinedMixin, BaseMixin, Base):
     """The class describes a table of communication by transformers.
 
     Describes a table of communication by transformers, values of short circuit current

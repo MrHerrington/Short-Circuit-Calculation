@@ -7,7 +7,7 @@ import sqlalchemy as sa
 import sqlalchemy.orm
 
 from ShortCircuitCalc.tools import Base
-from ShortCircuitCalc.database.mixins import BaseMixin
+from ShortCircuitCalc.database.mixins import BaseMixin, JoinedMixin
 
 
 __all__ = ('Device', 'CurrentNominal', 'CurrentBreaker', 'OtherContact')
@@ -33,7 +33,7 @@ class CurrentNominal(BaseMixin, Base):
     current_breakers = sa.orm.relationship('CurrentBreaker', back_populates='current_nominals')
 
 
-class CurrentBreaker(BaseMixin, Base):
+class CurrentBreaker(JoinedMixin, BaseMixin, Base):
     """The class describes a table of the switching devices.
 
     Describes a table of the switching devices, it's device type id, current value id, resistances.

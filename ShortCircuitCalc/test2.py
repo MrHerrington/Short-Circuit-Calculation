@@ -22,7 +22,13 @@ from tools import session_scope
 # print(Transformer.get_foreign_keys(on_side=False, as_str=True))
 # print(Transformer.get_non_keys(as_str=False)[0])
 # print(Transformer.read_joined_table())
-# print(Transformer.update_joined_table(row_id=15))
+print(Transformer.update_joined_table(row_id=15, old_source_data={
+                                          'power': 100,
+                                          'voltage': 0.4,
+                                          'vector_group': 'У/Ун-0'
+                                      }
+                                      )
+      )
+# print(PowerNominal.reset_id())
 # print(Transformer.reset_id())
-print(PowerNominal.update_table([{'id': 1, 'power': 5000}]))
-print(Transformer.show_table())
+# print(PowerNominal.update_table([{'id': 1, 'power': 5000}]))
