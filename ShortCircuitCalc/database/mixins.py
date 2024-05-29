@@ -299,7 +299,6 @@ class BaseMixin:
 
         # SQLite dialect
         if config_manager('DB_EXISTING_CONNECTION') == 'SQLite' and JoinedMixin not in cls.__mro__:
-            print(cls.__mro__)
             logger.error(
                 f"In 'SQLite' DB resetting the parent table's ('{cls.__tablename__}') "
                 'primary key is not available due to future relationship breakdowns '
@@ -526,83 +525,90 @@ class JoinedMixin:
 
     @classmethod
     def update_joined_table(cls: BT,
-                            row_id=None,
                             old_source_data=None,
                             new_source_data=None,
                             target_row_data=None
                             ) -> None:
 
-        # Update one string
-        # if row_id or all(old_source_data.values()) and any(target_row_data.values()):
+        old_source_dict = None
+        __UPDATED = []
 
-        joined_tables_non_keys = tuple(
-            map(lambda x: x.get_non_keys(as_str=False)[0], cls.SUBTABLES)
-        )
+        if old_source_data:
+            old_source_dict = {
+                getattr(table, attr): old_source_data[attr]
+                for table in cls.SUBTABLES
+                for attr in old_source_data
+                if hasattr(table, attr)
+            }
 
-        chosen_cols = (
-            *joined_tables_non_keys, *cls.get_non_keys(as_str=False)
-        )
-
-        cls.reset_id()
-        join_stmt = cls.get_join_stmt()
-
-        if config_manager('DB_EXISTING_CONNECTION') == 'MySQL':
             with session_scope() as session:
-                session.query(
-                    join_stmt
-                ).filter(
-                    sa.or_(
-                        cls.id == row_id,
-                        sa.and_(
-                            getattr(cls.get_class_from_tablename(
-                                [col.table.name for col in join_stmt.columns if col.name == 'power'][0]
-                            ), 'power') == 1600,
-                            getattr(cls.get_class_from_tablename(
-                                [col.table.name for col in join_stmt.columns if col.name == 'voltage'][0]
-                            ), 'voltage') == 0.4,
-                            getattr(cls.get_class_from_tablename(
-                                [col.table.name for col in join_stmt.columns if col.name == 'vector_group'][0]
-                            ), 'vector_group') == 'У/Ун-0'
-                        )
-                    )
-                ).update(
-                    {cls.resistance_r1: 3.333, cls.reactance_x1: 5.555}
-                )
-
-        if config_manager('DB_EXISTING_CONNECTION') == 'SQLite':
-            with session_scope() as session:
-                options = tuple(
-                    getattr(table, attr) == old_source_data[attr]
-                    for table in cls.SUBTABLES
-                    for attr in old_source_data
-                    if hasattr(table, attr)
-                )
-
                 primary_key_queries = (
-                    session.query(table.id).filter(options[idx])
-                    for idx, table in enumerate(cls.SUBTABLES)
+                    session.query(table.id).filter(relation[0] == relation[1])
+                    for table, relation in zip(cls.SUBTABLES, old_source_dict.items())
                 )
 
-                session.query(
+        # Update one string in joined table (update non_keys cols)
+        if old_source_data and target_row_data:
+            with session_scope() as session:
+                query = session.query(
                     cls
                 ).filter(
-                    sa.or_(
-                        cls.id == row_id,
-                        sa.and_(
-                            key == query.as_scalar()
-                            for key, query in zip(
-                                cls.get_foreign_keys(as_str=False), primary_key_queries
-                            )
+                    sa.and_(
+                        key == query.as_scalar()
+                        for key, query in zip(
+                            cls.get_foreign_keys(as_str=False), primary_key_queries
                         )
                     )
                 ).update(
-                    {cls.resistance_r1: 3.333, cls.reactance_x1: 5.555}
+                    {
+                        getattr(cls, k): v
+                        for k, v in target_row_data.items()
+                        if v
+                    }
                 )
 
-    # Update source tables strings
-    # if old_source_data and new_source_data:
-    #     if set({k: v for k, v in old_source_data.items() if v}.keys()) == set(new_source_data.keys()):
-    #         pass
+            __UPDATED.append(query)
+
+        # Update source tables strings (update non_keys cols in source tables)
+        if old_source_data and new_source_data:
+
+            new_source_dict = {
+                getattr(table, attr): new_source_data[attr]
+                for table in cls.SUBTABLES
+                for attr in new_source_data
+                if hasattr(table, attr)
+            }
+
+            changed_tables = tuple(
+                table
+                for table in cls.SUBTABLES
+                for attr in new_source_data
+                if hasattr(table, attr)
+            )
+
+            for source_table in changed_tables:
+                source_attr = source_table.get_non_keys()[0]
+
+                with session_scope() as session:
+                    query = session.query(
+                        source_table
+                    ).filter(
+                        getattr(source_table, source_attr) == old_source_dict[getattr(source_table, source_attr)]
+                    ).update(
+                        {
+                            source_attr: new_source_dict[getattr(source_table, source_attr)]
+                        }
+                    )
+
+                __UPDATED.append(query)
+
+        if __UPDATED:
+            logger.warning(f"Table '{cls.__tablename__}' has been changed. "
+                           f"{sum(__UPDATED)} record(s) were updated.")
+
+        else:
+            logger.error(f"Table '{cls.__tablename__}' not updated. "
+                         'Uncorrected / empty query or another problem.')
 
     @classmethod
     def reset_id(cls: BT) -> None:
