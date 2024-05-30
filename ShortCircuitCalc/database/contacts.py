@@ -39,6 +39,9 @@ class CurrentBreaker(JoinedMixin, BaseMixin, Base):
     Describes a table of the switching devices, it's device type id, current value id, resistances.
 
     """
+
+    SUBTABLES = Device, CurrentNominal
+
     device_type_id = sa.orm.mapped_column(
         sa.Integer, sa.ForeignKey(Device.id, ondelete='CASCADE', onupdate='CASCADE'), sort_order=10)
     current_value_id = sa.orm.mapped_column(

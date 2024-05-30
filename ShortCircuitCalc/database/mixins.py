@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
-"""The module presents class BaseMixin, which extends
-the functionality of the declarative base class 'Base'"""
+"""
+The module presents mixin classes, which extends
+the functionality of the declarative base class 'Base'.
+
+"""
+
 
 import logging
 import sys
@@ -20,13 +24,20 @@ from tabulate import tabulate
 
 from ShortCircuitCalc.tools import *
 
+
 __all__ = ('BaseMixin', 'JoinedMixin')
+
 
 logger = logging.getLogger(__name__)
 
 
+BT = ty.TypeVar('BT', bound=Base)
+
+
 class BaseMixin:
     """Class extends the functionality of the declarative base class 'Base'"""
+
+    __new_name: str = None
 
     @declared_attr.directive
     @classmethod
@@ -306,8 +317,17 @@ class BaseMixin:
             )
 
     @classmethod
-    def get_all_keys(cls, as_str: bool = True):
+    def get_all_keys(cls, as_str: bool = True) \
+            -> ty.Union[tuple, ty.Tuple[str, sa.orm.attributes.InstrumentedAttribute]]:
+        """The method generates all columns for the table.
 
+        Args:
+            as_str (bool, optional): Defaults to True. Accepts name string format for columns.
+        Returns:
+            Union[tuple, Tuple[str, sa.orm.attributes.InstrumentedAttribute]]:
+            Returns the columns as names strings or as ORM objects.
+
+        """
         all_keys = tuple(inspect(cls).columns.keys())
 
         if as_str:
@@ -316,8 +336,17 @@ class BaseMixin:
             return tuple(map(lambda x: getattr(cls, x), all_keys))
 
     @classmethod
-    def get_primary_key(cls, as_str: bool = True):
+    def get_primary_key(cls, as_str: bool = True) \
+            -> ty.Union[str, sa.orm.InstrumentedAttribute]:
+        """The method generates primary key column for the table.
 
+        Args:
+            as_str (bool, optional): Defaults to True. Accepts name string format for columns.
+        Returns:
+            Union[str, sa.orm.InstrumentedAttribute]: Returns the primary key column
+            as name string or as ORM object.
+
+        """
         primary_key = next(key.name for key in inspect(cls).primary_key)
 
         if as_str:
@@ -326,8 +355,20 @@ class BaseMixin:
             return getattr(cls, primary_key)
 
     @classmethod
-    def get_foreign_keys(cls, on_side: bool = False, as_str: bool = True):
+    def get_foreign_keys(cls, on_side: bool = False, as_str: bool = True) \
+            -> ty.Union[str, tuple, sa.orm.InstrumentedAttribute,
+                        ty.Tuple[str, sa.orm.InstrumentedAttribute]]:
+        """The method generates foreign keys columns for the table.
 
+        Args:
+            as_str (bool, optional): Defaults to True. Accepts name string format for columns.
+            on_side (bool, optional): Defaults to False. Accept return foreign key from bind table.
+        Returns:
+            Union[str, tuple, sa.orm.InstrumentedAttribute,
+                  ty.Tuple[str, sa.orm.InstrumentedAttribute]]: Returns the foreign keys columns
+            as name strings or as ORM objects.
+
+        """
         foreign_keys = None
 
         if not on_side:
@@ -363,8 +404,18 @@ class BaseMixin:
                         return tuple(map(lambda x: getattr(table_class, x), foreign_keys))
 
     @classmethod
-    def get_non_keys(cls, as_str: bool = True, allow_foreign: bool = False):
+    def get_non_keys(cls, as_str: bool = True, allow_foreign: bool = False) \
+            -> ty.Union[tuple, ty.Union[str, sa.orm.InstrumentedAttribute]]:
+        """The method generates not keys columns for the table.
 
+        Args:
+            as_str (bool, optional): Defaults to True. Accepts name string format for columns.
+            allow_foreign (bool, optional): Defaults to False. Accept include foreign keys in result.
+        Returns:
+            Union[tuple, Union[str, sa.orm.InstrumentedAttribute]]:
+            Returns the not keys columns as name strings or as ORM objects (and foreign keys if allowed).
+
+        """
         if allow_foreign:
             non_keys = tuple(
                 col for col in cls.get_all_keys() if
@@ -383,12 +434,19 @@ class BaseMixin:
             return tuple(getattr(cls, key) for key in non_keys)
 
     @staticmethod
-    def get_class_from_tablename(tablename) -> Base.metadata:
+    def get_class_from_tablename(tablename: str) -> Base.metadata:
+        """
+        The method returns table ORM class from table name.
+
+        Args:
+            tablename (str): Accept table name as string.
+        Returns:
+            Base.metadata: Returns table ORM class.
+
+        """
         for c in Base.__subclasses__():
             if c.__tablename__ == tablename:
                 return c
-
-    _new_name: ty.ClassVar[ty.Optional[str]]
 
     @classmethod
     def __camel_to_snake(cls, name: str) -> str:
@@ -407,8 +465,8 @@ class BaseMixin:
         if not hasattr(cls, '_new_name'):
             name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
             name = re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
-            cls._new_name = name
-        return cls._new_name
+            cls.__new_name = name
+        return cls.__new_name
 
     @classmethod
     def __csv_to_list_of_dicts(cls, path: ty.Union[str, pathlib.WindowsPath]) -> ty.List[dict]:
@@ -444,12 +502,23 @@ class BaseMixin:
         return val
 
 
-BT = ty.TypeVar('BT', bound=Base)
-
-
 class JoinedMixin:
     @classmethod
-    def get_join_stmt(cls: BT):
+    def get_join_stmt(cls: BT) -> sa.sql.Join:
+        """
+        The method returns joined table statement.
+
+        Returns:
+            sa.sql.Join: Joined table statement.
+        Example:
+            print(Transformer.get_join_stmt()) ->
+
+            'transformer
+                JOIN power_nominal ON power_nominal.id = transformer.power_id
+                JOIN voltage_nominal ON voltage_nominal.id = transformer.voltage_id
+                JOIN scheme ON scheme.id = transformer.vector_group_id'
+
+        """
         join_stmt = sa.join(cls, cls.SUBTABLES[0])
         for table in cls.SUBTABLES[1:]:
             join_stmt = join_stmt.join(table)
@@ -457,7 +526,17 @@ class JoinedMixin:
 
     @classmethod
     def read_joined_table(cls: BT) -> pd.DataFrame:
+        """The method returns joined table as pandas DataFrame.
 
+        Method returns joined table as pandas DataFrame with generated id columns.
+
+        Returns:
+            pd.DataFrame: Joined table as pandas DataFrame.
+        Note:
+            Further on the project, the joined table is a summary table of several source
+            tables and the object of their association with additional information.
+
+        """
         joined_tables_non_keys = tuple(
             map(lambda x: x.get_non_keys(as_str=False)[0], cls.SUBTABLES)
         )
@@ -482,9 +561,44 @@ class JoinedMixin:
             return df
 
     @classmethod
-    def insert_joined_table(cls: BT, data) -> None:
+    def insert_joined_table(cls: BT, data: ty.List[dict]) -> None:
+        """The method inserts new string into joined table.
 
-        def __temp_insert(tab, attr: str) -> None:
+        The method inserts new string into joined table. First, unique results are
+        inserted into the source tables, then record id are extracted from the sources,
+        which, along with other parameters, are added to the association object (joined table).
+
+        Args:
+            data (List[dict]): List of dictionaries with pairs "column name - value".
+        Note:
+            For correct insert query must contain all not empty fields of joined table row.
+            List type need for package insert method.
+        Example:
+            Transformer.insert_joined_table(
+                [
+                    {
+                        'power': 6300,
+                        'voltage': 0.4,
+                        'vector_group': 'У/Ун-0',
+                        'power_short_circuit': 0.11,
+                        'voltage_short_circuit': 0.22,
+                        'resistance_r1': 0.333,
+                        'reactance_x1': 0.444,
+                        'resistance_r0': 0.555,
+                        'reactance_x0': 0.777
+                    }
+                ]
+            )
+
+        """
+        def __temp_insert(tab: BT, attr: str) -> None:
+            """
+            The method insert new string into source table.
+
+            Args:
+                attr (str): Not primary key column name.
+
+            """
             session.connection().execute(sa.insert(
                 tab
             ), [
@@ -525,11 +639,41 @@ class JoinedMixin:
 
     @classmethod
     def update_joined_table(cls: BT,
-                            old_source_data=None,
-                            new_source_data=None,
-                            target_row_data=None
+                            old_source_data: dict = None,
+                            new_source_data: dict = None,
+                            target_row_data: dict = None
                             ) -> None:
+        """The method updates rows into joined table (and source if necessary).
 
+        Args:
+            old_source_data (dict): Existing source attribute pairs "column name - value".
+            new_source_data (dict): New source attribute pairs "column name - value".
+            target_row_data (dict): New joined table attribute pairs "column name - value".
+        Note:
+            First insert target row data into joined table.
+            Then, if necessary, updated source rows.
+        Example:
+            Transformer.update_joined_table(
+                old_source_data={
+                    'voltage': 0.4,
+                    'power': 100,
+                    'vector_group': 'У/Ун-0'
+                }, \n
+                new_source_data={
+                    'vector_group': 'У/Z-0',
+                    'power': 6300
+                }, \n
+                target_row_data={
+                    'power_short_circuit': 0.11,
+                    'voltage_short_circuit': 0.22,
+                    'resistance_r1': 0.333,
+                    'reactance_x1': 0.444,
+                    'resistance_r0': 0.555,
+                    'reactance_x0': 0.777
+                }
+            )
+
+        """
         old_source_dict = None
         __UPDATED = []
 
@@ -603,16 +747,108 @@ class JoinedMixin:
                 __UPDATED.append(query)
 
         if __UPDATED:
-            logger.warning(f"Table '{cls.__tablename__}' has been changed. "
-                           f"{sum(__UPDATED)} record(s) were updated.")
+            logger.warning(f"Joined table '{cls.__tablename__}' has been changed. "
+                           f"{sum(__UPDATED)} record(s) in joined and source tables were updated.")
 
         else:
-            logger.error(f"Table '{cls.__tablename__}' not updated. "
+            logger.error(f"Joined table '{cls.__tablename__}' not updated. "
+                         'Uncorrected / empty query or another problem.')
+
+    @classmethod
+    def delete_joined_table(cls: BT,
+                            source_data=None,
+                            from_source: bool = False
+                            ) -> None:
+        """The method deletes rows into joined table (and source if necessary).
+
+        Args:
+            source_data (dict): Existing source attribute pairs "column name - value".
+            from_source (bool): If True, deletes rows from source table, otherwise from joined table.
+        Note:
+            Default delete single rows from joined table.
+        Example:
+            Transformer.delete_joined_table(
+                source_data={
+                    'voltage': 0.4,
+                    'vector_group': 'У/Ун-0',
+                    'power': 100
+                }, \n
+                from_source=True
+            )
+
+        """
+        source_dict = None
+        __DELETED = None
+
+        if source_data:
+            source_dict = {
+                getattr(table, attr): source_data[attr]
+                for table in cls.SUBTABLES
+                for attr in source_data
+                if hasattr(table, attr)
+            }
+
+            with session_scope() as session:
+                primary_key_queries = (
+                    session.query(table.id).filter(relation[0] == relation[1])
+                    for table, relation in zip(cls.SUBTABLES, source_dict.items())
+                )
+
+        # Delete one string in joined table
+        if source_data and not from_source:
+            with session_scope() as session:
+                query = session.query(
+                    cls
+                ).filter(
+                    sa.and_(
+                        key == query.as_scalar()
+                        for key, query in zip(
+                            cls.get_foreign_keys(as_str=False), primary_key_queries
+                        )
+                    )
+                ).delete()
+
+            __DELETED = True
+            logger.warning(f"Joined table '{cls.__tablename__}' has been changed. "
+                           f"{query} record(s) from joined table were deleted.")
+
+        # Delete source tables strings
+        if source_data and from_source:
+
+            changed_tables = tuple(
+                table
+                for table in cls.SUBTABLES
+                for attr in source_data
+                if hasattr(table, attr)
+            )
+
+            for source_table in changed_tables:
+                source_attr = source_table.get_non_keys()[0]
+
+                with session_scope() as session:
+                    query = session.query(
+                        source_table
+                    ).filter(
+                        getattr(source_table, source_attr) == source_dict[getattr(source_table, source_attr)]
+                    ).delete()
+
+            __DELETED = True
+            logger.warning(f"Joined table '{cls.__tablename__}' has been changed. "
+                           f"{query} record(s) from source tables were deleted.")
+
+        if not __DELETED:
+            logger.error(f"Joined table '{cls.__tablename__}' not updated. "
                          'Uncorrected / empty query or another problem.')
 
     @classmethod
     def reset_id(cls: BT) -> None:
+        """The method extends 'reset_id' method from class 'BaseMixin'.
+
+        This part of parent method allows to reset id order for joined table in SQLite DB.
+
+        """
         super(JoinedMixin, cls).reset_id()
+
         # SQL dialect
         if config_manager('DB_EXISTING_CONNECTION') == 'SQLite':
             with session_scope(False) as session:
@@ -627,4 +863,4 @@ class JoinedMixin:
 
             df.to_sql(f'{cls.__tablename__}', engine, if_exists='append', index=False)
 
-            logger.warning(f"Id order for table '{cls.__tablename__}' has been reset!")
+            logger.warning(f"Id order for joined table '{cls.__tablename__}' has been reset!")
