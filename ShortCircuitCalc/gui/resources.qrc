@@ -4,6 +4,16 @@
     <file>resources/images/main_back.jpg</file>
   </qresource>
   <qresource prefix="icons">
+    <file>resources/icons/cables.svg</file>
+    <file>resources/icons/db_insert.svg</file>
+    <file>resources/icons/db_delete_row.svg</file>
+    <file>resources/icons/db_delete_source.svg</file>
+    <file>resources/icons/db_install.svg</file>
+    <file>resources/icons/db_manage.svg</file>
+    <file>resources/icons/db_update.svg</file>
+    <file>resources/icons/other_resistances.svg</file>
+    <file>resources/icons/switchers.svg</file>
+    <file>resources/icons/transformers.svg</file>
     <file>resources/icons/settings.svg</file>
     <file>resources/icons/catalog.svg</file>
     <file>resources/icons/switch.svg</file>
