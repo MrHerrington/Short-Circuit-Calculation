@@ -2,7 +2,6 @@
 """The module contains GUI windows templates, using PyQt5 and Matplotlib.
 Classes are based on ui files, developed by QtDesigner and customized."""
 
-
 from collections import namedtuple
 
 import logging
@@ -20,15 +19,13 @@ from PyQt5 import QtWidgets, QtCore, QtGui, uic
 # noinspection PyUnresolvedReferences
 import ShortCircuitCalc.gui.resources
 from ShortCircuitCalc.gui.figures import *
+from ShortCircuitCalc.database import *
 from ShortCircuitCalc.tools import *
 from ShortCircuitCalc.config import *
 
-
-__all__ = ('MainWindow', 'ConfirmWindow', 'CustomGraphicView')
-
+__all__ = ('MainWindow', 'DatabaseBrowser', 'CustomGraphicView', 'ConfirmWindow')
 
 logger = logging.getLogger(__name__)
-
 
 # Select the backend used for rendering and GUI integration.
 matplotlib.use('Qt5Agg')
@@ -322,12 +319,22 @@ class MainWindow(QtWidgets.QMainWindow):
         self.init_gui()
 
     def init_gui(self):
-        # Hiding tab bar for QTabWidget
-        self.findChild(QtWidgets.QTabBar).hide()
+        #######################
+        # Logger frame settings
+        #######################
 
+        self.logsOutput.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s]: %(message)s'))
+        logging.getLogger().addHandler(self.logsOutput)
+        logging.getLogger().setLevel(logging.INFO)
+
+        #########################
         # Initial start interface
+        #########################
         self.switchButton.setChecked(True)
         self.logsButton.setChecked(False)
+
+        # Hiding tab bar for QTabWidget
+        self.findChild(QtWidgets.QTabBar).hide()
 
         # Set window position in the center of the screen
         self.window_auto_center()
@@ -369,15 +376,10 @@ class MainWindow(QtWidgets.QMainWindow):
         # Catalog tab settings
         ######################
 
-        self.catalogView.set_figure(GetFigure())
-
-        #######################
-        # Logger frame settings
-        #######################
-
-        self.logsOutput.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s]: %(message)s'))
-        logging.getLogger().addHandler(self.logsOutput)
-        logging.getLogger().setLevel(logging.INFO)
+        try:
+            self.catalogView.set_figure(GetFigure())
+        except (Exception,):
+            logger.error('Problem with catalog initialization.')
 
         #########################
         # "Settings" tab settings
@@ -506,3 +508,57 @@ class MainWindow(QtWidgets.QMainWindow):
             event.accept()
         else:
             event.ignore()
+
+
+class DatabaseBrowser(QtWidgets.QWidget):
+    def __init__(self):
+        super(DatabaseBrowser, self).__init__()
+        uic.loadUi(GUI_DIR / 'db_browser.ui', self)
+        self.init_gui()
+
+    def init_gui(self):
+        #########################
+        # Initial start interface
+        #########################
+        self.viewerWidget.setCurrentIndex(0)
+        self.optionsWidget.setCurrentIndex(0)
+        self.manageButton.setChecked(True)
+
+        # Set DB name and logo
+        db_key = config_manager('DB_EXISTING_CONNECTION')
+
+        names = {
+            'MySQL': 'MySQL Browser',
+            'SQLite': 'SQLite Browser',
+            False: 'Database Browser'
+        }
+
+        logos = {
+            'MySQL': QtGui.QPixmap(':/logos/resources/logos/db_mysql_rectangle.svg'),
+            'SQLite': QtGui.QPixmap(':/logos/resources/logos/db_sqlite_rectangle.svg'),
+            False: QtGui.QPixmap(':/logos/resources/logos/db_no_connections.svg')
+        }
+
+        self.setWindowTitle(names[db_key])
+        self.iconLabel.setPixmap(logos[db_key])
+        self.iconLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+
+        # Show catalog tables
+        views_tables = zip(
+            ('transformersView', 'cablesView', 'contactsView', 'resistancesView'),
+            (Transformer, Cable, CurrentBreaker, OtherContact)
+        )
+
+        tables_errors = []
+
+        for view, table in views_tables:
+            try:
+                if 'JoinedMixin' in map(lambda x: x.__name__, table.__mro__):
+                    getattr(self, view).set_figure(table.show_table(table.read_joined_table()))
+                else:
+                    getattr(self, view).set_figure(table.show_table(table.read_table()))
+            except (Exception,):
+                tables_errors.append(table.__tablename__)
+
+        if tables_errors:
+            logger.error(f"Problems with table(s): {', '.join(tables_errors)}. Try to reinstall database.")

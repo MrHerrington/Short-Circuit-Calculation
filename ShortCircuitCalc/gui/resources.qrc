@@ -25,4 +25,10 @@
     <file>resources/icons/file_save.svg</file>
     <file>resources/icons/save_part.svg</file>
   </qresource>
+  <qresource prefix="logos">
+    <file>resources/logos/db_mysql_horizontal.svg</file>
+    <file>resources/logos/db_mysql_rectangle.svg</file>
+    <file>resources/logos/db_no_connections.svg</file>
+    <file>resources/logos/db_sqlite_rectangle.svg</file>
+  </qresource>
 </RCC>

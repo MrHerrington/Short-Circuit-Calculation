@@ -7,7 +7,6 @@ the functionality of the declarative base class 'Base'.
 
 
 import logging
-import sys
 import pathlib
 import re
 import csv
@@ -18,9 +17,7 @@ import sqlalchemy.exc
 from sqlalchemy.orm import declared_attr
 from sqlalchemy.inspection import inspect
 import pandas as pd
-import matplotlib.pyplot as plt
-from PyQt5 import QtWidgets
-from tabulate import tabulate
+from matplotlib import figure
 
 from ShortCircuitCalc.tools import *
 
@@ -100,54 +97,55 @@ class BaseMixin:
             pd.DataFrame: Object with query results
 
         """
-        with session_scope() as session:
+        with session_scope(logs=False) as session:
+            chosen_cols = cls.get_non_keys(as_str=False, allow_foreign=True)
+
             if filtrate is None:
-                df = pd.read_sql(session.query(cls).statement, session.bind, dtype=object)[:limit]
+                query = session.query(*chosen_cols)
+                df = pd.read_sql(query.statement, session.bind, dtype=object)[:limit]
+
             else:
-                df = pd.read_sql(
-                    session.query(cls).filter(sa.text(filtrate)).statement, session.bind, dtype=object)[:limit]
-        df = df.sort_values(by=['id'])
+                query = session.query(
+                    *chosen_cols
+                ).filter(
+                    sa.text(filtrate)
+                ).order_by(
+                    *chosen_cols
+                )
+                df = pd.read_sql(query.statement, session.bind, dtype=object)[:limit]
+
+        df.insert(0, 'id', pd.Series(range(1, len(df) + 1)))
         return df
 
     @classmethod
-    def show_table(cls, gui: bool = True, filtrate: ty.Optional[str] = None, limit: ty.Optional[int] = None,
-                   indexes: bool = False) -> None:
-        """The method shows the table.
+    def show_table(cls,
+                   dataframe: pd.DataFrame,
+                   show_title: bool = False
+                   ) -> figure.Figure:
+        """The method return the table matplotlib figure.
 
         Args:
-            gui (bool): Defaults by True, shows the table in the GUI mode.
-            filtrate (Optional[str]): Defaults to None. Accepts the filtering condition.
-            limit (Optional[int]): Defaults shows all results, otherwise shows the specified number of results.
-            indexes (bool): Parameter shows rows indexes of the query results.
-        Filtrate query sample:
-            PowerNominal.show_table(filtrate='power <= 63') or
-            VoltageNominal.show_table(filtrate='voltage = 0.4')
-        Note:
-             This method prints query statement.
+            dataframe (Optional[pd.DataFrame]): Defaults to None. Accepts the Pandas dataframe.
+            show_title (bool): Defaults to False. Accepts the title of the table.
+        Returns:
+            figure.Figure: Matplotlib figure object.
 
         """
-        df = cls.read_table(filtrate=filtrate, limit=limit)
-        if not gui:
-            logger.info('\n' + tabulate(df, headers='keys', tablefmt='psql', numalign='center', showindex=indexes))
-        else:
-            from ShortCircuitCalc.gui.windows import CustomGraphicView
-            # Creating fig in matplotlib
-            df = cls.read_table()
-            figsize_x = len(df.columns) + 1
-            figsize_y = (len(df.index) + 1) * 0.4
-            fig, ax = plt.subplots(figsize=(figsize_x, figsize_y))
-            ax.axis('off')
+        figsize_x = len(dataframe.columns) + 1
+        figsize_y = (len(dataframe.index) + 1) * 0.4
+        fig = figure.Figure(figsize=(figsize_x, figsize_y))
+        ax = fig.canvas.figure.subplots(1, 1)
+        ax.axis('off')
+        if show_title:
             ax.set_title(cls.__tablename__.title())
-            table = ax.table(cellText=df.values, colLabels=df.columns, loc='center',
-                             cellLoc='center', bbox=[0, 0, 1, 1], fontsize='large')
-            table.auto_set_column_width(col=list(range(len(df.columns))))
-            plt.tight_layout()
+        table = ax.table(
+            cellText=dataframe.values, colLabels=dataframe.columns,
+            loc='center', cellLoc='center', bbox=[0, 0, 1, 1]
+        )
+        table.auto_set_column_width(col=list(range(len(dataframe.columns))))
+        fig.tight_layout()
 
-            # Creating GUI
-            app = QtWidgets.QApplication(sys.argv)
-            window = CustomGraphicView(None, fig, cls.__tablename__.title())
-            window.show()
-            app.exec_()
+        return fig
 
     @classmethod
     def insert_table(cls, data: ty.Optional[ty.List[dict]] = None,
