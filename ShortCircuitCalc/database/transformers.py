@@ -5,9 +5,8 @@ of the category 'transformers'"""
 
 import sqlalchemy as sa
 import sqlalchemy.orm
-import pandas as pd
 
-from ShortCircuitCalc.tools import Base, session_scope
+from ShortCircuitCalc.tools import Base
 from ShortCircuitCalc.database.mixins import BaseMixin, JoinedMixin
 
 

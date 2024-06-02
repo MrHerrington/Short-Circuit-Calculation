@@ -354,7 +354,7 @@ def session_scope(logs: bool = True) -> None:
     except sa.exc.OperationalError as err:
         session.rollback()
         if logs:
-            logger.error(err, exc_info=True)
+            logger.error(err)
         raise err
     finally:
         session.close()

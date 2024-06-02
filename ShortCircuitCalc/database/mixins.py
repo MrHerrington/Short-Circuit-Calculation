@@ -78,7 +78,7 @@ class BaseMixin:
         elif drop_first:
             cls.drop_table(cls.__tablename__)
         try:
-            Base.metadata.tables[cls.__tablename__].create(engine)
+            Base.metadata.tables[cls.__tablename__].create(engine, checkfirst=True)
             logger.warning(f"Table '{cls.__tablename__}' has been created.")
         except sa.exc.OperationalError as err:
             logger.warning(f"{type(err)}: Table '{cls.__tablename__}' already exists!")
@@ -97,12 +97,15 @@ class BaseMixin:
             pd.DataFrame: Object with query results
 
         """
-        with session_scope(logs=False) as session:
+        with session_scope() as session:
             chosen_cols = cls.get_non_keys(as_str=False, allow_foreign=True)
 
             if filtrate is None:
-                query = session.query(*chosen_cols)
-                df = pd.read_sql(query.statement, session.bind, dtype=object)[:limit]
+                query = session.query(
+                    *chosen_cols
+                ).order_by(
+                    *chosen_cols
+                )
 
             else:
                 query = session.query(
@@ -112,8 +115,8 @@ class BaseMixin:
                 ).order_by(
                     *chosen_cols
                 )
-                df = pd.read_sql(query.statement, session.bind, dtype=object)[:limit]
 
+        df = pd.read_sql(query.statement, session.bind, dtype=object)[:limit]
         df.insert(0, 'id', pd.Series(range(1, len(df) + 1)))
         return df
 
@@ -288,7 +291,7 @@ class BaseMixin:
             if 'Unknown table' in err.orig.__str__() or 'no such table' in err.orig.__str__():
                 logger.info(f"There is no need to delete the table '{cls.__tablename__}', it does not exist")
             else:
-                logger.exception(err, exc_info=True)
+                logger.error(err)
 
     @classmethod
     def reset_id(cls) -> None:

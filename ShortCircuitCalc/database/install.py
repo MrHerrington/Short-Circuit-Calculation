@@ -2,6 +2,7 @@
 """This module performs the initial deployment of the database, including the creation
 of basic lookup tables and their filling from equipment parameter catalogs"""
 
+
 import typing as ty
 from pathlib import Path
 
@@ -12,8 +13,13 @@ from ShortCircuitCalc.tools import *
 from ShortCircuitCalc.config import DATA_DIR, DB_TABLES_CLEAR_INSTALL
 
 
-def deploy_if_not_exist(db_table: ty.Type[Base], pathlike: ty.Union[str, Path],
-                        full: bool = False) -> None:
+__all__ = ('db_install',)
+
+
+def deploy_if_not_exist(db_table: ty.Type[Base],
+                        pathlike: ty.Union[str, Path],
+                        full: bool = False
+                        ) -> None:
     """Function to deploy a table if it does not already exist in the database.
 
     Args:
@@ -28,13 +34,19 @@ def deploy_if_not_exist(db_table: ty.Type[Base], pathlike: ty.Union[str, Path],
         db_table.insert_table(from_csv=pathlike)
 
 
-def install(clear: bool = False) -> None:
+def db_install(clear: bool = False) -> None:
     """Deploy part of the database for different equipment categories.
 
     Args:
         clear (bool): If True, clear existing data before deployment.
 
     """
+    # Need for create SQLITE_SEQUENCE in DB
+    if config_manager('DB_EXISTING_CONNECTION') == 'SQLite':
+        with session_scope() as session:
+            session.execute(sa.text("CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT);"))
+            session.execute(sa.text("DROP TABLE test;"))
+
     # Deploying part of the database for equipment category 'Transformers'
     for table in (PowerNominal, VoltageNominal, Scheme, Transformer):
         deploy_if_not_exist(table, DATA_DIR / 'transformer_catalog' / Path(table.__tablename__ + 's'), clear)
@@ -51,14 +63,5 @@ def install(clear: bool = False) -> None:
     deploy_if_not_exist(OtherContact, DATA_DIR / Path(OtherContact.__tablename__ + 's'), clear)
 
 
-def installer():
-    install(clear=DB_TABLES_CLEAR_INSTALL)
-    if config_manager('DB_EXISTING_CONNECTION') == 'SQLite':
-        with session_scope() as session:
-            # need for create SQLITE_SEQUENCE in DB
-            session.execute(sa.text("CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT);"))
-            session.execute(sa.text("DROP TABLE test;"))
-
-
 if __name__ == '__main__':
-    installer()
+    db_install(clear=DB_TABLES_CLEAR_INSTALL)

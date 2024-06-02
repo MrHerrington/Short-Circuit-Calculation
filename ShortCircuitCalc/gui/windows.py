@@ -2,6 +2,7 @@
 """The module contains GUI windows templates, using PyQt5 and Matplotlib.
 Classes are based on ui files, developed by QtDesigner and customized."""
 
+
 from collections import namedtuple
 
 import logging
@@ -23,9 +24,12 @@ from ShortCircuitCalc.database import *
 from ShortCircuitCalc.tools import *
 from ShortCircuitCalc.config import *
 
+
 __all__ = ('MainWindow', 'DatabaseBrowser', 'CustomGraphicView', 'ConfirmWindow')
 
+
 logger = logging.getLogger(__name__)
+
 
 # Select the backend used for rendering and GUI integration.
 matplotlib.use('Qt5Agg')
@@ -557,8 +561,14 @@ class DatabaseBrowser(QtWidgets.QWidget):
                     getattr(self, view).set_figure(table.show_table(table.read_joined_table()))
                 else:
                     getattr(self, view).set_figure(table.show_table(table.read_table()))
+
             except (Exception,):
                 tables_errors.append(table.__tablename__)
 
         if tables_errors:
             logger.error(f"Problems with table(s): {', '.join(tables_errors)}. Try to reinstall database.")
+
+        ###########################
+        # Main keys actions binding
+        ###########################
+        self.installButton.clicked.connect(lambda: db_install(clear=DB_TABLES_CLEAR_INSTALL))
