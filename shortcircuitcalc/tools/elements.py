@@ -17,13 +17,13 @@ from functools import reduce
 
 import sqlalchemy as sa
 
+from shortcircuitcalc.tools.tools import session_scope
 from shortcircuitcalc.database import (
     PowerNominal, VoltageNominal, Scheme, Transformer,
     Mark, Amount, RangeVal, Cable,
     Device, CurrentNominal, CurrentBreaker,
     OtherContact
 )
-from shortcircuitcalc.tools import session_scope
 from shortcircuitcalc.config import (
     SYSTEM_VOLTAGE_IN_KILOVOLTS, CALCULATIONS_ACCURACY
 )

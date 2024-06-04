@@ -4085,7 +4085,7 @@ border-radius: 10px;
   <customwidget>
    <class>CustomGraphicView</class>
    <extends>QGraphicsView</extends>
-   <header>ShortCircuitCalc.gui.windows</header>
+   <header>shortcircuitcalc.gui.windows</header>
   </customwidget>
  </customwidgets>
  <resources>

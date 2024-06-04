@@ -4,6 +4,7 @@
     <file>resources/images/main_back.jpg</file>
   </qresource>
   <qresource prefix="icons">
+    <file>resources/icons/db_open_manager.svg</file>
     <file>resources/icons/cables.svg</file>
     <file>resources/icons/db_insert.svg</file>
     <file>resources/icons/db_delete_row.svg</file>

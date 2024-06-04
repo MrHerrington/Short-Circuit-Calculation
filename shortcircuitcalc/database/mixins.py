@@ -5,7 +5,6 @@ the functionality of the declarative base class 'Base'.
 
 """
 
-
 import logging
 import pathlib
 import re
@@ -23,12 +22,9 @@ from shortcircuitcalc.tools import (
     Base, engine, session_scope, config_manager
 )
 
-
 __all__ = ('BaseMixin', 'JoinedMixin')
 
-
 logger = logging.getLogger(__name__)
-
 
 BT = ty.TypeVar('BT', bound=Base)
 
@@ -145,10 +141,25 @@ class BaseMixin:
             ax.set_title(cls.__tablename__.title())
         table = ax.table(
             cellText=dataframe.values, colLabels=dataframe.columns,
-            loc='center', cellLoc='center', bbox=[0, 0, 1, 1]
+            loc='center', cellLoc='center', bbox=[0, 0, 1, 1],
+            colColours=(
+                    ('#CCFF99',) +
+                    ('#9999FF',) * (len(cls.get_foreign_keys())
+                                    if cls.get_foreign_keys() else 1) +
+                    ('#FF9999',) * len(cls.get_non_keys())
+            ),
+            cellColours=(
+                        (
+                            ('#E5FFCC',) +
+                            ('#CCCCFF',) * (len(cls.get_foreign_keys())
+                                            if cls.get_foreign_keys() else 1) +
+                            ('#FFCCCC',) * (len(cls.get_non_keys())
+                                            if cls.get_foreign_keys() else len(cls.get_non_keys()) - 1),
+                        ) * len(dataframe.index)
+            )
         )
         table.auto_set_column_width(col=list(range(len(dataframe.columns))))
-        fig.tight_layout()
+        fig.tight_layout(pad=0.05)
 
         return fig
 
@@ -359,8 +370,10 @@ class BaseMixin:
 
     @classmethod
     def get_foreign_keys(cls, on_side: bool = False, as_str: bool = True) \
-            -> ty.Union[str, tuple, sa.orm.InstrumentedAttribute,
-                        ty.Tuple[str, sa.orm.InstrumentedAttribute]]:
+            -> ty.Union[
+                str, tuple, sa.orm.InstrumentedAttribute,
+                ty.Tuple[str, sa.orm.InstrumentedAttribute]
+            ]:
         """The method generates foreign keys columns for the table.
 
         Args:
@@ -594,6 +607,7 @@ class JoinedMixin:
             )
 
         """
+
         def __temp_insert(tab: BT, attr: str) -> None:
             """
             The method insert new string into source table.

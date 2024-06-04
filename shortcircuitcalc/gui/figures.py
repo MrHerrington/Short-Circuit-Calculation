@@ -24,16 +24,16 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 import cairosvg
 from PIL import Image
 
+from shortcircuitcalc.tools import (
+    BaseElement,
+    T, Q, QF, QS, W, R, Line, Arc,
+    ChainsSystem, ElemChain
+)
 from shortcircuitcalc.database import (
     PowerNominal, VoltageNominal, Scheme,
     Mark, Amount, RangeVal,
     Device, CurrentNominal,
     OtherContact
-)
-from shortcircuitcalc.tools import (
-    BaseElement,
-    T, Q, QF, QS, W, R, Line, Arc,
-    ChainsSystem, ElemChain
 )
 from shortcircuitcalc.config import (
     SYSTEM_PHASES, GRAPHS_DIR, GUI_DIR
@@ -142,7 +142,8 @@ class _ResultsFigure:
         self.fig.subplots_adjust(wspace=0.01, hspace=0, left=0, right=1, bottom=0, top=1)
         self.__draw_figure()
         self.__off_axis()
-        self.fig.subplots_adjust(wspace=0.01, hspace=0, left=0, right=1, bottom=0, top=1)
+        # self.fig.subplots_adjust(wspace=0, hspace=0, left=0, right=1, bottom=0, top=1)
+        self.fig.tight_layout(pad=0.05)
 
         logger.info('Results system successfully created %s' % self.schem)
 

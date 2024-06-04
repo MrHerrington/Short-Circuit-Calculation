@@ -13,14 +13,14 @@ from pathlib import Path
 import sqlalchemy as sa
 import sqlalchemy.exc
 
+from shortcircuitcalc.tools import (
+    Base, engine, metadata, session_scope, config_manager
+)
 from shortcircuitcalc.database.models import (
     PowerNominal, VoltageNominal, Scheme, Transformer,
     Mark, Amount, RangeVal, Cable,
     Device, CurrentNominal, CurrentBreaker,
     OtherContact
-)
-from shortcircuitcalc.tools import (
-    Base, engine, metadata, session_scope, config_manager
 )
 from shortcircuitcalc.config import DATA_DIR
 

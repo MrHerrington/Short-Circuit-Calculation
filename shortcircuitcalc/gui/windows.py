@@ -5,6 +5,7 @@ Classes are based on ui files, developed by QtDesigner and customized."""
 
 from collections import namedtuple
 from decimal import Decimal
+import typing as ty
 
 import logging
 import matplotlib
@@ -25,7 +26,7 @@ from shortcircuitcalc.database import (
     Transformer, Cable, CurrentBreaker, OtherContact,
     db_install
 )
-from shortcircuitcalc.tools import config_manager
+from shortcircuitcalc.tools import config_manager, ChainsSystem
 from shortcircuitcalc.config import (
     GUI_DIR, DB_TABLES_CLEAR_INSTALL
 )
@@ -34,11 +35,12 @@ from shortcircuitcalc.config import (
 __all__ = ('MainWindow', 'DatabaseBrowser', 'CustomGraphicView', 'ConfirmWindow')
 
 
-logger = logging.getLogger(__name__)
-
-
 # Select the backend used for rendering and GUI integration.
 matplotlib.use('Qt5Agg')
+
+
+logger = logging.getLogger(__name__)
+GW = ty.TypeVar('GW', bound=ty.Union[QtWidgets.QMainWindow, QtWidgets.QWidget])
 
 
 class CustomGraphicView(QtWidgets.QGraphicsView):
@@ -108,6 +110,10 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
         self._scene = QtWidgets.QGraphicsScene()
         self._scene.addWidget(self._canvas)
         self.setScene(self._scene)
+        if self.objectName() not in (
+                'resultsView',
+        ):
+            self.setStyleSheet('QGraphicsView {background-color: transparent;}')
 
         # Start viewing position
         self.horizontalScrollBar().setSliderPosition(1)
@@ -270,30 +276,6 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
             pixmap.save(fname)
 
 
-# class ViewerWidget(QtWidgets.QWidget):
-#     """Initializes a ViewerWidget object.
-#
-#     ViewerWidget is a QWidget that displays a matplotlib figure in a QGraphicsView widget.
-#     Also allows saving the figure as any graphical format or saving part of the figure as an image.
-#
-#     Args:
-#         title (str): The title of the viewer widget.
-#
-#     """
-#
-#     def __init__(self, title: str = 'Viewer Window') -> None:
-#         super(ViewerWidget, self).__init__()
-#         # self._figure definition before loadUi is necessarily!
-#         uic.loadUi(GUI_DIR / 'viewer.ui', self)
-#         self.setWindowTitle(title)
-#
-#         self.allButton.setToolTip('Save whole page')
-#         self.allButton.clicked.connect(self.save_model)
-#
-#         self.partButton.setToolTip('Save part of page')
-#         self.partButton.clicked.connect(self.save_fragment)
-
-
 class ConfirmWindow(QtWidgets.QDialog):
     """Initializes a ConfirmWindow object."""
 
@@ -315,17 +297,51 @@ class QPlainTextEditLogger(QtWidgets.QPlainTextEdit, logging.Handler):
         if "DEBUG" in msg or "INFO" in msg:
             msg = f"""<span style='color:#000000;'>{msg}</span>"""
         elif "WARNING" in msg:
-            msg = f"""<span style='color:#00fff7;'>{msg}</span>"""
+            msg = f"""<span style='color:#ffffff;'>{msg}</span>"""
         elif "ERROR" in msg or "CRITICAL" in msg:
             msg = f"""<span style='color:#ff0000;'>{msg}</span>"""
 
         self.appendHtml(msg)
 
 
-class MainWindow(QtWidgets.QMainWindow):
+class CustomWindow:
+    def __init__(self):
+        super().__init__()
+
+    def window_center_position(self: GW,
+                               shift_x: int = 0,
+                               shift_y: int = 0,
+                               relative: ty.Tuple[int, int] = None) -> None:
+        """Centers the window on the screen.
+
+        Args:
+            shift_x (int, optional): The shift on the X axis in percentage. Defaults to 0.
+            shift_y (int, optional): The shift on the Y axis in percentage. Defaults to 0.
+            relative (ty.Tuple[int], optional): Relative position of one window relative to another.
+
+        """
+        desktop = QtWidgets.QDesktopWidget().screenGeometry()
+        screen_width = desktop.width()
+        screen_height = desktop.height()
+        x = int((screen_width - self.width()) / 2)
+        y = int((screen_height - self.height()) / 2)
+        if not relative:
+            self.move(
+                int(x + self.width() * shift_x / 100),
+                int(y - self.height() * shift_y / 100)
+            )
+        else:
+            self.move(
+                int(relative[0] + self.width() * shift_x / 100),
+                int(relative[1] - self.height() * shift_y / 100)
+            )
+
+
+class MainWindow(QtWidgets.QMainWindow, CustomWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         uic.loadUi(GUI_DIR / 'main_window.ui', self)
+        self.db_browser = None
         self.init_gui()
 
     def init_gui(self):
@@ -347,7 +363,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.findChild(QtWidgets.QTabBar).hide()
 
         # Set window position in the center of the screen
-        self.window_auto_center()
+        self.window_center_position()
+
+        ###########################
+        # Main bar buttons config #
+        ###########################
+
+        self.switchButton.setToolTip('Switch side panel view')
+
+        self.dbmanagerButton.setToolTip('Open database manage client in separate window')
+        self.dbmanagerButton.clicked.connect(lambda: self.open_db_browser())
 
         #############################
         # Side panel buttons config #
@@ -481,6 +506,13 @@ class MainWindow(QtWidgets.QMainWindow):
             lambda: box_config[self.settingsBox7].update(self.settingsBox7.currentText())
         )
 
+    def open_db_browser(self):
+        self.db_browser = DatabaseBrowser()
+        self.db_browser.window_center_position(
+            shift_x=5, shift_y=-5, relative=(self.x(), self.y())
+        )
+        self.db_browser.show()
+
     # noinspection PyUnresolvedReferences
     def eventFilter(self, obj, event):
         if event.type() == QtCore.QEvent.KeyPress and obj is self.consoleInput:
@@ -491,15 +523,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 except Exception as e:
                     logger.error(e)
         return super().eventFilter(obj, event)
-
-    def window_auto_center(self) -> None:
-        """Centers the window on the screen."""
-        desktop = QtWidgets.QDesktopWidget().screenGeometry()
-        screen_width = desktop.width()
-        screen_height = desktop.height()
-        x = int((screen_width - self.width()) / 2)
-        y = int((screen_height - self.height()) / 2)
-        self.move(x, y)
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         """Handle the close event of the window.
@@ -520,7 +543,7 @@ class MainWindow(QtWidgets.QMainWindow):
             event.ignore()
 
 
-class DatabaseBrowser(QtWidgets.QWidget):
+class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
     def __init__(self):
         super(DatabaseBrowser, self).__init__()
         uic.loadUi(GUI_DIR / 'db_browser.ui', self)
@@ -577,4 +600,28 @@ class DatabaseBrowser(QtWidgets.QWidget):
         #############################
         # Main keys actions binding #
         #############################
-        self.installButton.clicked.connect(lambda: db_install(clear=DB_TABLES_CLEAR_INSTALL))
+        self.installButton.clicked.connect(lambda: db_install(clear=config_manager('DB_TABLES_CLEAR_INSTALL')))
+
+
+# class ViewerWidget(QtWidgets.QWidget):
+#     """Initializes a ViewerWidget object.
+#
+#     ViewerWidget is a QWidget that displays a matplotlib figure in a QGraphicsView widget.
+#     Also allows saving the figure as any graphical format or saving part of the figure as an image.
+#
+#     Args:
+#         title (str): The title of the viewer widget.
+#
+#     """
+#
+#     def __init__(self, title: str = 'Viewer Window') -> None:
+#         super(ViewerWidget, self).__init__()
+#         # self._figure definition before loadUi is necessarily!
+#         uic.loadUi(GUI_DIR / 'viewer.ui', self)
+#         self.setWindowTitle(title)
+#
+#         self.allButton.setToolTip('Save whole page')
+#         self.allButton.clicked.connect(self.save_model)
+#
+#         self.partButton.setToolTip('Save part of page')
+#         self.partButton.clicked.connect(self.save_fragment)
