@@ -1,6 +1,6 @@
 import unittest
 from decimal import Decimal
-from ShortCircuitCalc.tools import TypesManager
+from shortcircuitcalc.tools import TypesManager
 
 
 class TestTypesManager(unittest.TestCase):

@@ -1,7 +1,7 @@
 import sys
 from PyQt5 import QtWidgets
 
-from ShortCircuitCalc.gui.windows import DatabaseBrowser, MainWindow
+from shortcircuitcalc.gui.windows import DatabaseBrowser, MainWindow
 
 
 if __name__ == '__main__':

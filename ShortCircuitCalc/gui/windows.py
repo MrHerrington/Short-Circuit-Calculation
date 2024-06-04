@@ -4,6 +4,7 @@ Classes are based on ui files, developed by QtDesigner and customized."""
 
 
 from collections import namedtuple
+from decimal import Decimal
 
 import logging
 import matplotlib
@@ -18,11 +19,16 @@ from PyQt5 import QtWidgets, QtCore, QtGui, uic
 
 # Need for correctly loading icons
 # noinspection PyUnresolvedReferences
-import ShortCircuitCalc.gui.resources
-from ShortCircuitCalc.gui.figures import *
-from ShortCircuitCalc.database import *
-from ShortCircuitCalc.tools import *
-from ShortCircuitCalc.config import *
+import shortcircuitcalc.gui.resources
+from shortcircuitcalc.gui.figures import GetFigure
+from shortcircuitcalc.database import (
+    Transformer, Cable, CurrentBreaker, OtherContact,
+    db_install
+)
+from shortcircuitcalc.tools import config_manager
+from shortcircuitcalc.config import (
+    GUI_DIR, DB_TABLES_CLEAR_INSTALL
+)
 
 
 __all__ = ('MainWindow', 'DatabaseBrowser', 'CustomGraphicView', 'ConfirmWindow')
@@ -323,17 +329,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.init_gui()
 
     def init_gui(self):
-        #######################
-        # Logger frame settings
-        #######################
+        #########################
+        # Logger frame settings #
+        #########################
 
         self.logsOutput.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s]: %(message)s'))
         logging.getLogger().addHandler(self.logsOutput)
         logging.getLogger().setLevel(logging.INFO)
 
-        #########################
-        # Initial start interface
-        #########################
+        ###########################
+        # Initial start interface #
+        ###########################
         self.switchButton.setChecked(True)
         self.logsButton.setChecked(False)
 
@@ -343,9 +349,9 @@ class MainWindow(QtWidgets.QMainWindow):
         # Set window position in the center of the screen
         self.window_auto_center()
 
-        ###########################
-        # Side panel buttons config
-        ###########################
+        #############################
+        # Side panel buttons config #
+        #############################
 
         self.inputButton.setToolTip('Show input console')
         self.inputButton.clicked.connect(lambda: self.tabWidget.setCurrentIndex(0))
@@ -364,30 +370,30 @@ class MainWindow(QtWidgets.QMainWindow):
         self.infoButton.setToolTip('Show info')
         self.infoButton.clicked.connect(lambda: self.tabWidget.setCurrentIndex(4))
 
-        ####################
-        # Input tab settings
-        ####################
+        ######################
+        # Input tab settings #
+        ######################
 
         self.consoleInput.installEventFilter(self)
 
-        #####################
-        # Result tab settings
-        #####################
+        #######################
+        # Result tab settings #
+        #######################
 
         pass
 
-        ######################
-        # Catalog tab settings
-        ######################
+        ########################
+        # Catalog tab settings #
+        ########################
 
         try:
             self.catalogView.set_figure(GetFigure())
         except (Exception,):
             logger.error('Problem with catalog initialization.')
 
-        #########################
-        # "Settings" tab settings
-        #########################
+        ###########################
+        # "Settings" tab settings #
+        ###########################
 
         BoxParams = namedtuple('BoxParams', ('editable', 'values', 'default', 'update'))
 
@@ -521,9 +527,9 @@ class DatabaseBrowser(QtWidgets.QWidget):
         self.init_gui()
 
     def init_gui(self):
-        #########################
-        # Initial start interface
-        #########################
+        ###########################
+        # Initial start interface #
+        ###########################
         self.viewerWidget.setCurrentIndex(0)
         self.optionsWidget.setCurrentIndex(0)
         self.manageButton.setChecked(True)
@@ -568,7 +574,7 @@ class DatabaseBrowser(QtWidgets.QWidget):
         if tables_errors:
             logger.error(f"Problems with table(s): {', '.join(tables_errors)}. Try to reinstall database.")
 
-        ###########################
-        # Main keys actions binding
-        ###########################
+        #############################
+        # Main keys actions binding #
+        #############################
         self.installButton.clicked.connect(lambda: db_install(clear=DB_TABLES_CLEAR_INSTALL))

@@ -1,6 +1,6 @@
 import logging
-from ShortCircuitCalc.database import *
-import ShortCircuitCalc.tools as tools
+from shortcircuitcalc.database import *
+import shortcircuitcalc.tools as tools
 
 
 # logging.basicConfig(level=logging.INFO)

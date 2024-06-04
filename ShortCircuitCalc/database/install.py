@@ -1,16 +1,28 @@
 # -*- coding: utf-8 -*-
-"""This module performs the initial deployment of the database, including the creation
-of basic lookup tables and their filling from equipment parameter catalogs"""
+"""
+This module performs the initial deployment of the database,
+including the creation of basic lookup tables and their
+filling from equipment parameter catalogs
+
+"""
 
 
 import typing as ty
 from pathlib import Path
 
 import sqlalchemy as sa
+import sqlalchemy.exc
 
-from ShortCircuitCalc.database import *
-from ShortCircuitCalc.tools import *
-from ShortCircuitCalc.config import DATA_DIR, DB_TABLES_CLEAR_INSTALL
+from shortcircuitcalc.database.models import (
+    PowerNominal, VoltageNominal, Scheme, Transformer,
+    Mark, Amount, RangeVal, Cable,
+    Device, CurrentNominal, CurrentBreaker,
+    OtherContact
+)
+from shortcircuitcalc.tools import (
+    Base, engine, metadata, session_scope, config_manager
+)
+from shortcircuitcalc.config import DATA_DIR
 
 
 __all__ = ('db_install',)
@@ -28,9 +40,15 @@ def deploy_if_not_exist(db_table: ty.Type[Base],
         full (bool): If True, the table will be dropped and recreated with data from CSV file. Defaults to None.
 
     """
-    metadata.reflect(bind=engine)
-    if full or db_table.__tablename__ not in metadata.tables:
-        db_table.create_table(drop_first=full, forced_drop=full)
+    try:
+        metadata.reflect(bind=engine)
+
+        if full or db_table.__tablename__ not in metadata.tables:
+            db_table.create_table(drop_first=full, forced_drop=full)
+            db_table.insert_table(from_csv=pathlike)
+
+    except sqlalchemy.exc.NoSuchTableError:
+        db_table.create_table()
         db_table.insert_table(from_csv=pathlike)
 
 
@@ -61,7 +79,3 @@ def db_install(clear: bool = False) -> None:
 
     # Deploying part of the database for equipment category 'Other resistances'
     deploy_if_not_exist(OtherContact, DATA_DIR / Path(OtherContact.__tablename__ + 's'), clear)
-
-
-if __name__ == '__main__':
-    db_install(clear=DB_TABLES_CLEAR_INSTALL)

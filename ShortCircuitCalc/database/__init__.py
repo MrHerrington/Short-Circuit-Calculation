@@ -9,7 +9,5 @@ with the selected database table is presented.
 The package also presents ORM models of the database of various electrical devices."""
 
 
-from ShortCircuitCalc.database.transformers import *
-from ShortCircuitCalc.database.cables import *
-from ShortCircuitCalc.database.contacts import *
-from ShortCircuitCalc.database.install import *
+from shortcircuitcalc.database.models import *
+from shortcircuitcalc.database.install import *

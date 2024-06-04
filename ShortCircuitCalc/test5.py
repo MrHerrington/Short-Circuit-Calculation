@@ -1,4 +1,4 @@
-from ShortCircuitCalc.tools import *
+from shortcircuitcalc.tools import *
 #
 #
 # print(T(160, 'Д/Ун-11'))

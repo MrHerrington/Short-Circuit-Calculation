@@ -1,4 +1,4 @@
-from ShortCircuitCalc.database import *
+from shortcircuitcalc.database import *
 import sqlalchemy as sa
 from tools import session_scope
 

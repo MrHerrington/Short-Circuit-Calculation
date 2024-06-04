@@ -3,7 +3,7 @@ import logging
 import argparse
 import re
 
-from ShortCircuitCalc.tools import *
+from shortcircuitcalc.tools import ElemChain
 
 
 logger = logging.getLogger(__name__)

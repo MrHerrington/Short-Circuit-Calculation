@@ -2,7 +2,7 @@ import sys
 
 from PyQt5 import QtWidgets
 
-from ShortCircuitCalc.tools import *
+from shortcircuitcalc.tools import *
 
 
 if __name__ == '__main__':
@@ -36,7 +36,7 @@ if __name__ == '__main__':
         chain4
     )
 
-    from ShortCircuitCalc.gui import *
+    from shortcircuitcalc.gui import *
     app = QtWidgets.QApplication(sys.argv)
     w = MainWindow()
     # w.resultsView.set_figure(GetFigure(cs))

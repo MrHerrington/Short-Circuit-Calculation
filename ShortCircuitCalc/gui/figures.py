@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Module contains classes for drawing matplotlib figures in the GUI PyQt5.
+"""
+Module contains classes for drawing matplotlib figures in the GUI PyQt5.
 
 For correctly working cairosvg first install and
 add in PATH environment bin directory variables:
@@ -23,9 +24,20 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 import cairosvg
 from PIL import Image
 
-from ShortCircuitCalc.database import *
-from ShortCircuitCalc.tools import *
-from ShortCircuitCalc.config import SYSTEM_PHASES, GRAPHS_DIR, GUI_DIR
+from shortcircuitcalc.database import (
+    PowerNominal, VoltageNominal, Scheme,
+    Mark, Amount, RangeVal,
+    Device, CurrentNominal,
+    OtherContact
+)
+from shortcircuitcalc.tools import (
+    BaseElement,
+    T, Q, QF, QS, W, R, Line, Arc,
+    ChainsSystem, ElemChain
+)
+from shortcircuitcalc.config import (
+    SYSTEM_PHASES, GRAPHS_DIR, GUI_DIR
+)
 
 
 __all__ = ('GetFigure',)

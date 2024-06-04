@@ -14,7 +14,9 @@ from decimal import Decimal, InvalidOperation
 import sqlalchemy as sa
 import sqlalchemy.orm
 
-from ShortCircuitCalc.config import ROOT_DIR, CONFIG_DIR, CREDENTIALS_DIR, ENGINE_ECHO, SQLITE_DB_NAME
+from shortcircuitcalc.config import (
+    ROOT_DIR, CONFIG_DIR, CREDENTIALS_DIR, ENGINE_ECHO, SQLITE_DB_NAME
+)
 
 
 __all__ = ('Base', 'engine', 'metadata', 'session_scope', 'TypesManager', 'config_manager')

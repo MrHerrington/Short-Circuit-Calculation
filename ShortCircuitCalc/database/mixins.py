@@ -19,7 +19,9 @@ from sqlalchemy.inspection import inspect
 import pandas as pd
 from matplotlib import figure
 
-from ShortCircuitCalc.tools import *
+from shortcircuitcalc.tools import (
+    Base, engine, session_scope, config_manager
+)
 
 
 __all__ = ('BaseMixin', 'JoinedMixin')
