@@ -649,10 +649,12 @@ class JoinedMixin:
                             **{k: v for k, v in row.items() if k not in attrs}
                         }
                     ]).rowcount
-                    print(f"Joined table '{cls.__tablename__}' has been updated. {result} string(s) were inserted.")
+                    logger.warning(f"Joined table '{cls.__tablename__}' has been updated. "
+                                   f"{result} string(s) were inserted.")
 
                 else:
-                    print(f"Joined table '{cls.__tablename__}' not updated. 0 unique string or another problem.")
+                    logger.warning(f"Joined table '{cls.__tablename__}' not updated. "
+                                   '0 unique string or another problem.')
 
     @classmethod
     def update_joined_table(cls: BT,

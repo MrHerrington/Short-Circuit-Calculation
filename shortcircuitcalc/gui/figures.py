@@ -121,7 +121,7 @@ class GetFigure:
         if obj is None:
             return _CatalogFigure().fig
         else:
-            return _ResultsFigure(obj).fig
+            return _ResultsFigure(obj)
 
 
 class _ResultsFigure:

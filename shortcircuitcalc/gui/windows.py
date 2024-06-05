@@ -27,9 +27,7 @@ from shortcircuitcalc.database import (
     db_install
 )
 from shortcircuitcalc.tools import config_manager, ChainsSystem
-from shortcircuitcalc.config import (
-    GUI_DIR, DB_TABLES_CLEAR_INSTALL
-)
+from shortcircuitcalc.config import GUI_DIR
 
 
 __all__ = ('MainWindow', 'DatabaseBrowser', 'CustomGraphicView', 'ConfirmWindow')
@@ -341,7 +339,11 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         uic.loadUi(GUI_DIR / 'main_window.ui', self)
+
+        # Saved instances
+        self.results_figure = None
         self.db_browser = None
+
         self.init_gui()
 
     def init_gui(self):
@@ -372,7 +374,7 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
         self.switchButton.setToolTip('Switch side panel view')
 
         self.dbmanagerButton.setToolTip('Open database manage client in separate window')
-        self.dbmanagerButton.clicked.connect(lambda: self.open_db_browser())
+        self.dbmanagerButton.clicked.connect(self.open_db_browser)
 
         #############################
         # Side panel buttons config #
@@ -507,10 +509,11 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
         )
 
     def open_db_browser(self):
-        self.db_browser = DatabaseBrowser()
-        self.db_browser.window_center_position(
-            shift_x=5, shift_y=-5, relative=(self.x(), self.y())
-        )
+        if self.db_browser is None:
+            self.db_browser = DatabaseBrowser()
+            self.db_browser.window_center_position(
+                shift_x=5, shift_y=-5, relative=(self.x(), self.y())
+            )
         self.db_browser.show()
 
     # noinspection PyUnresolvedReferences
@@ -519,7 +522,9 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
             text = self.consoleInput.toPlainText()
             if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Return:
                 try:
-                    self.resultsView.set_figure(GetFigure(ChainsSystem(text)))
+                    temp_figure = GetFigure(ChainsSystem(text))
+                    self.resultsView.set_figure(temp_figure.fig)
+                    self.results_figure = temp_figure
                 except Exception as e:
                     logger.error(e)
         return super().eventFilter(obj, event)
@@ -535,10 +540,14 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
         window is closed. Otherwise, the event is ignored and the window remains open.
 
         """
+        app = QtWidgets.QApplication.instance()
         confirm_window = ConfirmWindow(self)
         confirm_window.exec_()
         if confirm_window.result() == QtWidgets.QDialog.Accepted:
             event.accept()
+            # noinspection PyUnresolvedReferences
+            for window in app.topLevelWidgets():
+                window.close()
         else:
             event.ignore()
 
@@ -547,7 +556,13 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
     def __init__(self):
         super(DatabaseBrowser, self).__init__()
         uic.loadUi(GUI_DIR / 'db_browser.ui', self)
+
+        # Saved instances
+        self.insert_tools = None
+
         self.init_gui()
+        self.show_database()
+        self.crud_operations()
 
     def init_gui(self):
         ###########################
@@ -576,7 +591,12 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
         self.iconLabel.setPixmap(logos[db_key])
         self.iconLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
-        # Show catalog tables
+        #############################
+        # Main keys actions binding #
+        #############################
+        self.installButton.clicked.connect(self.reinstall_database)
+
+    def show_database(self):
         views_tables = zip(
             ('transformersView', 'cablesView', 'contactsView', 'resistancesView'),
             (Transformer, Cable, CurrentBreaker, OtherContact)
@@ -596,11 +616,107 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
 
         if tables_errors:
             logger.error(f"Problems with table(s): {', '.join(tables_errors)}. Try to reinstall database.")
+        else:
+            logger.info('Database mapped successfully.')
 
-        #############################
-        # Main keys actions binding #
-        #############################
-        self.installButton.clicked.connect(lambda: db_install(clear=config_manager('DB_TABLES_CLEAR_INSTALL')))
+    def reinstall_database(self):
+        confirm_window = ConfirmWindow(self)
+        confirm_window.exec_()
+        if confirm_window.result() == QtWidgets.QDialog.Accepted:
+            db_install(clear=config_manager('DB_TABLES_CLEAR_INSTALL'))
+            self.show_database()
+
+    def crud_operations(self):
+        ##############################
+        # Insert operations settings #
+        ##############################
+        self.insertButton.clicked.connect(self.get_insert_tools)
+        self.insertButton.clicked.connect(lambda: self.insert_tools.operation())
+        self.insertButton.clicked.connect(
+            lambda: self.insert_tools.view.set_figure(
+                self.insert_tools.table.show_table(self.insert_tools.table.read_joined_table())
+            )
+            if 'JoinedMixin' in map(lambda x: x.__name__, self.insert_tools.table.__mro__) else
+            self.insert_tools.view.set_figure(
+                self.insert_tools.table.show_table(self.insert_tools.table.read_table())
+            )
+        )
+
+        ##############################
+        # Update operations settings #
+        ##############################
+
+    def get_insert_tools(self):
+        InsertTuple = namedtuple('InsertTuple', ('table', 'view', 'operation'))
+
+        insert_operations = {
+            'insertTransPage': InsertTuple(
+                Transformer, self.transformersView, lambda: Transformer.insert_joined_table(
+                    [
+                        {
+                            'power': int(self.insertTransEdit.text()),
+                            'voltage': Decimal(self.insertTransEdit2.text()),
+                            'vector_group': self.insertTransEdit3.text(),
+                            'power_short_circuit': Decimal(self.default(self.insertTransEdit4.text())),
+                            'voltage_short_circuit': Decimal(self.default(self.insertTransEdit5.text())),
+                            'resistance_r1': Decimal(self.default(self.insertTransEdit6.text())),
+                            'reactance_x1': Decimal(self.default(self.insertTransEdit7.text())),
+                            'resistance_r0': Decimal(self.default(self.insertTransEdit8.text())),
+                            'reactance_x0': Decimal(self.default(self.insertTransEdit9.text())),
+                        }
+                    ]
+                )
+            ),
+            'insertCablePage': InsertTuple(
+                Cable, self.cablesView, lambda: Cable.insert_joined_table(
+                    [
+                        {
+                            'mark_name': self.insertCableEdit.text(),
+                            'multicore_amount': int(self.insertCableEdit2.text()),
+                            'cable_range': Decimal(self.insertCableEdit3.text()),
+                            'continuous_current': Decimal(self.default(self.insertCableEdit4.text())),
+                            'resistance_r1': Decimal(self.default(self.insertCableEdit5.text())),
+                            'reactance_x1': Decimal(self.default(self.insertCableEdit6.text())),
+                            'resistance_r0': Decimal(self.default(self.insertCableEdit7.text())),
+                            'reactance_x0': Decimal(self.default(self.insertCableEdit8.text())),
+                        }
+                    ]
+                )
+            ),
+            'insertContactPage': InsertTuple(
+                CurrentBreaker, self.contactsView, lambda: CurrentBreaker.insert_joined_table(
+                    [
+                        {
+                            'device_type': self.insertContactEdit.text(),
+                            'current_value': int(self.insertContactEdit2.text()),
+                            'resistance_r1': Decimal(self.default(self.insertContactEdit3.text())),
+                            'reactance_x1': Decimal(self.default(self.insertContactEdit4.text())),
+                            'resistance_r0': Decimal(self.default(self.insertContactEdit5.text())),
+                            'reactance_x0': Decimal(self.default(self.insertContactEdit6.text())),
+                        }
+                    ]
+                )
+            ),
+            'insertResistPage': InsertTuple(
+                OtherContact, self.resistancesView, lambda: OtherContact.insert_table(
+                    [
+                        {
+                            'contact_type': self.insertResistEdit.text(),
+                            'resistance_r1': Decimal(self.default(self.insertResistEdit2.text())),
+                            'reactance_x1': Decimal(self.default(self.insertResistEdit3.text())),
+                            'resistance_r0': Decimal(self.default(self.insertResistEdit4.text())),
+                            'reactance_x0': Decimal(self.default(self.insertResistEdit5.text())),
+                        }
+                    ]
+                )
+            )
+        }
+
+        self.insert_tools = insert_operations[self.insertWidget.currentWidget().objectName()]
+
+    @staticmethod
+    def default(val: ty.Any, default: ty.Any = 0) -> ty.Any:
+        return val if val else default
 
 
 # class ViewerWidget(QtWidgets.QWidget):
