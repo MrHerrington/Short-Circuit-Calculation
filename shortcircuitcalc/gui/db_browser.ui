@@ -284,7 +284,7 @@ QTabWidget::pane {
           <item>
            <widget class="CustomGraphicView" name="transformersView">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -1706,7 +1706,7 @@ border: 1px solid black</string>
           <item>
            <widget class="QStackedWidget" name="updateWidget">
             <property name="currentIndex">
-             <number>3</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="updateTransPage">
              <layout class="QGridLayout" name="gridLayout_5">
@@ -2284,7 +2284,7 @@ border-radius: 10px;
                </widget>
               </item>
               <item row="1" column="1">
-               <widget class="QLineEdit" name="lineEdit_45">
+               <widget class="QLineEdit" name="updateCableEdit">
                 <property name="font">
                  <font>
                   <pointsize>9</pointsize>
@@ -2318,7 +2318,7 @@ border: 1px solid black</string>
                </widget>
               </item>
               <item row="1" column="3">
-               <widget class="QLineEdit" name="lineEdit_41">
+               <widget class="QLineEdit" name="updateCableEdit7">
                 <property name="font">
                  <font>
                   <pointsize>9</pointsize>
@@ -2352,7 +2352,7 @@ border: 1px solid black</string>
                </widget>
               </item>
               <item row="2" column="1">
-               <widget class="QLineEdit" name="lineEdit_38">
+               <widget class="QLineEdit" name="updateCableEdit2">
                 <property name="font">
                  <font>
                   <pointsize>9</pointsize>
@@ -2386,7 +2386,7 @@ border: 1px solid black</string>
                </widget>
               </item>
               <item row="2" column="3">
-               <widget class="QLineEdit" name="lineEdit_40">
+               <widget class="QLineEdit" name="updateCableEdit8">
                 <property name="font">
                  <font>
                   <pointsize>9</pointsize>
@@ -2420,7 +2420,7 @@ border: 1px solid black</string>
                </widget>
               </item>
               <item row="3" column="1">
-               <widget class="QLineEdit" name="lineEdit_39">
+               <widget class="QLineEdit" name="updateCableEdit3">
                 <property name="font">
                  <font>
                   <pointsize>9</pointsize>
@@ -2454,7 +2454,7 @@ border: 1px solid black</string>
                </widget>
               </item>
               <item row="3" column="3">
-               <widget class="QLineEdit" name="lineEdit_42">
+               <widget class="QLineEdit" name="updateCableEdit9">
                 <property name="font">
                  <font>
                   <pointsize>9</pointsize>
@@ -2515,7 +2515,7 @@ border-radius: 10px;
                </widget>
               </item>
               <item row="4" column="3">
-               <widget class="QLineEdit" name="lineEdit_43">
+               <widget class="QLineEdit" name="updateCableEdit10">
                 <property name="font">
                  <font>
                   <pointsize>9</pointsize>
@@ -2549,7 +2549,7 @@ border: 1px solid black</string>
                </widget>
               </item>
               <item row="5" column="1">
-               <widget class="QLineEdit" name="lineEdit_62">
+               <widget class="QLineEdit" name="updateCableEdit4">
                 <property name="font">
                  <font>
                   <pointsize>9</pointsize>
@@ -2583,7 +2583,7 @@ border: 1px solid black</string>
                </widget>
               </item>
               <item row="5" column="3">
-               <widget class="QLineEdit" name="lineEdit_44">
+               <widget class="QLineEdit" name="updateCableEdit11">
                 <property name="font">
                  <font>
                   <pointsize>9</pointsize>
@@ -2617,7 +2617,7 @@ border: 1px solid black</string>
                </widget>
               </item>
               <item row="6" column="1">
-               <widget class="QLineEdit" name="lineEdit_60">
+               <widget class="QLineEdit" name="updateCableEdit5">
                 <property name="font">
                  <font>
                   <pointsize>9</pointsize>
@@ -2651,7 +2651,7 @@ border: 1px solid black</string>
                </widget>
               </item>
               <item row="7" column="1">
-               <widget class="QLineEdit" name="lineEdit_61">
+               <widget class="QLineEdit" name="updateCableEdit6">
                 <property name="font">
                  <font>
                   <pointsize>9</pointsize>
@@ -3339,7 +3339,7 @@ border: 1px solid black</string>
           <item>
            <widget class="QStackedWidget" name="deleteWidget">
             <property name="currentIndex">
-             <number>3</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="deleteTransPage">
              <layout class="QGridLayout" name="gridLayout_9">

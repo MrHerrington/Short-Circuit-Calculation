@@ -139,11 +139,10 @@ class _ResultsFigure:
 
         self.checks = dict()
 
-        self.fig.subplots_adjust(wspace=0.01, hspace=0, left=0, right=1, bottom=0, top=1)
+        self.fig.subplots_adjust(wspace=0.01, hspace=0, left=0.01, right=0.99, bottom=0.01, top=0.99)
         self.__draw_figure()
         self.__off_axis()
-        # self.fig.subplots_adjust(wspace=0, hspace=0, left=0, right=1, bottom=0, top=1)
-        self.fig.tight_layout(pad=0.05)
+        self.fig.subplots_adjust(wspace=0.01, hspace=0, left=0.01, right=0.99, bottom=0.01, top=0.99)
 
         logger.info('Results system successfully created %s' % self.schem)
 

@@ -2,7 +2,6 @@
 """The module contains GUI windows templates, using PyQt5 and Matplotlib.
 Classes are based on ui files, developed by QtDesigner and customized."""
 
-
 from collections import namedtuple
 from decimal import Decimal
 import typing as ty
@@ -26,16 +25,13 @@ from shortcircuitcalc.database import (
     Transformer, Cable, CurrentBreaker, OtherContact,
     db_install
 )
-from shortcircuitcalc.tools import config_manager, ChainsSystem
+from shortcircuitcalc.tools import config_manager, handle_error, ChainsSystem
 from shortcircuitcalc.config import GUI_DIR
-
 
 __all__ = ('MainWindow', 'DatabaseBrowser', 'CustomGraphicView', 'ConfirmWindow')
 
-
 # Select the backend used for rendering and GUI integration.
 matplotlib.use('Qt5Agg')
-
 
 logger = logging.getLogger(__name__)
 GW = ty.TypeVar('GW', bound=ty.Union[QtWidgets.QMainWindow, QtWidgets.QWidget])
@@ -559,6 +555,8 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
 
         # Saved instances
         self.insert_tools = None
+        self.update_tools = None
+        self.delete_tools = None
 
         self.init_gui()
         self.show_database()
@@ -630,8 +628,8 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
         ##############################
         # Insert operations settings #
         ##############################
-        self.insertButton.clicked.connect(self.get_insert_tools)
-        self.insertButton.clicked.connect(lambda: self.insert_tools.operation())
+        self.insertButton.clicked.connect(lambda: handle_error(self.get_insert_tools))
+        self.insertButton.clicked.connect(lambda: handle_error(self.insert_tools.operation))
         self.insertButton.clicked.connect(
             lambda: self.insert_tools.view.set_figure(
                 self.insert_tools.table.show_table(self.insert_tools.table.read_joined_table())
@@ -645,6 +643,17 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
         ##############################
         # Update operations settings #
         ##############################
+        self.updateButton.clicked.connect(lambda: handle_error(self.get_update_tools))
+        self.updateButton.clicked.connect(lambda: handle_error(self.update_tools.operation))
+        self.updateButton.clicked.connect(
+            lambda: self.update_tools.view.set_figure(
+                self.update_tools.table.show_table(self.update_tools.table.read_joined_table())
+            )
+            if 'JoinedMixin' in map(lambda x: x.__name__, self.update_tools.table.__mro__) else
+            self.update_tools.view.set_figure(
+                self.update_tools.table.show_table(self.update_tools.table.read_table())
+            )
+        )
 
     def get_insert_tools(self):
         InsertTuple = namedtuple('InsertTuple', ('table', 'view', 'operation'))
@@ -652,7 +661,7 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
         insert_operations = {
             'insertTransPage': InsertTuple(
                 Transformer, self.transformersView, lambda: Transformer.insert_joined_table(
-                    [
+                    data=[
                         {
                             'power': int(self.insertTransEdit.text()),
                             'voltage': Decimal(self.insertTransEdit2.text()),
@@ -669,7 +678,7 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
             ),
             'insertCablePage': InsertTuple(
                 Cable, self.cablesView, lambda: Cable.insert_joined_table(
-                    [
+                    data=[
                         {
                             'mark_name': self.insertCableEdit.text(),
                             'multicore_amount': int(self.insertCableEdit2.text()),
@@ -685,7 +694,7 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
             ),
             'insertContactPage': InsertTuple(
                 CurrentBreaker, self.contactsView, lambda: CurrentBreaker.insert_joined_table(
-                    [
+                    data=[
                         {
                             'device_type': self.insertContactEdit.text(),
                             'current_value': int(self.insertContactEdit2.text()),
@@ -699,7 +708,7 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
             ),
             'insertResistPage': InsertTuple(
                 OtherContact, self.resistancesView, lambda: OtherContact.insert_table(
-                    [
+                    data=[
                         {
                             'contact_type': self.insertResistEdit.text(),
                             'resistance_r1': Decimal(self.default(self.insertResistEdit2.text())),
@@ -714,10 +723,159 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
 
         self.insert_tools = insert_operations[self.insertWidget.currentWidget().objectName()]
 
+    def get_update_tools(self):
+        UpdateTuple = namedtuple('UpdateTuple', ('table', 'view', 'operation'))
+
+        old_source_data = {
+            'updateTransPage': {
+                label: type_(field) for label, field, type_ in zip(
+                    ('power', 'voltage', 'vector_group'),
+                    (self.updateTransEdit.text(), self.updateTransEdit2.text(), self.updateTransEdit3.text()),
+                    (int, Decimal, str)
+                ) if field
+            },
+
+            'updateCablePage': {
+                label: type_(field) for label, field, type_ in zip(
+                    ('mark_name', 'multicore_amount', 'cable_range'),
+                    (self.updateCableEdit.text(), self.updateCableEdit2.text(), self.updateCableEdit3.text()),
+                    (str, int, Decimal)
+                ) if field
+            },
+
+            'updateContactPage': {
+                label: type_(field) for label, field, type_ in zip(
+                    ('device_type', 'current_value'),
+                    (self.updateContactEdit.text(), self.updateContactEdit2.text()),
+                    (str, int)
+                ) if field
+            },
+
+            'updateResistPage': {
+                label: type_(field) for label, field, type_ in zip(
+                    ('contact_type',),
+                    (self.updateResistEdit.text(),),
+                    (str,)
+                ) if field
+            }
+        }
+
+        new_source_data = {
+            'updateTransPage': {
+                label: type_(field) for label, field, type_ in zip(
+                    ('power', 'voltage', 'vector_group'),
+                    (self.updateTransEdit4.text(), self.updateTransEdit5.text(), self.updateTransEdit6.text()),
+                    (int, Decimal, str)
+                ) if field
+            },
+
+            'updateCablePage': {
+                label: type_(field) for label, field, type_ in zip(
+                    ('mark_name', 'multicore_amount', 'cable_range'),
+                    (self.updateCableEdit4.text(), self.updateCableEdit5.text(), self.updateCableEdit6.text()),
+                    (str, int, Decimal)
+                ) if field
+            },
+
+            'updateContactPage': {
+                label: type_(field) for label, field, type_ in zip(
+                    ('device_type', 'current_value'),
+                    (self.updateContactEdit3.text(), self.updateContactEdit4.text()),
+                    (str, int)
+                ) if field
+            },
+
+            'updateResistPage': {
+                label: type_(field) for label, field, type_ in zip(
+                    ('contact_type',),
+                    (self.updateResistEdit2.text(),),
+                    (str,)
+                ) if field
+            }
+        }
+
+        target_row_data = {
+            'updateTransPage': {
+                label: type_(field) for label, field, type_ in zip(
+                    ('power_short_circuit', 'voltage_short_circuit',
+                     'resistance_r1', 'reactance_x1', 'resistance_r0', 'reactance_x0'),
+                    (self.updateTransEdit7.text(), self.updateTransEdit8.text(), self.updateTransEdit9.text(),
+                     self.updateTransEdit10.text(), self.updateTransEdit11.text(), self.updateTransEdit12.text()),
+                    (Decimal, Decimal, Decimal, Decimal, Decimal, Decimal)
+                ) if field
+            },
+
+            'updateCablePage': {
+                label: type_(field) for label, field, type_ in zip(
+                    ('continuous_current',
+                     'resistance_r1', 'reactance_x1', 'resistance_r0', 'reactance_x0'),
+                    (self.updateCableEdit7.text(), self.updateCableEdit8.text(),
+                     self.updateCableEdit9.text(), self.updateCableEdit10.text(), self.updateCableEdit11.text()),
+                    (Decimal, Decimal, Decimal, Decimal, Decimal, Decimal)
+                ) if field
+            },
+
+            'updateContactPage': {
+                label: type_(field) for label, field, type_ in zip(
+                    ('resistance_r1', 'reactance_x1', 'resistance_r0', 'reactance_x0'),
+                    (self.updateContactEdit5.text(), self.updateContactEdit6.text(),
+                     self.updateContactEdit7.text(), self.updateContactEdit8.text()),
+                    (Decimal, Decimal, Decimal, Decimal)
+                ) if field
+            },
+
+            'updateResistPage': {
+                label: type_(field) for label, field, type_ in zip(
+                    ('resistance_r1', 'reactance_x1', 'resistance_r0', 'reactance_x0'),
+                    (self.updateResistEdit3.text(), self.updateResistEdit4.text(),
+                    self.updateResistEdit5.text(), self.updateResistEdit6.text()),
+                    (Decimal, Decimal, Decimal, Decimal)
+                ) if field
+            }
+        }
+
+        update_operations = {
+            'updateTransPage': UpdateTuple(
+                Transformer, self.transformersView, lambda: Transformer.update_joined_table(
+                    old_source_data=old_source_data['updateTransPage'],
+                    new_source_data=new_source_data['updateTransPage'],
+                    target_row_data=target_row_data['updateTransPage']
+                )
+            ),
+
+            'updateCablePage': UpdateTuple(
+                Cable, self.cablesView, lambda: Cable.update_joined_table(
+                    old_source_data=old_source_data['updateCablePage'],
+                    new_source_data=new_source_data['updateCablePage'],
+                    target_row_data=target_row_data['updateCablePage']
+                )
+            ),
+
+            'updateContactPage': UpdateTuple(
+                CurrentBreaker, self.contactsView, lambda: CurrentBreaker.update_joined_table(
+                    old_source_data=old_source_data['updateContactPage'],
+                    new_source_data=new_source_data['updateContactPage'],
+                    target_row_data=target_row_data['updateContactPage']
+                )
+            ),
+
+            'updateResistPage': UpdateTuple(
+                OtherContact, self.resistancesView, lambda: OtherContact.update_table(
+                    {
+                        **new_source_data['updateResistPage'], **target_row_data['updateResistPage']
+                    },
+                    options='where_condition',
+                    attr='contact_type',
+                    criteria=(old_source_data['updateResistPage']['contact_type'],)
+                )
+            )
+        }
+
+        self.update_tools = update_operations[self.updateWidget.currentWidget().objectName()]
+
     @staticmethod
     def default(val: ty.Any, default: ty.Any = 0) -> ty.Any:
         return val if val else default
-
 
 # class ViewerWidget(QtWidgets.QWidget):
 #     """Initializes a ViewerWidget object.
