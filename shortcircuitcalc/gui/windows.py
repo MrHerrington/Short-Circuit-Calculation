@@ -5,6 +5,7 @@ Classes are based on ui files, developed by QtDesigner and customized."""
 from collections import namedtuple
 from decimal import Decimal
 import typing as ty
+from dataclasses import asdict
 
 import logging
 import matplotlib
@@ -23,7 +24,12 @@ import shortcircuitcalc.gui.resources
 from shortcircuitcalc.gui.figures import GetFigure
 from shortcircuitcalc.database import (
     Transformer, Cable, CurrentBreaker, OtherContact,
-    db_install
+    db_install,
+
+    InsertTrans, UpdateTransOldSource, UpdateTransNewSource, UpdateTransRow, DeleteTrans,
+    InsertCable, UpdateCableOldSource, UpdateCableNewSource, UpdateCableRow, DeleteCable,
+    InsertContact, UpdateContactOldSource, UpdateContactNewSource, UpdateContactRow, DeleteContact,
+    InsertResist, UpdateResistOldSource, UpdateResistNewSource, UpdateResistRow, DeleteResist
 )
 from shortcircuitcalc.tools import config_manager, handle_error, ChainsSystem
 from shortcircuitcalc.config import GUI_DIR
@@ -662,60 +668,68 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
             'insertTransPage': InsertTuple(
                 Transformer, self.transformersView, lambda: Transformer.insert_joined_table(
                     data=[
-                        {
-                            'power': int(self.insertTransEdit.text()),
-                            'voltage': Decimal(self.insertTransEdit2.text()),
-                            'vector_group': self.insertTransEdit3.text(),
-                            'power_short_circuit': Decimal(self.default(self.insertTransEdit4.text())),
-                            'voltage_short_circuit': Decimal(self.default(self.insertTransEdit5.text())),
-                            'resistance_r1': Decimal(self.default(self.insertTransEdit6.text())),
-                            'reactance_x1': Decimal(self.default(self.insertTransEdit7.text())),
-                            'resistance_r0': Decimal(self.default(self.insertTransEdit8.text())),
-                            'reactance_x0': Decimal(self.default(self.insertTransEdit9.text())),
-                        }
+                        asdict(
+                            InsertTrans(
+                                self.insertTransEdit.text(),
+                                self.insertTransEdit2.text(),
+                                self.insertTransEdit3.text(),
+                                self.insertTransEdit4.text(),
+                                self.insertTransEdit5.text(),
+                                self.insertTransEdit6.text(),
+                                self.insertTransEdit7.text(),
+                                self.insertTransEdit8.text(),
+                                self.insertTransEdit9.text()
+                            )
+                        )
                     ]
                 )
             ),
             'insertCablePage': InsertTuple(
                 Cable, self.cablesView, lambda: Cable.insert_joined_table(
                     data=[
-                        {
-                            'mark_name': self.insertCableEdit.text(),
-                            'multicore_amount': int(self.insertCableEdit2.text()),
-                            'cable_range': Decimal(self.insertCableEdit3.text()),
-                            'continuous_current': Decimal(self.default(self.insertCableEdit4.text())),
-                            'resistance_r1': Decimal(self.default(self.insertCableEdit5.text())),
-                            'reactance_x1': Decimal(self.default(self.insertCableEdit6.text())),
-                            'resistance_r0': Decimal(self.default(self.insertCableEdit7.text())),
-                            'reactance_x0': Decimal(self.default(self.insertCableEdit8.text())),
-                        }
+                        asdict(
+                            InsertCable(
+                                self.insertCableEdit.text(),
+                                self.insertCableEdit2.text(),
+                                self.insertCableEdit3.text(),
+                                self.insertCableEdit4.text(),
+                                self.insertCableEdit5.text(),
+                                self.insertCableEdit6.text(),
+                                self.insertCableEdit7.text(),
+                                self.insertCableEdit8.text()
+                            )
+                        )
                     ]
                 )
             ),
             'insertContactPage': InsertTuple(
                 CurrentBreaker, self.contactsView, lambda: CurrentBreaker.insert_joined_table(
                     data=[
-                        {
-                            'device_type': self.insertContactEdit.text(),
-                            'current_value': int(self.insertContactEdit2.text()),
-                            'resistance_r1': Decimal(self.default(self.insertContactEdit3.text())),
-                            'reactance_x1': Decimal(self.default(self.insertContactEdit4.text())),
-                            'resistance_r0': Decimal(self.default(self.insertContactEdit5.text())),
-                            'reactance_x0': Decimal(self.default(self.insertContactEdit6.text())),
-                        }
+                        asdict(
+                            InsertContact(
+                                self.insertContactEdit.text(),
+                                self.insertContactEdit2.text(),
+                                self.insertContactEdit3.text(),
+                                self.insertContactEdit4.text(),
+                                self.insertContactEdit5.text(),
+                                self.insertContactEdit6.text()
+                            )
+                        )
                     ]
                 )
             ),
             'insertResistPage': InsertTuple(
                 OtherContact, self.resistancesView, lambda: OtherContact.insert_table(
                     data=[
-                        {
-                            'contact_type': self.insertResistEdit.text(),
-                            'resistance_r1': Decimal(self.default(self.insertResistEdit2.text())),
-                            'reactance_x1': Decimal(self.default(self.insertResistEdit3.text())),
-                            'resistance_r0': Decimal(self.default(self.insertResistEdit4.text())),
-                            'reactance_x0': Decimal(self.default(self.insertResistEdit5.text())),
-                        }
+                        asdict(
+                            InsertResist(
+                                self.insertResistEdit.text(),
+                                self.insertResistEdit2.text(),
+                                self.insertResistEdit3.text(),
+                                self.insertResistEdit4.text(),
+                                self.insertResistEdit5.text()
+                            )
+                        )
                     ]
                 )
             )
@@ -726,156 +740,136 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
     def get_update_tools(self):
         UpdateTuple = namedtuple('UpdateTuple', ('table', 'view', 'operation'))
 
-        old_source_data = {
-            'updateTransPage': {
-                label: type_(field) for label, field, type_ in zip(
-                    ('power', 'voltage', 'vector_group'),
-                    (self.updateTransEdit.text(), self.updateTransEdit2.text(), self.updateTransEdit3.text()),
-                    (int, Decimal, str)
-                ) if field
-            },
-
-            'updateCablePage': {
-                label: type_(field) for label, field, type_ in zip(
-                    ('mark_name', 'multicore_amount', 'cable_range'),
-                    (self.updateCableEdit.text(), self.updateCableEdit2.text(), self.updateCableEdit3.text()),
-                    (str, int, Decimal)
-                ) if field
-            },
-
-            'updateContactPage': {
-                label: type_(field) for label, field, type_ in zip(
-                    ('device_type', 'current_value'),
-                    (self.updateContactEdit.text(), self.updateContactEdit2.text()),
-                    (str, int)
-                ) if field
-            },
-
-            'updateResistPage': {
-                label: type_(field) for label, field, type_ in zip(
-                    ('contact_type',),
-                    (self.updateResistEdit.text(),),
-                    (str,)
-                ) if field
-            }
-        }
-
-        new_source_data = {
-            'updateTransPage': {
-                label: type_(field) for label, field, type_ in zip(
-                    ('power', 'voltage', 'vector_group'),
-                    (self.updateTransEdit4.text(), self.updateTransEdit5.text(), self.updateTransEdit6.text()),
-                    (int, Decimal, str)
-                ) if field
-            },
-
-            'updateCablePage': {
-                label: type_(field) for label, field, type_ in zip(
-                    ('mark_name', 'multicore_amount', 'cable_range'),
-                    (self.updateCableEdit4.text(), self.updateCableEdit5.text(), self.updateCableEdit6.text()),
-                    (str, int, Decimal)
-                ) if field
-            },
-
-            'updateContactPage': {
-                label: type_(field) for label, field, type_ in zip(
-                    ('device_type', 'current_value'),
-                    (self.updateContactEdit3.text(), self.updateContactEdit4.text()),
-                    (str, int)
-                ) if field
-            },
-
-            'updateResistPage': {
-                label: type_(field) for label, field, type_ in zip(
-                    ('contact_type',),
-                    (self.updateResistEdit2.text(),),
-                    (str,)
-                ) if field
-            }
-        }
-
-        target_row_data = {
-            'updateTransPage': {
-                label: type_(field) for label, field, type_ in zip(
-                    ('power_short_circuit', 'voltage_short_circuit',
-                     'resistance_r1', 'reactance_x1', 'resistance_r0', 'reactance_x0'),
-                    (self.updateTransEdit7.text(), self.updateTransEdit8.text(), self.updateTransEdit9.text(),
-                     self.updateTransEdit10.text(), self.updateTransEdit11.text(), self.updateTransEdit12.text()),
-                    (Decimal, Decimal, Decimal, Decimal, Decimal, Decimal)
-                ) if field
-            },
-
-            'updateCablePage': {
-                label: type_(field) for label, field, type_ in zip(
-                    ('continuous_current',
-                     'resistance_r1', 'reactance_x1', 'resistance_r0', 'reactance_x0'),
-                    (self.updateCableEdit7.text(), self.updateCableEdit8.text(),
-                     self.updateCableEdit9.text(), self.updateCableEdit10.text(), self.updateCableEdit11.text()),
-                    (Decimal, Decimal, Decimal, Decimal, Decimal, Decimal)
-                ) if field
-            },
-
-            'updateContactPage': {
-                label: type_(field) for label, field, type_ in zip(
-                    ('resistance_r1', 'reactance_x1', 'resistance_r0', 'reactance_x0'),
-                    (self.updateContactEdit5.text(), self.updateContactEdit6.text(),
-                     self.updateContactEdit7.text(), self.updateContactEdit8.text()),
-                    (Decimal, Decimal, Decimal, Decimal)
-                ) if field
-            },
-
-            'updateResistPage': {
-                label: type_(field) for label, field, type_ in zip(
-                    ('resistance_r1', 'reactance_x1', 'resistance_r0', 'reactance_x0'),
-                    (self.updateResistEdit3.text(), self.updateResistEdit4.text(),
-                    self.updateResistEdit5.text(), self.updateResistEdit6.text()),
-                    (Decimal, Decimal, Decimal, Decimal)
-                ) if field
-            }
-        }
-
         update_operations = {
             'updateTransPage': UpdateTuple(
                 Transformer, self.transformersView, lambda: Transformer.update_joined_table(
-                    old_source_data=old_source_data['updateTransPage'],
-                    new_source_data=new_source_data['updateTransPage'],
-                    target_row_data=target_row_data['updateTransPage']
+                    old_source_data=asdict(
+                        dict_factory=self.__dict_factory,
+                        obj=UpdateTransOldSource(
+                            self.updateTransEdit.text(),
+                            self.updateTransEdit2.text(),
+                            self.updateTransEdit3.text()
+                        )
+                    ),
+                    new_source_data=asdict(
+                        dict_factory=self.__dict_factory,
+                        obj=UpdateTransNewSource(
+                            self.updateTransEdit4.text(),
+                            self.updateTransEdit5.text(),
+                            self.updateTransEdit6.text()
+                        )
+                    ),
+                    target_row_data=asdict(
+                        dict_factory=self.__dict_factory,
+                        obj=UpdateTransRow(
+                            self.updateTransEdit7.text(),
+                            self.updateTransEdit8.text(),
+                            self.updateTransEdit9.text(),
+                            self.updateTransEdit10.text(),
+                            self.updateTransEdit11.text(),
+                            self.updateTransEdit12.text()
+                        )
+                    )
                 )
             ),
 
             'updateCablePage': UpdateTuple(
                 Cable, self.cablesView, lambda: Cable.update_joined_table(
-                    old_source_data=old_source_data['updateCablePage'],
-                    new_source_data=new_source_data['updateCablePage'],
-                    target_row_data=target_row_data['updateCablePage']
+                    old_source_data=asdict(
+                        dict_factory=self.__dict_factory,
+                        obj=UpdateCableOldSource(
+                            self.updateCableEdit.text(),
+                            self.updateCableEdit2.text(),
+                            self.updateCableEdit3.text()
+                        )
+                    ),
+                    new_source_data=asdict(
+                        dict_factory=self.__dict_factory,
+                        obj=UpdateCableNewSource(
+                            self.updateCableEdit4.text(),
+                            self.updateCableEdit5.text(),
+                            self.updateCableEdit6.text()
+                        )
+                    ),
+                    target_row_data=asdict(
+                        dict_factory=self.__dict_factory,
+                        obj=UpdateCableRow(
+                            self.updateCableEdit7.text(),
+                            self.updateCableEdit8.text(),
+                            self.updateCableEdit9.text(),
+                            self.updateCableEdit10.text(),
+                            self.updateCableEdit11.text()
+                        )
+                    )
                 )
             ),
 
             'updateContactPage': UpdateTuple(
                 CurrentBreaker, self.contactsView, lambda: CurrentBreaker.update_joined_table(
-                    old_source_data=old_source_data['updateContactPage'],
-                    new_source_data=new_source_data['updateContactPage'],
-                    target_row_data=target_row_data['updateContactPage']
+                    old_source_data=asdict(
+                        dict_factory=self.__dict_factory,
+                        obj=UpdateContactOldSource(
+                            self.updateContactEdit.text(),
+                            self.updateContactEdit2.text()
+                        )
+                    ),
+                    new_source_data=asdict(
+                        dict_factory=self.__dict_factory,
+                        obj=UpdateContactNewSource(
+                            self.updateContactEdit3.text(),
+                            self.updateContactEdit4.text()
+                        )
+                    ),
+                    target_row_data=asdict(
+                        dict_factory=self.__dict_factory,
+                        obj=UpdateContactRow(
+                            self.updateContactEdit5.text(),
+                            self.updateContactEdit6.text(),
+                            self.updateContactEdit7.text(),
+                            self.updateContactEdit8.text()
+                        )
+                    )
                 )
             ),
 
             'updateResistPage': UpdateTuple(
                 OtherContact, self.resistancesView, lambda: OtherContact.update_table(
                     {
-                        **new_source_data['updateResistPage'], **target_row_data['updateResistPage']
+                        **asdict(
+                            dict_factory=self.__dict_factory,
+                            obj=UpdateResistNewSource(
+                                self.updateResistEdit2.text()
+                            )
+                        ),
+                        **asdict(
+                            dict_factory=self.__dict_factory,
+                            obj=UpdateResistRow(
+                                self.updateResistEdit3.text(),
+                                self.updateResistEdit4.text(),
+                                self.updateResistEdit5.text(),
+                                self.updateResistEdit6.text()
+                            )
+                        )
                     },
                     options='where_condition',
                     attr='contact_type',
-                    criteria=(old_source_data['updateResistPage']['contact_type'],)
+                    criteria=(
+                        asdict(
+                            dict_factory=self.__dict_factory,
+                            obj=UpdateResistOldSource(
+                                self.updateResistEdit.text()
+                            )
+                        )['contact_type'],
+                    )
                 )
             )
         }
 
         self.update_tools = update_operations[self.updateWidget.currentWidget().objectName()]
-
-    @staticmethod
-    def default(val: ty.Any, default: ty.Any = 0) -> ty.Any:
-        return val if val else default
+    
+    @property
+    def __dict_factory(self):
+        return lambda x: {k: v for (k, v) in x if v is not None}
 
 # class ViewerWidget(QtWidgets.QWidget):
 #     """Initializes a ViewerWidget object.

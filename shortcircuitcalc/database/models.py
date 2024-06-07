@@ -23,7 +23,12 @@ __all__ = (
     'PowerNominal', 'VoltageNominal', 'Scheme', 'Transformer',
     'Mark', 'RangeVal', 'Amount', 'Cable',
     'Device', 'CurrentNominal', 'CurrentBreaker',
-    'OtherContact'
+    'OtherContact',
+
+    'InsertTrans', 'UpdateTransOldSource', 'UpdateTransNewSource', 'UpdateTransRow', 'DeleteTrans',
+    'InsertCable', 'UpdateCableOldSource', 'UpdateCableNewSource', 'UpdateCableRow', 'DeleteCable',
+    'InsertContact', 'UpdateContactOldSource', 'UpdateContactNewSource', 'UpdateContactRow', 'DeleteContact',
+    'InsertResist', 'UpdateResistOldSource', 'UpdateResistNewSource', 'UpdateResistRow', 'DeleteResist'
 )
 
 

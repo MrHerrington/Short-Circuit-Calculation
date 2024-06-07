@@ -110,7 +110,7 @@ class Validator:
         if isinstance(self._saved_value, ty.get_type_hints(obj)[self._public_name]):
             return self._saved_value
         else:
-            print(type_error_msg)
+            logger.warning(type_error_msg)
 
     def __set__(self, obj: ty.Any, value: ty.Any) -> None:
         # https://stackoverflow.com/questions/67612451/combining-a-descriptor-class-with-dataclass-and-field
@@ -129,7 +129,7 @@ class Validator:
                 return ty.get_type_hints(obj)[self._public_name](self._default)
             else:
                 if isinstance(self._default, str) and not self._default:
-                    print(empty_str_error_msg)
+                    logger.warning(empty_str_error_msg)
 
         def __set_obj_arg(arg):
             if isinstance(arg, str) and arg or \
@@ -137,7 +137,7 @@ class Validator:
                 return ty.get_type_hints(obj)[self._public_name](arg)
             else:
                 if isinstance(arg, str) and not arg:
-                    print(empty_str_error_msg)
+                    logger.warning(empty_str_error_msg)
 
         try:
             if value is self:
@@ -150,8 +150,8 @@ class Validator:
                     value = __set_obj_arg(value)
 
         except (Exception,):
-            print(type_error_msg)
-            # raise
+            logger.error(type_error_msg)
+            raise
 
         setattr(obj, self._private_name, value)
 
