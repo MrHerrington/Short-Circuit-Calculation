@@ -7,10 +7,13 @@ and 'contacts and other resistances'
 """
 
 
+from decimal import Decimal
+from dataclasses import dataclass, field
+
 import sqlalchemy as sa
 import sqlalchemy.orm
 
-from shortcircuitcalc.tools import Base
+from shortcircuitcalc.tools import Base, Validator
 from shortcircuitcalc.database.mixins import (
     BaseMixin, JoinedMixin
 )
@@ -25,8 +28,11 @@ __all__ = (
 
 
 ##########################
+#       Main models      #
+##########################
 # 'Transformers' section #
 ##########################
+
 
 class PowerNominal(BaseMixin, Base):
     """The class describes a table of transformer power nominals"""
@@ -263,3 +269,179 @@ class OtherContact(BaseMixin, Base):
     reactance_x0 = sa.orm.mapped_column(
         sa.Numeric(8, 5), nullable=True, default=0, sort_order=10
     )
+
+
+###################################
+# Dataclasses for CRUD operations #
+###################################
+#     'Transformers' section      #
+###################################
+
+@dataclass
+class InsertTrans:
+    power: int = field(default=Validator())
+    voltage: Decimal = field(default=Validator())
+    vector_group: str = field(default=Validator())
+
+    power_short_circuit: Decimal = field(default=Validator(default=0))
+    voltage_short_circuit: Decimal = field(default=Validator(default=0))
+    resistance_r1: Decimal = field(default=Validator(default=0))
+    reactance_x1: Decimal = field(default=Validator(default=0))
+    resistance_r0: Decimal = field(default=Validator(default=0))
+    reactance_x0: Decimal = field(default=Validator(default=0))
+
+
+@dataclass
+class UpdateTransOldSource:
+    power: int = field(default=Validator())
+    voltage: Decimal = field(default=Validator())
+    vector_group: str = field(default=Validator())
+
+
+@dataclass
+class UpdateTransNewSource:
+    power: int = field(default=Validator())
+    voltage: Decimal = field(default=Validator())
+    vector_group: str = field(default=Validator())
+
+
+@dataclass
+class UpdateTransRow:
+    power_short_circuit: Decimal = field(default=Validator())
+    voltage_short_circuit: Decimal = field(default=Validator())
+    resistance_r1: Decimal = field(default=Validator())
+    reactance_x1: Decimal = field(default=Validator())
+    resistance_r0: Decimal = field(default=Validator())
+    reactance_x0: Decimal = field(default=Validator())
+
+
+@dataclass
+class DeleteTrans:
+    power: int = field(default=Validator())
+    voltage: Decimal = field(default=Validator())
+    vector_group: str = field(default=Validator())
+
+
+##############################
+# 'Cables and wires' section #
+##############################
+
+@dataclass
+class InsertCable:
+    mark_name: str = field(default=Validator())
+    multicore_amount: int = field(default=Validator())
+    cable_range: Decimal = field(default=Validator())
+
+    continuous_current: Decimal = field(default=Validator(default=0))
+    resistance_r1: Decimal = field(default=Validator(default=0))
+    reactance_x1: Decimal = field(default=Validator(default=0))
+    resistance_r0: Decimal = field(default=Validator(default=0))
+    reactance_x0: Decimal = field(default=Validator(default=0))
+
+
+@dataclass
+class UpdateCableOldSource:
+    mark_name: str = field(default=Validator())
+    multicore_amount: int = field(default=Validator())
+    cable_range: Decimal = field(default=Validator())
+
+
+@dataclass
+class UpdateCableNewSource:
+    mark_name: str = field(default=Validator())
+    multicore_amount: int = field(default=Validator())
+    cable_range: Decimal = field(default=Validator())
+
+
+@dataclass
+class UpdateCableRow:
+    continuous_current: Decimal = field(default=Validator())
+    resistance_r1: Decimal = field(default=Validator())
+    reactance_x1: Decimal = field(default=Validator())
+    resistance_r0: Decimal = field(default=Validator())
+    reactance_x0: Decimal = field(default=Validator())
+
+
+@dataclass
+class DeleteCable:
+    mark_name: str = field(default=Validator())
+    multicore_amount: int = field(default=Validator())
+    cable_range: Decimal = field(default=Validator())
+
+
+######################
+# 'Contacts' section #
+######################
+
+@dataclass
+class InsertContact:
+    device_type: str = field(default=Validator())
+    current_value: int = field(default=Validator())
+
+    resistance_r1: Decimal = field(default=Validator(default=0))
+    reactance_x1: Decimal = field(default=Validator(default=0))
+    resistance_r0: Decimal = field(default=Validator(default=0))
+    reactance_x0: Decimal = field(default=Validator(default=0))
+
+
+@dataclass
+class UpdateContactOldSource:
+    device_type: str = field(default=Validator())
+    current_value: int = field(default=Validator())
+
+
+@dataclass
+class UpdateContactNewSource:
+    device_type: str = field(default=Validator())
+    current_value: int = field(default=Validator())
+
+
+@dataclass
+class UpdateContactRow:
+    resistance_r1: Decimal = field(default=Validator())
+    reactance_x1: Decimal = field(default=Validator())
+    resistance_r0: Decimal = field(default=Validator())
+    reactance_x0: Decimal = field(default=Validator())
+
+
+@dataclass
+class DeleteContact:
+    device_type: str = field(default=Validator())
+    current_value: int = field(default=Validator())
+
+
+###############################
+# 'Other resistances' section #
+###############################
+
+@dataclass
+class InsertResist:
+    contact_type: str = field(default=Validator())
+
+    resistance_r1: Decimal = field(default=Validator(default=0))
+    reactance_x1: Decimal = field(default=Validator(default=0))
+    resistance_r0: Decimal = field(default=Validator(default=0))
+    reactance_x0: Decimal = field(default=Validator(default=0))
+
+
+@dataclass
+class UpdateResistOldSource:
+    contact_type: str = field(default=Validator())
+
+
+@dataclass
+class UpdateResistNewSource:
+    contact_type: str = field(default=Validator())
+
+
+@dataclass
+class UpdateResistRow:
+    resistance_r1: Decimal = field(default=Validator())
+    reactance_x1: Decimal = field(default=Validator())
+    resistance_r0: Decimal = field(default=Validator())
+    reactance_x0: Decimal = field(default=Validator())
+
+
+@dataclass
+class DeleteResist:
+    contact_type: str = field(default=Validator())

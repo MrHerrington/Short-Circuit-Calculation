@@ -17,7 +17,7 @@ from functools import reduce
 
 import sqlalchemy as sa
 
-from shortcircuitcalc.tools.tools import session_scope
+from shortcircuitcalc.tools.tools import Validator, session_scope
 from shortcircuitcalc.database import (
     PowerNominal, VoltageNominal, Scheme, Transformer,
     Mark, Amount, RangeVal, Cable,
@@ -28,54 +28,11 @@ from shortcircuitcalc.config import (
     SYSTEM_VOLTAGE_IN_KILOVOLTS, CALCULATIONS_ACCURACY
 )
 
+
 __all__ = ('BaseElement', 'T', 'W', 'Q', 'QF', 'QS', 'R', 'Line', 'Arc', 'ElemChain', 'ChainsSystem')
 
+
 logger = logging.getLogger(__name__)
-
-
-class Validator:
-    """The class for validating the input data.
-
-    The class for validating the input data in accordance with
-    the type annotations specified when creating the dataclasses.
-
-    Sample:
-        @dataclass
-        class Person:
-            age: float = field(default=Validator())
-            ---: ...
-
-        print(Person('10').age) -> 10.0
-        print(type(Person('10').age)) -> <class 'float'>
-
-    """
-
-    def __init__(self, arg=None) -> None:
-        self._arg = arg
-
-    def __set_name__(self, owner: ty.Any, name: ty.Any) -> None:
-        self._public_name = name
-        self._private_name = '_' + name
-
-    def __get__(self, obj: ty.Any, owner: ty.Any) -> ty.Any:
-        return getattr(obj, self._private_name)
-
-    def __set__(self, obj: ty.Any, value: ty.Any) -> None:
-        # https://stackoverflow.com/questions/67612451/combining-a-descriptor-class-with-dataclass-and-field
-        # Next in Validator.__set__, when the arg argument is not provided to the
-        # constructor, the value argument will actually be the instance of the
-        # Validator class. So we need to change the guard to see if value is self:
-        if value is self:
-            value = self._arg
-        else:
-            try:
-                value = ty.get_type_hints(obj)[self._public_name](value)
-            except (TypeError, ValueError):
-                msg = (f"The type of the attribute '{type(obj).__name__}.{self._public_name}' "
-                       f'must be {ty.get_type_hints(obj)[self._public_name]}.')
-                logger.error(msg)
-                raise TypeError(msg)
-        setattr(obj, self._private_name, value)
 
 
 class BaseElement(ABC):
