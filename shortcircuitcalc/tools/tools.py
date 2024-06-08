@@ -13,6 +13,7 @@ import ast
 import typing as ty
 from contextlib import contextmanager
 from decimal import Decimal, InvalidOperation
+from functools import wraps
 
 import sqlalchemy as sa
 import sqlalchemy.orm
@@ -491,7 +492,7 @@ def session_scope(logs: bool = True) -> None:
         session.close()
 
 
-def handle_error(func: ty.Callable) -> None:
+def handle_error(func: ty.Callable) -> ty.Callable:
     """Decorator for handling errors in a function.
 
     Args:
@@ -500,7 +501,10 @@ def handle_error(func: ty.Callable) -> None:
         Logging exceptions to the logs frame in MainWindow GUI.
 
     """
-    try:
-        func()
-    except Exception as err:
-        logger.error(err)
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except Exception as err:
+            logger.error(err)
+    return wrapper

@@ -5,6 +5,7 @@ the functionality of the declarative base class 'Base'.
 
 """
 
+
 import logging
 import pathlib
 import re
@@ -22,9 +23,12 @@ from shortcircuitcalc.tools import (
     Base, engine, session_scope, config_manager
 )
 
+
 __all__ = ('BaseMixin', 'JoinedMixin')
 
+
 logger = logging.getLogger(__name__)
+
 
 BT = ty.TypeVar('BT', bound=Base)
 
@@ -132,6 +136,13 @@ class BaseMixin:
             figure.Figure: Matplotlib figure object.
 
         """
+        # Values precision
+        dataframe.update(
+            dataframe[
+                ['resistance_r1', 'reactance_x1', 'resistance_r0', 'reactance_x0']
+            ].applymap(lambda x: '{:,.5f}'.format(x) if x < 0.0001 and x != 0 else x)
+        )
+
         figsize_x = len(dataframe.columns) + 1
         figsize_y = (len(dataframe.index) + 1) * 0.4
         fig = figure.Figure(figsize=(figsize_x, figsize_y))
@@ -775,7 +786,7 @@ class JoinedMixin:
 
     @classmethod
     def delete_joined_table(cls: BT,
-                            source_data=None,
+                            source_data: dict = None,
                             from_source: bool = False
                             ) -> None:
         """The method deletes rows into joined table (and source if necessary).
@@ -808,10 +819,13 @@ class JoinedMixin:
             }
 
             with session_scope() as session:
-                primary_key_queries = (
-                    session.query(table.id).filter(relation[0] == relation[1])
-                    for table, relation in zip(cls.SUBTABLES, source_dict.items())
-                )
+                primary_key_queries = {
+                    table.get_foreign_keys(on_side=True):
+                        session.query(table.id).filter(relation[0] == relation[1])
+                    for table in cls.SUBTABLES
+                    for relation in source_dict.items()
+                    if hasattr(table, relation[0].name)
+                }
 
         # Delete one string in joined table
         if source_data and not from_source:
@@ -820,10 +834,9 @@ class JoinedMixin:
                     cls
                 ).filter(
                     sa.and_(
-                        key == query.as_scalar()
-                        for key, query in zip(
-                            cls.get_foreign_keys(as_str=False), primary_key_queries
-                        )
+                        key == primary_key_queries[key.name].as_scalar()
+                        for key in cls.get_foreign_keys(as_str=False)
+                        if key.name in primary_key_queries
                     )
                 ).delete()
 

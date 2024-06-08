@@ -110,14 +110,15 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
         self._scene = QtWidgets.QGraphicsScene()
         self._scene.addWidget(self._canvas)
         self.setScene(self._scene)
-        if self.objectName() not in (
-                'resultsView',
-        ):
-            self.setStyleSheet('QGraphicsView {background-color: transparent;}')
 
         # Start viewing position
         self.horizontalScrollBar().setSliderPosition(1)
         self.verticalScrollBar().setSliderPosition(1)
+
+        if self.objectName() not in (
+                'resultsView',
+        ):
+            self.setStyleSheet('QGraphicsView {background-color: transparent;}')
 
         # self.zoom_initialize()
 
@@ -661,6 +662,56 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
             )
         )
 
+        ##############################
+        # Delete operations settings #
+        ##############################
+        def __delete_event(delete_from_source):
+            handle_error(self.get_delete_tools)()
+            handle_error(self.delete_tools.operation(delete_from_source))()
+            handle_error(
+                self.delete_tools.view.set_figure(
+                    self.delete_tools.table.show_table(self.delete_tools.table.read_joined_table())
+                )
+                if 'JoinedMixin' in map(lambda x: x.__name__, self.delete_tools.table.__mro__) else
+                self.delete_tools.view.set_figure(
+                    self.delete_tools.table.show_table(self.delete_tools.table.read_table())
+                )
+            )
+
+        self.rowButton.clicked.connect(lambda: __delete_event(delete_from_source=False))
+        self.sourceButton.clicked.connect(lambda: __delete_event(delete_from_source=True))
+
+
+
+
+
+
+
+
+        # self.rowButton.clicked.connect(lambda: handle_error(self.get_delete_tools))
+        # self.rowButton.clicked.connect(lambda x=False: handle_error(self.delete_tools.operation(x)))
+        # self.rowButton.clicked.connect(
+        #     lambda: self.delete_tools.view.set_figure(
+        #         self.delete_tools.table.show_table(self.delete_tools.table.read_joined_table())
+        #     )
+        #     if 'JoinedMixin' in map(lambda x: x.__name__, self.delete_tools.table.__mro__) else
+        #     self.delete_tools.view.set_figure(
+        #         self.delete_tools.table.show_table(self.delete_tools.table.read_table())
+        #     )
+        # )
+        #
+        # self.sourceButton.clicked.connect(lambda: handle_error(self.get_delete_tools)())
+        # self.sourceButton.clicked.connect(lambda: handle_error(self.delete_tools.operation(True))())
+        # self.sourceButton.clicked.connect(
+        #     lambda: self.delete_tools.view.set_figure(
+        #         self.delete_tools.table.show_table(self.delete_tools.table.read_joined_table())
+        #     )
+        #     if 'JoinedMixin' in map(lambda x: x.__name__, self.delete_tools.table.__mro__) else
+        #     self.delete_tools.view.set_figure(
+        #         self.delete_tools.table.show_table(self.delete_tools.table.read_table())
+        #     )
+        # )
+
     def get_insert_tools(self):
         InsertTuple = namedtuple('InsertTuple', ('table', 'view', 'operation'))
 
@@ -684,6 +735,7 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
                     ]
                 )
             ),
+
             'insertCablePage': InsertTuple(
                 Cable, self.cablesView, lambda: Cable.insert_joined_table(
                     data=[
@@ -702,6 +754,7 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
                     ]
                 )
             ),
+
             'insertContactPage': InsertTuple(
                 CurrentBreaker, self.contactsView, lambda: CurrentBreaker.insert_joined_table(
                     data=[
@@ -718,6 +771,7 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
                     ]
                 )
             ),
+
             'insertResistPage': InsertTuple(
                 OtherContact, self.resistancesView, lambda: OtherContact.insert_table(
                     data=[
@@ -866,10 +920,76 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
         }
 
         self.update_tools = update_operations[self.updateWidget.currentWidget().objectName()]
+
+    def get_delete_tools(self):
+        DeleteTuple = namedtuple('DeleteTuple', ('table', 'view', 'operation'))
+
+        delete_operations = {
+            'deleteTransPage': DeleteTuple(
+                Transformer, self.transformersView, lambda x: Transformer.delete_joined_table(
+                    from_source=x,
+                    source_data=asdict(
+                        dict_factory=self.__dict_factory,
+                        obj=DeleteTrans(
+                            self.deleteTransEdit.text(),
+                            self.deleteTransEdit2.text(),
+                            self.deleteTransEdit3.text()
+                        )
+                    )
+                )
+            ),
+
+            'deleteCablePage': DeleteTuple(
+                Cable, self.cablesView, lambda x: Cable.delete_joined_table(
+                    from_source=x,
+                    source_data=asdict(
+                        dict_factory=self.__dict_factory,
+                        obj=DeleteCable(
+                            self.deleteCableEdit.text(),
+                            self.deleteCableEdit2.text(),
+                            self.deleteCableEdit3.text()
+                        )
+                    )
+                )
+            ),
+
+            'deleteContactPage': DeleteTuple(
+                CurrentBreaker, self.contactsView, lambda x: CurrentBreaker.delete_joined_table(
+                    from_source=x,
+                    source_data=asdict(
+                        dict_factory=self.__dict_factory,
+                        obj=DeleteContact(
+                            self.deleteContactEdit.text(),
+                            self.deleteContactEdit2.text()
+                        )
+                    )
+                )
+            ),
+            'deleteResistPage': DeleteTuple(
+                OtherContact, self.resistancesView, lambda x: OtherContact.delete_table(
+                    filtrate=next(
+                        map(
+                            lambda pair: f"{pair[0]} = '{pair[1]}'",
+                            tuple(
+                                asdict(
+                                    dict_factory=self.__dict_factory,
+                                    obj=DeleteResist(
+                                        self.deleteResistEdit.text()
+                                    )
+                                ).items()
+                            )
+                        )
+                    )
+                )
+            )
+        }
+
+        self.delete_tools = delete_operations[self.deleteWidget.currentWidget().objectName()]
     
     @property
     def __dict_factory(self):
         return lambda x: {k: v for (k, v) in x if v is not None}
+
 
 # class ViewerWidget(QtWidgets.QWidget):
 #     """Initializes a ViewerWidget object.

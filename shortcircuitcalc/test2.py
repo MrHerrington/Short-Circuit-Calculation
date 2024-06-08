@@ -1,4 +1,4 @@
-from shortcircuitcalc.database import *
+from shortcircuitcalc.database import CurrentBreaker
 import sqlalchemy as sa
 from tools import session_scope
 
@@ -66,4 +66,5 @@ from tools import session_scope
 #     },
 #     from_source=True
 # )
+CurrentBreaker.delete_joined_table(source_data={'device_type': 'Рубильник'}, from_source=True)
 # print(Transformer.get_join_stmt())
