@@ -716,10 +716,13 @@ class JoinedMixin:
             }
 
             with session_scope() as session:
-                primary_key_queries = (
-                    session.query(table.id).filter(relation[0] == relation[1])
-                    for table, relation in zip(cls.SUBTABLES, old_source_dict.items())
-                )
+                primary_key_queries = {
+                    table.get_foreign_keys(on_side=True):
+                        session.query(table.id).filter(relation[0] == relation[1])
+                    for table in cls.SUBTABLES
+                    for relation in old_source_dict.items()
+                    if hasattr(table, relation[0].name)
+                }
 
         # Update one string in joined table (update non_keys cols)
         if old_source_data and target_row_data:
@@ -728,10 +731,9 @@ class JoinedMixin:
                     cls
                 ).filter(
                     sa.and_(
-                        key == query.as_scalar()
-                        for key, query in zip(
-                            cls.get_foreign_keys(as_str=False), primary_key_queries
-                        )
+                        key == primary_key_queries[key.name].as_scalar()
+                        for key in cls.get_foreign_keys(as_str=False)
+                        if key.name in primary_key_queries
                     )
                 ).update(
                     {

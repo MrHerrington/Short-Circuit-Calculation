@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
-"""The module contains GUI windows templates, using PyQt5 and Matplotlib.
-Classes are based on ui files, developed by QtDesigner and customized."""
+"""
+The module contains GUI windows templates, using PyQt5 and Matplotlib.
+Classes are based on ui files, developed by QtDesigner and customized.
+
+"""
+
 
 from collections import namedtuple
 from decimal import Decimal
 import typing as ty
 from dataclasses import asdict
+from functools import wraps, partial
 
 import logging
 import matplotlib
@@ -31,16 +36,31 @@ from shortcircuitcalc.database import (
     InsertContact, UpdateContactOldSource, UpdateContactNewSource, UpdateContactRow, DeleteContact,
     InsertResist, UpdateResistOldSource, UpdateResistNewSource, UpdateResistRow, DeleteResist
 )
-from shortcircuitcalc.tools import config_manager, handle_error, ChainsSystem
+from shortcircuitcalc.tools import config_manager, logging_error, ChainsSystem
 from shortcircuitcalc.config import GUI_DIR
 
+
 __all__ = ('MainWindow', 'DatabaseBrowser', 'CustomGraphicView', 'ConfirmWindow')
+
 
 # Select the backend used for rendering and GUI integration.
 matplotlib.use('Qt5Agg')
 
+
 logger = logging.getLogger(__name__)
 GW = ty.TypeVar('GW', bound=ty.Union[QtWidgets.QMainWindow, QtWidgets.QWidget])
+
+
+class Worker(QtCore.QThread):
+    signal = QtCore.pyqtSignal(object)
+
+    def __init__(self, parent=None, table=None):
+        super(Worker, self).__init__(parent)
+        self.table = table
+
+    def run(self):
+        data = self.table.show_table(self.table.read_joined_table())
+        self.signal.emit(data)
 
 
 class CustomGraphicView(QtWidgets.QGraphicsView):
@@ -277,16 +297,6 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
             pixmap.save(fname)
 
 
-class ConfirmWindow(QtWidgets.QDialog):
-    """Initializes a ConfirmWindow object."""
-
-    def __init__(self, parent=None):
-        super(ConfirmWindow, self).__init__(parent)
-        uic.loadUi(GUI_DIR / 'confirm.ui', self)
-        # noinspection PyUnresolvedReferences
-        self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
-
-
 class QPlainTextEditLogger(QtWidgets.QPlainTextEdit, logging.Handler):
     def __init__(self, parent):
         super(QPlainTextEditLogger, self).__init__(parent)
@@ -303,6 +313,16 @@ class QPlainTextEditLogger(QtWidgets.QPlainTextEdit, logging.Handler):
             msg = f"""<span style='color:#ff0000;'>{msg}</span>"""
 
         self.appendHtml(msg)
+
+
+class ConfirmWindow(QtWidgets.QDialog):
+    """Initializes a ConfirmWindow object."""
+
+    def __init__(self, parent=None):
+        super(ConfirmWindow, self).__init__(parent)
+        uic.loadUi(GUI_DIR / 'confirm.ui', self)
+        # noinspection PyUnresolvedReferences
+        self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
 
 
 class CustomWindow:
@@ -560,11 +580,6 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
         super(DatabaseBrowser, self).__init__()
         uic.loadUi(GUI_DIR / 'db_browser.ui', self)
 
-        # Saved instances
-        self.insert_tools = None
-        self.update_tools = None
-        self.delete_tools = None
-
         self.init_gui()
         self.show_database()
         self.crud_operations()
@@ -625,92 +640,52 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
             logger.info('Database mapped successfully.')
 
     def reinstall_database(self):
-        confirm_window = ConfirmWindow(self)
-        confirm_window.exec_()
-        if confirm_window.result() == QtWidgets.QDialog.Accepted:
-            db_install(clear=config_manager('DB_TABLES_CLEAR_INSTALL'))
-            self.show_database()
+        db_install(clear=config_manager('DB_TABLES_CLEAR_INSTALL'))
+        tables = (Transformer, Cable, CurrentBreaker)
+        views = (self.transformersView, self.cablesView, self.contactsView)
+        self.threads = []
+
+        for table, view in zip(tables, views):
+            worker = Worker(self, table)
+            worker.signal.connect(view.set_figure)
+            self.threads.append(worker)
+            worker.start()
+
+        # confirm_window = ConfirmWindow(self)
+        # confirm_window.exec_()
+        # if confirm_window.result() == QtWidgets.QDialog.Accepted:
+        # db_install(clear=config_manager('DB_TABLES_CLEAR_INSTALL'))
+        # self.show_database()
 
     def crud_operations(self):
         ##############################
         # Insert operations settings #
         ##############################
-        self.insertButton.clicked.connect(lambda: handle_error(self.get_insert_tools))
-        self.insertButton.clicked.connect(lambda: handle_error(self.insert_tools.operation))
-        self.insertButton.clicked.connect(
-            lambda: self.insert_tools.view.set_figure(
-                self.insert_tools.table.show_table(self.insert_tools.table.read_joined_table())
-            )
-            if 'JoinedMixin' in map(lambda x: x.__name__, self.insert_tools.table.__mro__) else
-            self.insert_tools.view.set_figure(
-                self.insert_tools.table.show_table(self.insert_tools.table.read_table())
-            )
-        )
+        self.insertButton.clicked.connect(lambda: self.crud_event(self.get_insert_tools))
 
         ##############################
         # Update operations settings #
         ##############################
-        self.updateButton.clicked.connect(lambda: handle_error(self.get_update_tools))
-        self.updateButton.clicked.connect(lambda: handle_error(self.update_tools.operation))
-        self.updateButton.clicked.connect(
-            lambda: self.update_tools.view.set_figure(
-                self.update_tools.table.show_table(self.update_tools.table.read_joined_table())
-            )
-            if 'JoinedMixin' in map(lambda x: x.__name__, self.update_tools.table.__mro__) else
-            self.update_tools.view.set_figure(
-                self.update_tools.table.show_table(self.update_tools.table.read_table())
-            )
-        )
+        self.updateButton.clicked.connect(lambda: self.crud_event(self.get_update_tools))
 
         ##############################
         # Delete operations settings #
         ##############################
-        def __delete_event(delete_from_source):
-            handle_error(self.get_delete_tools)()
-            handle_error(self.delete_tools.operation(delete_from_source))()
-            handle_error(
-                self.delete_tools.view.set_figure(
-                    self.delete_tools.table.show_table(self.delete_tools.table.read_joined_table())
-                )
-                if 'JoinedMixin' in map(lambda x: x.__name__, self.delete_tools.table.__mro__) else
-                self.delete_tools.view.set_figure(
-                    self.delete_tools.table.show_table(self.delete_tools.table.read_table())
-                )
+        self.rowButton.clicked.connect(lambda: self.crud_event(self.get_delete_tools, False))
+        self.sourceButton.clicked.connect(lambda: self.crud_event(self.get_delete_tools, True))
+
+    @logging_error
+    def crud_event(self, get_tools, *args, **kwargs) -> None:
+        tools = get_tools()
+        tools.operation(*args, **kwargs)
+        if 'JoinedMixin' in map(lambda x: x.__name__, tools.table.__mro__):
+            tools.view.set_figure(
+                tools.table.show_table(tools.table.read_joined_table())
             )
-
-        self.rowButton.clicked.connect(lambda: __delete_event(delete_from_source=False))
-        self.sourceButton.clicked.connect(lambda: __delete_event(delete_from_source=True))
-
-
-
-
-
-
-
-
-        # self.rowButton.clicked.connect(lambda: handle_error(self.get_delete_tools))
-        # self.rowButton.clicked.connect(lambda x=False: handle_error(self.delete_tools.operation(x)))
-        # self.rowButton.clicked.connect(
-        #     lambda: self.delete_tools.view.set_figure(
-        #         self.delete_tools.table.show_table(self.delete_tools.table.read_joined_table())
-        #     )
-        #     if 'JoinedMixin' in map(lambda x: x.__name__, self.delete_tools.table.__mro__) else
-        #     self.delete_tools.view.set_figure(
-        #         self.delete_tools.table.show_table(self.delete_tools.table.read_table())
-        #     )
-        # )
-        #
-        # self.sourceButton.clicked.connect(lambda: handle_error(self.get_delete_tools)())
-        # self.sourceButton.clicked.connect(lambda: handle_error(self.delete_tools.operation(True))())
-        # self.sourceButton.clicked.connect(
-        #     lambda: self.delete_tools.view.set_figure(
-        #         self.delete_tools.table.show_table(self.delete_tools.table.read_joined_table())
-        #     )
-        #     if 'JoinedMixin' in map(lambda x: x.__name__, self.delete_tools.table.__mro__) else
-        #     self.delete_tools.view.set_figure(
-        #         self.delete_tools.table.show_table(self.delete_tools.table.read_table())
-        #     )
-        # )
+        else:
+            tools.view.set_figure(
+                tools.table.show_table(tools.table.read_table())
+            )
 
     def get_insert_tools(self):
         InsertTuple = namedtuple('InsertTuple', ('table', 'view', 'operation'))
@@ -789,7 +764,7 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
             )
         }
 
-        self.insert_tools = insert_operations[self.insertWidget.currentWidget().objectName()]
+        return insert_operations[self.insertWidget.currentWidget().objectName()]
 
     def get_update_tools(self):
         UpdateTuple = namedtuple('UpdateTuple', ('table', 'view', 'operation'))
@@ -919,7 +894,7 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
             )
         }
 
-        self.update_tools = update_operations[self.updateWidget.currentWidget().objectName()]
+        return update_operations[self.updateWidget.currentWidget().objectName()]
 
     def get_delete_tools(self):
         DeleteTuple = namedtuple('DeleteTuple', ('table', 'view', 'operation'))
@@ -984,7 +959,7 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
             )
         }
 
-        self.delete_tools = delete_operations[self.deleteWidget.currentWidget().objectName()]
+        return delete_operations[self.deleteWidget.currentWidget().objectName()]
     
     @property
     def __dict_factory(self):

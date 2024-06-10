@@ -24,7 +24,7 @@ from shortcircuitcalc.config import (
 
 
 __all__ = ('Base', 'engine', 'metadata', 'session_scope', 'Validator',
-           'TypesManager', 'config_manager', 'handle_error')
+           'TypesManager', 'config_manager', 'logging_error')
 
 
 logger = logging.getLogger(__name__)
@@ -492,13 +492,11 @@ def session_scope(logs: bool = True) -> None:
         session.close()
 
 
-def handle_error(func: ty.Callable) -> ty.Callable:
-    """Decorator for handling errors in a function.
+def logging_error(func: ty.Callable) -> ty.Callable:
+    """Decorator for logging errors in the function.
 
     Args:
         func (ty.Callable): The function to be decorated.
-    Note:
-        Logging exceptions to the logs frame in MainWindow GUI.
 
     """
     @wraps(func)
@@ -507,4 +505,5 @@ def handle_error(func: ty.Callable) -> ty.Callable:
             func(*args, **kwargs)
         except Exception as err:
             logger.error(err)
+
     return wrapper
