@@ -102,32 +102,46 @@ class Validator:
         self._private_name = '_' + name
 
     def __get__(self, obj: ty.Any, owner: ty.Any) -> ty.Any:
+        required_type = ty.get_type_hints(obj)[self._public_name]
+        current_type = type(self._saved_value)
+        additional = ''
+
+        if required_type == current_type:
+            additional = 'NON EMPTY '
+
         type_error_msg = (f"[GETTER] The type of the attribute '{type(obj).__name__}.{self._public_name}' "
-                          f"must be '{ty.get_type_hints(obj)[self._public_name].__name__}', "
-                          f"now '{type(self._saved_value).__name__}'.")
+                          f"must be {additional}'{required_type.__name__}', "
+                          f"now '{current_type.__name__}'.")
 
         self._saved_value = getattr(obj, self._private_name)
 
-        if isinstance(self._saved_value, ty.get_type_hints(obj)[self._public_name]):
+        if isinstance(self._saved_value, required_type):
             return self._saved_value
         else:
-            logger.warning(type_error_msg)
+            logger.info(type_error_msg)
 
     def __set__(self, obj: ty.Any, value: ty.Any) -> None:
         # https://stackoverflow.com/questions/67612451/combining-a-descriptor-class-with-dataclass-and-field
         # Next in Validator.__set__, when the arg argument is not provided to the
         # constructor, the value argument will actually be the instance of the
         # Validator class. So we need to change the guard to see if value is self:
+        required_type = ty.get_type_hints(obj)[self._public_name]
+        current_type = type(self._saved_value)
+        additional = ''
+
+        if required_type == current_type:
+            additional = 'NON EMPTY '
+
         type_error_msg = (f"[SETTER] The type of the attribute '{type(obj).__name__}.{self._public_name}' "
-                          f"must be '{ty.get_type_hints(obj)[self._public_name].__name__}', "
-                          f"now '{type(self._saved_value).__name__}'.")
+                          f"must be {additional}'{required_type.__name__}', "
+                          f"now '{current_type.__name__}'.")
         empty_str_error_msg = (f"[SETTER] Attribute '{type(obj).__name__}.{self._public_name}' "
                                f'must be non empty string.')
 
         def __set_valid_arg():
             if isinstance(self._default, str) and self._default or \
                     not (isinstance(self._default, str)) and self._default is not None:
-                return ty.get_type_hints(obj)[self._public_name](self._default)
+                return required_type(self._default)
             else:
                 if isinstance(self._default, str) and not self._default:
                     logger.warning(empty_str_error_msg)
@@ -135,7 +149,7 @@ class Validator:
         def __set_obj_arg(arg):
             if isinstance(arg, str) and arg or \
                     not (isinstance(arg, str)) and arg is not None:
-                return ty.get_type_hints(obj)[self._public_name](arg)
+                return required_type(arg)
             else:
                 if isinstance(arg, str) and not arg:
                     logger.warning(empty_str_error_msg)

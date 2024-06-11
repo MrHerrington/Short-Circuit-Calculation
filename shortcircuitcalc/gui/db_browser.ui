@@ -3359,7 +3359,7 @@ border: 1px solid black</string>
                <number>9</number>
               </property>
               <item row="0" column="1" alignment="Qt::AlignHCenter|Qt::AlignVCenter">
-               <widget class="QLabel" name="deleteTransEdit3">
+               <widget class="QLabel" name="deleteTransTitle">
                 <property name="font">
                  <font>
                   <pointsize>9</pointsize>
@@ -3471,7 +3471,7 @@ border: 1px solid black</string>
                </widget>
               </item>
               <item row="3" column="1">
-               <widget class="QLineEdit" name="lineEdit_74">
+               <widget class="QLineEdit" name="deleteTransEdit3">
                 <property name="font">
                  <font>
                   <pointsize>9</pointsize>

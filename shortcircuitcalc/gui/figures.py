@@ -40,7 +40,7 @@ from shortcircuitcalc.config import (
 )
 
 
-__all__ = ('GetFigure',)
+__all__ = ('ResultsFigure', 'CatalogFigure')
 
 
 logger = logging.getLogger(__name__)
@@ -110,22 +110,11 @@ class Visualizer:
         return f'{self._display_element(self._element)}'
 
 
-class GetFigure:
-    """Class-manager for creating figures in the GUI.
-
-    if arg is None, return figure for catalog window,
-    else return figure for results window.
-
-    """
-    def __new__(cls, obj=None):
-        if obj is None:
-            return _CatalogFigure().fig
-        else:
-            return _ResultsFigure(obj)
-
-
-class _ResultsFigure:
+class ResultsFigure:
     """Service class for drawing results figure."""
+
+    LOGS_NAME = 'Results presentation'
+
     def __init__(self, schem: ChainsSystem):
         self.schem = schem
 
@@ -347,8 +336,11 @@ class _ResultsFigure:
             cellColours=(('#FFE5CC',) * len(df[switch_bool].columns),) * len(df[switch_bool].index))
 
 
-class _CatalogFigure:
+class CatalogFigure:
     """Service class for drawing catalog figure."""
+
+    LOGS_NAME = 'Catalog presentation'
+
     def __init__(self):
         self.fig = figure.Figure()
         self.grid = gridspec.GridSpec(nrows=1, ncols=9)

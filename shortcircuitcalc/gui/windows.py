@@ -10,7 +10,6 @@ from collections import namedtuple
 from decimal import Decimal
 import typing as ty
 from dataclasses import asdict
-from functools import wraps, partial
 
 import logging
 import matplotlib
@@ -26,7 +25,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui, uic
 # Need for correctly loading icons
 # noinspection PyUnresolvedReferences
 import shortcircuitcalc.gui.resources
-from shortcircuitcalc.gui.figures import GetFigure
+from shortcircuitcalc.gui.figures import ResultsFigure, CatalogFigure
 from shortcircuitcalc.database import (
     Transformer, Cable, CurrentBreaker, OtherContact,
     db_install,
@@ -51,17 +50,9 @@ logger = logging.getLogger(__name__)
 GW = ty.TypeVar('GW', bound=ty.Union[QtWidgets.QMainWindow, QtWidgets.QWidget])
 
 
-class Worker(QtCore.QThread):
-    signal = QtCore.pyqtSignal(object)
-
-    def __init__(self, parent=None, table=None):
-        super(Worker, self).__init__(parent)
-        self.table = table
-
-    def run(self):
-        data = self.table.show_table(self.table.read_joined_table())
-        self.signal.emit(data)
-
+#######################
+# Inner functionality #
+#######################
 
 class CustomGraphicView(QtWidgets.QGraphicsView):
     """Initializes a CustomGraphicView object.
@@ -298,6 +289,8 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
 
 
 class QPlainTextEditLogger(QtWidgets.QPlainTextEdit, logging.Handler):
+    append_plain_text = QtCore.pyqtSignal(str)
+
     def __init__(self, parent):
         super(QPlainTextEditLogger, self).__init__(parent)
         self.setReadOnly(True)
@@ -312,7 +305,7 @@ class QPlainTextEditLogger(QtWidgets.QPlainTextEdit, logging.Handler):
         elif "ERROR" in msg or "CRITICAL" in msg:
             msg = f"""<span style='color:#ff0000;'>{msg}</span>"""
 
-        self.appendHtml(msg)
+        self.append_plain_text.emit(self.appendHtml(msg))
 
 
 class ConfirmWindow(QtWidgets.QDialog):
@@ -357,6 +350,74 @@ class CustomWindow:
                 int(relative[1] - self.height() * shift_y / 100)
             )
 
+
+##################
+# Custom threads #
+##################
+
+class GraphicsDataThread(QtCore.QThread):
+    save_data = QtCore.pyqtSignal(object)
+    read_data = QtCore.pyqtSignal(object)
+    load_complete = QtCore.pyqtSignal(str)
+    load_failure = QtCore.pyqtSignal(str)
+
+    def __init__(self, parent=None, outer_fn=None, inner_fn=None, *args):
+        super(GraphicsDataThread, self).__init__(parent)
+        self.outer_fn = outer_fn
+        self.inner_fn = inner_fn
+        self.args = (*args,)
+
+    def run(self):
+        try:
+            if self.inner_fn:
+                data = self.outer_fn(self.inner_fn(*self.args))
+            else:
+                data = self.outer_fn(*self.args)
+
+            only_fig = data.fig
+
+            self.save_data.emit(data)
+            self.read_data.emit(only_fig)
+            self.load_complete.emit(
+                f"Graphics '{self.outer_fn.LOGS_NAME}' successfully loaded."
+            )
+
+        except (Exception,):
+            self.load_failure.emit(
+                f"Problems with graphics initialization. '{self.outer_fn.LOGS_NAME}' not loaded."
+            )
+
+
+class TableDataThread(QtCore.QThread):
+    load_data = QtCore.pyqtSignal(object)
+    load_complete = QtCore.pyqtSignal(str)
+    load_failure = QtCore.pyqtSignal(str)
+
+    def __init__(self, parent=None, table=None):
+        super(TableDataThread, self).__init__(parent)
+        self.table = table
+
+    def run(self):
+        try:
+            if 'JoinedMixin' in map(lambda x: x.__name__, self.table.__mro__):
+                data = self.table.show_table(self.table.read_joined_table())
+            else:
+                data = self.table.show_table(self.table.read_table())
+
+            self.load_data.emit(data)
+            self.load_complete.emit(
+                f"Table '{self.table.__tablename__}' successfully loaded."
+            )
+
+        except (Exception,):
+            self.load_failure.emit(
+                f"Problems with table '{self.table.__tablename__}'. Try to reinstall database."
+            )
+
+
+####################
+# App main windows #
+####################
 
 class MainWindow(QtWidgets.QMainWindow, CustomWindow):
     def __init__(self):
@@ -436,10 +497,7 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
         # Catalog tab settings #
         ########################
 
-        try:
-            self.catalogView.set_figure(GetFigure())
-        except (Exception,):
-            logger.error('Problem with catalog initialization.')
+        self.set_catalog()
 
         ###########################
         # "Settings" tab settings #
@@ -531,6 +589,15 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
             lambda: box_config[self.settingsBox7].update(self.settingsBox7.currentText())
         )
 
+    def set_catalog(self):
+        catalog_thread = GraphicsDataThread(self, CatalogFigure)
+
+        catalog_thread.read_data.connect(self.catalogView.set_figure)
+        catalog_thread.load_complete.connect(logger.info)
+        catalog_thread.load_failure.connect(logger.error)
+
+        catalog_thread.start()
+
     def open_db_browser(self):
         if self.db_browser is None:
             self.db_browser = DatabaseBrowser()
@@ -539,17 +606,25 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
             )
         self.db_browser.show()
 
+    def save_interactive_stmt(self, figure_obj):
+        self.results_figure = figure_obj
+
     # noinspection PyUnresolvedReferences
     def eventFilter(self, obj, event):
         if event.type() == QtCore.QEvent.KeyPress and obj is self.consoleInput:
-            text = self.consoleInput.toPlainText()
             if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Return:
-                try:
-                    temp_figure = GetFigure(ChainsSystem(text))
-                    self.resultsView.set_figure(temp_figure.fig)
-                    self.results_figure = temp_figure
-                except Exception as e:
-                    logger.error(e)
+                text = self.consoleInput.toPlainText()
+                results_thread = GraphicsDataThread(
+                    self, ResultsFigure, ChainsSystem, text
+                )
+
+                results_thread.save_data.connect(self.save_interactive_stmt)
+                results_thread.read_data.connect(self.resultsView.set_figure)
+                results_thread.load_complete.connect(logger.info)
+                results_thread.load_failure.connect(logger.error)
+
+                results_thread.start()
+
         return super().eventFilter(obj, event)
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
@@ -581,6 +656,8 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
         uic.loadUi(GUI_DIR / 'db_browser.ui', self)
 
         self.init_gui()
+        self.main_menu = next(widget for widget in QtWidgets.QApplication.topLevelWidgets()
+                              if isinstance(widget, MainWindow))
         self.show_database()
         self.crud_operations()
 
@@ -617,45 +694,29 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
         self.installButton.clicked.connect(self.reinstall_database)
 
     def show_database(self):
-        views_tables = zip(
-            ('transformersView', 'cablesView', 'contactsView', 'resistancesView'),
-            (Transformer, Cable, CurrentBreaker, OtherContact)
-        )
+        tables = Transformer, Cable, CurrentBreaker, OtherContact
+        views = self.transformersView, self.cablesView, self.contactsView, self.resistancesView
 
-        tables_errors = []
-
-        for view, table in views_tables:
-            try:
-                if 'JoinedMixin' in map(lambda x: x.__name__, table.__mro__):
-                    getattr(self, view).set_figure(table.show_table(table.read_joined_table()))
-                else:
-                    getattr(self, view).set_figure(table.show_table(table.read_table()))
-
-            except (Exception,):
-                tables_errors.append(table.__tablename__)
-
-        if tables_errors:
-            logger.error(f"Problems with table(s): {', '.join(tables_errors)}. Try to reinstall database.")
-        else:
-            logger.info('Database mapped successfully.')
-
-    def reinstall_database(self):
-        db_install(clear=config_manager('DB_TABLES_CLEAR_INSTALL'))
-        tables = (Transformer, Cable, CurrentBreaker)
-        views = (self.transformersView, self.cablesView, self.contactsView)
-        self.threads = []
+        threads = []
 
         for table, view in zip(tables, views):
-            worker = Worker(self, table)
-            worker.signal.connect(view.set_figure)
-            self.threads.append(worker)
-            worker.start()
+            table_data_thread = TableDataThread(self, table)
 
-        # confirm_window = ConfirmWindow(self)
-        # confirm_window.exec_()
-        # if confirm_window.result() == QtWidgets.QDialog.Accepted:
-        # db_install(clear=config_manager('DB_TABLES_CLEAR_INSTALL'))
-        # self.show_database()
+            table_data_thread.load_data.connect(view.set_figure)
+            table_data_thread.load_complete.connect(logger.info)
+            table_data_thread.load_failure.connect(logger.error)
+
+            threads.append(table_data_thread)
+            table_data_thread.start()
+
+    def reinstall_database(self):
+        confirm_window = ConfirmWindow(self)
+        confirm_window.exec_()
+
+        if confirm_window.result() == QtWidgets.QDialog.Accepted:
+            db_install(clear=config_manager('DB_TABLES_CLEAR_INSTALL'))
+            self.show_database()
+            self.main_menu.set_catalog()
 
     def crud_operations(self):
         ##############################
@@ -678,6 +739,7 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
     def crud_event(self, get_tools, *args, **kwargs) -> None:
         tools = get_tools()
         tools.operation(*args, **kwargs)
+
         if 'JoinedMixin' in map(lambda x: x.__name__, tools.table.__mro__):
             tools.view.set_figure(
                 tools.table.show_table(tools.table.read_joined_table())
@@ -686,6 +748,8 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
             tools.view.set_figure(
                 tools.table.show_table(tools.table.read_table())
             )
+
+        self.main_menu.set_catalog()
 
     def get_insert_tools(self):
         InsertTuple = namedtuple('InsertTuple', ('table', 'view', 'operation'))
@@ -960,11 +1024,15 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
         }
 
         return delete_operations[self.deleteWidget.currentWidget().objectName()]
-    
+
     @property
     def __dict_factory(self):
         return lambda x: {k: v for (k, v) in x if v is not None}
 
+
+########################
+# Others functionality #
+########################
 
 # class ViewerWidget(QtWidgets.QWidget):
 #     """Initializes a ViewerWidget object.
