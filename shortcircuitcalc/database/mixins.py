@@ -17,6 +17,7 @@ import sqlalchemy.exc
 from sqlalchemy.orm import declared_attr
 from sqlalchemy.inspection import inspect
 import pandas as pd
+import numpy as np
 from matplotlib import figure
 
 from shortcircuitcalc.tools import (
@@ -136,12 +137,16 @@ class BaseMixin:
             figure.Figure: Matplotlib figure object.
 
         """
-        # Values precision
-        dataframe.update(
-            dataframe[
-                ['resistance_r1', 'reactance_x1', 'resistance_r0', 'reactance_x0']
-            ].applymap(lambda x: '{:,.5f}'.format(x) if x < 0.0001 and x != 0 else x)
-        )
+        # Dataframe initialization and precision if not empty
+        if dataframe.empty:
+            for col in dataframe.columns:
+                dataframe[col] = ['---']
+        else:
+            dataframe.update(
+                dataframe[
+                    ['resistance_r1', 'reactance_x1', 'resistance_r0', 'reactance_x0']
+                ].applymap(lambda x: '{:,.5f}'.format(x) if x < 0.0001 and x != 0 else x)
+            )
 
         figsize_x = len(dataframe.columns) + 1
         figsize_y = (len(dataframe.index) + 1) * 0.4

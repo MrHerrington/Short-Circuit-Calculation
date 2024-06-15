@@ -1024,7 +1024,7 @@ border-radius: 5px;</string>
                 </widget>
                </item>
                <item>
-                <widget class="QPlainTextEdit" name="consoleInput">
+                <widget class="CustomPlainTextEdit" name="consoleInput">
                  <property name="enabled">
                   <bool>true</bool>
                  </property>
@@ -1036,7 +1036,7 @@ border-radius: 5px;</string>
                  </property>
                  <property name="font">
                   <font>
-                   <pointsize>14</pointsize>
+                   <pointsize>12</pointsize>
                   </font>
                  </property>
                  <property name="styleSheet">
@@ -1495,6 +1495,11 @@ border-radius: 20px
   </customwidget>
   <customwidget>
    <class>QPlainTextEditLogger</class>
+   <extends>QPlainTextEdit</extends>
+   <header>shortcircuitcalc.gui.windows</header>
+  </customwidget>
+  <customwidget>
+   <class>CustomPlainTextEdit</class>
    <extends>QPlainTextEdit</extends>
    <header>shortcircuitcalc.gui.windows</header>
   </customwidget>

@@ -27,7 +27,9 @@ from PIL import Image
 from shortcircuitcalc.tools import (
     BaseElement,
     T, Q, QF, QS, W, R, Line, Arc,
-    ChainsSystem, ElemChain
+    ChainsSystem, ElemChain,
+
+    config_manager
 )
 from shortcircuitcalc.database import (
     PowerNominal, VoltageNominal, Scheme,
@@ -35,9 +37,7 @@ from shortcircuitcalc.database import (
     Device, CurrentNominal,
     OtherContact
 )
-from shortcircuitcalc.config import (
-    SYSTEM_PHASES, GRAPHS_DIR, GUI_DIR
-)
+from shortcircuitcalc.config import GRAPHS_DIR, GUI_DIR
 
 
 __all__ = ('ResultsFigure', 'CatalogFigure')
@@ -239,10 +239,14 @@ class ResultsFigure:
             """Return images list with one/three phases element"""
             return [
                 Image.open(BytesIO(
-                    cairosvg.svg2png(url=str(Visualizer(vals[col], SYSTEM_PHASES))))
+                    cairosvg.svg2png(url=str(
+                        Visualizer(vals[col], config_manager('SYSTEM_PHASES'))
+                    )))
                 ),
                 Image.open(BytesIO(
-                    cairosvg.svg2png(url=str(Visualizer(vals[col], SYSTEM_PHASES).create_invert)))
+                    cairosvg.svg2png(url=str(
+                        Visualizer(vals[col], config_manager('SYSTEM_PHASES')).create_invert
+                    )))
                 )
             ]
 
@@ -275,11 +279,14 @@ class ResultsFigure:
 
         short_circuit_table = [
             self.__redraw_table(
-                self.ax, col, idx, short_circuit_df, SYSTEM_PHASES != 3
+                self.ax, col, idx, short_circuit_df,
+                config_manager('SYSTEM_PHASES') != 3
             )
         ]
 
-        check = CheckButtons(rax, ['3ph'], [SYSTEM_PHASES == 3], label_props={'color': 'red'})
+        check = CheckButtons(
+            rax, ['3ph'], [config_manager('SYSTEM_PHASES') == 3], label_props={'color': 'red'}
+        )
         check.on_clicked(lambda label, i=col, j=idx: self.__callback(label, i, j))
         Button = namedtuple(
             'Button', ('check', 'ax', 'rax', 'images', 'sc_df', 'sc_table', 'back')

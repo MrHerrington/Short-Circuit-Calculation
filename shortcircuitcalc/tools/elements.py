@@ -17,15 +17,12 @@ from functools import reduce
 
 import sqlalchemy as sa
 
-from shortcircuitcalc.tools.tools import Validator, session_scope
+from shortcircuitcalc.tools.tools import Validator, session_scope, config_manager
 from shortcircuitcalc.database import (
     PowerNominal, VoltageNominal, Scheme, Transformer,
     Mark, Amount, RangeVal, Cable,
     Device, CurrentNominal, CurrentBreaker,
     OtherContact
-)
-from shortcircuitcalc.config import (
-    SYSTEM_VOLTAGE_IN_KILOVOLTS, CALCULATIONS_ACCURACY
 )
 
 
@@ -98,7 +95,7 @@ class T(BaseElement):
     __slots__ = ('_power', '_vector_group')
     power: int = field(default=Validator())
     vector_group: str = field(default=Validator())
-    voltage: Decimal = field(init=False, default=SYSTEM_VOLTAGE_IN_KILOVOLTS)
+    voltage: Decimal = field(init=False, default=config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS'))
 
     def _sql_query(self, attr_name) -> Decimal:
         with session_scope() as session:
@@ -268,8 +265,12 @@ class ElemChain(ty.Sequence, ty.Mapping):
 
         """
         return round(
-            SYSTEM_VOLTAGE_IN_KILOVOLTS / Decimal(math.sqrt(3)) / self.__three_phase_summary_resistance(),
-            CALCULATIONS_ACCURACY)
+            (
+                config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS') / Decimal(math.sqrt(3)) /
+                self.__three_phase_summary_resistance()
+            ),
+            config_manager('CALCULATIONS_ACCURACY')
+        )
 
     @property
     def two_phase_current_short_circuit(self) -> Decimal:
@@ -283,8 +284,11 @@ class ElemChain(ty.Sequence, ty.Mapping):
 
         """
         return round(
-            Decimal(math.sqrt(3)) / 2 * self.three_phase_current_short_circuit,
-            CALCULATIONS_ACCURACY)
+            (
+                Decimal(math.sqrt(3)) / 2 * self.three_phase_current_short_circuit
+            ),
+            config_manager('CALCULATIONS_ACCURACY')
+        )
 
     @property
     def one_phase_current_short_circuit(self) -> Decimal:
@@ -299,8 +303,12 @@ class ElemChain(ty.Sequence, ty.Mapping):
 
         """
         return round(
-            Decimal(math.sqrt(3)) * SYSTEM_VOLTAGE_IN_KILOVOLTS / self.__one_phase_summary_resistance(),
-            CALCULATIONS_ACCURACY)
+            (
+                Decimal(math.sqrt(3)) * config_manager('SYSTEM_VOLTAGE_IN_KILOVOLTS') /
+                self.__one_phase_summary_resistance()
+            ),
+            config_manager('CALCULATIONS_ACCURACY')
+        )
 
     def __three_phase_summary_resistance(self) -> Decimal:
         """

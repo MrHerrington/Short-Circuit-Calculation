@@ -288,6 +288,21 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
             pixmap.save(fname)
 
 
+class CustomPlainTextEdit(QtWidgets.QPlainTextEdit):
+    def __init__(self, parent=None):
+        QtWidgets.QPlainTextEdit.__init__(self, parent)
+
+    def paintEvent(self, event):
+        # Use paintEvent() of base class to do the main work
+        QtWidgets.QPlainTextEdit.paintEvent(self, event)
+        # Draw cursor (if widget has focus)
+        if self.hasFocus():
+            rect = self.cursorRect(self.textCursor())
+            rect.setWidth(rect.width() * 5)
+            painter = QtGui.QPainter(self.viewport())
+            painter.fillRect(rect, QtGui.QColor('red'))
+
+
 class QPlainTextEditLogger(QtWidgets.QPlainTextEdit, logging.Handler):
     append_plain_text = QtCore.pyqtSignal(str)
 
@@ -486,6 +501,25 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
         ######################
 
         self.consoleInput.installEventFilter(self)
+
+        # Set placeholder text color
+        palette = self.consoleInput.palette()
+        text_color = QtGui.QColor("white")
+        palette.setColor(QtGui.QPalette.PlaceholderText, text_color)
+        self.consoleInput.setPalette(palette)
+
+        self.consoleInput.setPlaceholderText(
+            'Enter your statement here and press [CTRL + ENTER] to calculate system.\n'
+            'For each element in one chain use the same style (using project names or not).\n'
+            "Use next service special symbols:\n"
+            "   ' ' - for separate attributes of element in chain;\n"
+            "   ':' - for separate project name and value of element in chain (if project name exists);\n"
+            "   ',' - for separate elements in chain;\n"
+            "   ';' - for separate chains.\n"
+            'Query chains sample:\n\n'
+            "T(160, 'У/Ун-0'), QS(160), QF(160), Line(), QF(25), W('ВВГ', 3, 4, 20), Line(), Arc();\n\n"
+            "TCH: T(160, 'У/Ун-0'), QF3: QF(100), R1: Line(), QF2: QF(25), W1: W('ВВГ', 3, 4, 20)"
+        )
 
         #######################
         # Result tab settings #
