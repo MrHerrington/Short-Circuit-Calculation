@@ -7,8 +7,7 @@ setup(
     exclude_package_data={'': ['*.json']},
     entry_points={
         'console_scripts': [
-            'get_install = ShortCircuitCalc.install: installer',
-            'get_res = ShortCircuitCalc.run: main',
+            'calculate-sc = shortcircuitcalc.run: main',
         ],
     },
 )

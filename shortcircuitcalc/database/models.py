@@ -284,9 +284,9 @@ class OtherContact(BaseMixin, Base):
 
 @dataclass
 class InsertTrans:
-    power: int = field(default=Validator())
-    voltage: Decimal = field(default=Validator())
-    vector_group: str = field(default=Validator())
+    power: int = field(default=Validator(log_info=True))
+    voltage: Decimal = field(default=Validator(log_info=True))
+    vector_group: str = field(default=Validator(log_info=True))
 
     power_short_circuit: Decimal = field(default=Validator(default=0))
     voltage_short_circuit: Decimal = field(default=Validator(default=0))
@@ -333,9 +333,9 @@ class DeleteTrans:
 
 @dataclass
 class InsertCable:
-    mark_name: str = field(default=Validator())
-    multicore_amount: int = field(default=Validator())
-    cable_range: Decimal = field(default=Validator())
+    mark_name: str = field(default=Validator(log_info=True))
+    multicore_amount: int = field(default=Validator(log_info=True))
+    cable_range: Decimal = field(default=Validator(log_info=True))
 
     continuous_current: Decimal = field(default=Validator(default=0))
     resistance_r1: Decimal = field(default=Validator(default=0))
@@ -380,8 +380,8 @@ class DeleteCable:
 
 @dataclass
 class InsertContact:
-    device_type: str = field(default=Validator())
-    current_value: int = field(default=Validator())
+    device_type: str = field(default=Validator(log_info=True))
+    current_value: int = field(default=Validator(log_info=True))
 
     resistance_r1: Decimal = field(default=Validator(default=0))
     reactance_x1: Decimal = field(default=Validator(default=0))
@@ -421,7 +421,7 @@ class DeleteContact:
 
 @dataclass
 class InsertResist:
-    contact_type: str = field(default=Validator())
+    contact_type: str = field(default=Validator(log_info=True))
 
     resistance_r1: Decimal = field(default=Validator(default=0))
     reactance_x1: Decimal = field(default=Validator(default=0))

@@ -1,1 +1,1 @@
-recursive-include ShortCircuitCalc/data *
+recursive-include shortcircuitcalc/data *

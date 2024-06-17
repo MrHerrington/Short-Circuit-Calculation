@@ -5,6 +5,8 @@ Classes are based on ui files, developed by QtDesigner and customized.
 
 """
 
+import sys
+import os
 
 from collections import namedtuple
 from decimal import Decimal
@@ -326,11 +328,14 @@ class QPlainTextEditLogger(QtWidgets.QPlainTextEdit, logging.Handler):
 class ConfirmWindow(QtWidgets.QDialog):
     """Initializes a ConfirmWindow object."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, msg: str = None):
         super(ConfirmWindow, self).__init__(parent)
         uic.loadUi(GUI_DIR / 'confirm.ui', self)
         # noinspection PyUnresolvedReferences
         self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
+
+        if msg:
+            self.textLabel.setText(msg)
 
 
 class CustomWindow:
@@ -544,12 +549,12 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
             # Database settings
             self.settingsBox: BoxParams(
                 True, [config_manager('SQLITE_DB_NAME')], config_manager('SQLITE_DB_NAME'),
-                lambda x: config_manager('SQLITE_DB_NAME', x)
+                lambda: self.admit_changes('SQLITE_DB_NAME', self.settingsBox)
             ),
 
             self.settingsBox2: BoxParams(
-                False, [False, 'MySQL', 'SQLite'], config_manager('DB_EXISTING_CONNECTION'),
-                lambda x: config_manager('DB_EXISTING_CONNECTION', x)
+                False, ['MySQL', 'SQLite'], config_manager('DB_EXISTING_CONNECTION'),
+                lambda: self.admit_changes('DB_EXISTING_CONNECTION', self.settingsBox2)
             ),
 
             self.settingsBox3: BoxParams(
@@ -559,7 +564,7 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
 
             self.settingsBox4: BoxParams(
                 False, [True, False], config_manager('ENGINE_ECHO'),
-                lambda x: config_manager('ENGINE_ECHO', x)
+                lambda: self.admit_changes('ENGINE_ECHO', self.settingsBox4)
             ),
 
             # Calculations settings
@@ -600,19 +605,15 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
             else:
                 box.setStyleSheet('font: italic bold 11pt; background-color: lightgray')
 
+            box.previous_index = box.currentText()
+
         # Actions if combo boxes changed
-        self.settingsBox.currentIndexChanged.connect(
-            lambda: box_config[self.settingsBox].update(self.settingsBox.currentText())
-        )
-        self.settingsBox2.currentIndexChanged.connect(
-            lambda: box_config[self.settingsBox2].update(self.settingsBox2.currentText())
-        )
+        self.settingsBox.currentIndexChanged.connect(box_config[self.settingsBox].update)
+        self.settingsBox2.currentIndexChanged.connect(box_config[self.settingsBox2].update)
         self.settingsBox3.currentIndexChanged.connect(
             lambda: box_config[self.settingsBox3].update(self.settingsBox3.currentText())
         )
-        self.settingsBox4.currentIndexChanged.connect(
-            lambda: box_config[self.settingsBox4].update(self.settingsBox4.currentText())
-        )
+        self.settingsBox4.currentIndexChanged.connect(box_config[self.settingsBox4].update)
         self.settingsBox5.currentIndexChanged.connect(
             lambda: box_config[self.settingsBox5].update(self.settingsBox5.currentText())
         )
@@ -622,6 +623,20 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
         self.settingsBox7.currentIndexChanged.connect(
             lambda: box_config[self.settingsBox7].update(self.settingsBox7.currentText())
         )
+
+    def admit_changes(self, critical_param, owner):
+        if not owner.previous_index == owner.currentText():
+            confirm_window = ConfirmWindow(self, 'ADMIT CHANGES AND RELOAD APP?')
+            confirm_window.exec_()
+
+            if confirm_window.result() == QtWidgets.QDialog.Accepted:
+                config_manager(critical_param, owner.currentText())
+                owner.previous_index = owner.currentText()
+                self.restart_app()
+
+            else:
+                index = owner.findText(owner.previous_index)
+                owner.setCurrentIndex(index)
 
     def set_catalog(self):
         catalog_thread = GraphicsDataThread(self, CatalogFigure)
@@ -682,6 +697,10 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
                 window.close()
         else:
             event.ignore()
+
+    @staticmethod
+    def restart_app():
+        os.execl(sys.executable, sys.executable, *sys.argv)
 
 
 class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
@@ -744,7 +763,7 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
             table_data_thread.start()
 
     def reinstall_database(self):
-        confirm_window = ConfirmWindow(self)
+        confirm_window = ConfirmWindow(self, 'RE/INSTALL DATABASE?')
         confirm_window.exec_()
 
         if confirm_window.result() == QtWidgets.QDialog.Accepted:

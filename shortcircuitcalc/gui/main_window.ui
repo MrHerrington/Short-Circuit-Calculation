@@ -1109,283 +1109,319 @@ border-radius: 20px;
               <attribute name="title">
                <string>Settings</string>
               </attribute>
-              <layout class="QFormLayout" name="formLayout">
-               <item row="0" column="1">
-                <widget class="QLabel" name="settingsTitle">
+              <layout class="QVBoxLayout" name="verticalLayout_3">
+               <item>
+                <widget class="QWidget" name="widget" native="true">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <layout class="QFormLayout" name="formLayout">
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="settingsLabel">
+                    <property name="font">
+                     <font>
+                      <pointsize>11</pointsize>
+                      <weight>75</weight>
+                      <italic>true</italic>
+                      <bold>true</bold>
+                      <underline>false</underline>
+                      <strikeout>false</strikeout>
+                      <kerning>false</kerning>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>LOCAL NAME</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QComboBox" name="settingsBox">
+                    <property name="font">
+                     <font>
+                      <pointsize>11</pointsize>
+                      <weight>75</weight>
+                      <italic>true</italic>
+                      <bold>true</bold>
+                      <underline>false</underline>
+                      <strikeout>false</strikeout>
+                      <kerning>false</kerning>
+                     </font>
+                    </property>
+                    <property name="editable">
+                     <bool>false</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QLabel" name="settingsLabel2">
+                    <property name="font">
+                     <font>
+                      <pointsize>11</pointsize>
+                      <weight>75</weight>
+                      <italic>true</italic>
+                      <bold>true</bold>
+                      <underline>false</underline>
+                      <strikeout>false</strikeout>
+                      <kerning>false</kerning>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>CONNECTION</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QComboBox" name="settingsBox2">
+                    <property name="font">
+                     <font>
+                      <pointsize>11</pointsize>
+                      <weight>75</weight>
+                      <italic>true</italic>
+                      <bold>true</bold>
+                      <underline>false</underline>
+                      <strikeout>false</strikeout>
+                      <kerning>false</kerning>
+                     </font>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="0">
+                   <widget class="QLabel" name="settingsLabel3">
+                    <property name="font">
+                     <font>
+                      <pointsize>11</pointsize>
+                      <weight>75</weight>
+                      <italic>true</italic>
+                      <bold>true</bold>
+                      <underline>false</underline>
+                      <strikeout>false</strikeout>
+                      <kerning>false</kerning>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>CLEAR INSTALL</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="1">
+                   <widget class="QComboBox" name="settingsBox3">
+                    <property name="font">
+                     <font>
+                      <pointsize>11</pointsize>
+                      <weight>75</weight>
+                      <italic>true</italic>
+                      <bold>true</bold>
+                      <underline>false</underline>
+                      <strikeout>false</strikeout>
+                      <kerning>false</kerning>
+                     </font>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="0">
+                   <widget class="QLabel" name="settingsLabel4">
+                    <property name="font">
+                     <font>
+                      <pointsize>11</pointsize>
+                      <weight>75</weight>
+                      <italic>true</italic>
+                      <bold>true</bold>
+                      <underline>false</underline>
+                      <strikeout>false</strikeout>
+                      <kerning>false</kerning>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>ENGINE ECHO</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="1">
+                   <widget class="QComboBox" name="settingsBox4">
+                    <property name="font">
+                     <font>
+                      <pointsize>11</pointsize>
+                      <weight>75</weight>
+                      <italic>true</italic>
+                      <bold>true</bold>
+                      <underline>false</underline>
+                      <strikeout>false</strikeout>
+                      <kerning>false</kerning>
+                     </font>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="6" column="0">
+                   <widget class="QLabel" name="settingsLabel5">
+                    <property name="font">
+                     <font>
+                      <pointsize>11</pointsize>
+                      <weight>75</weight>
+                      <italic>true</italic>
+                      <bold>true</bold>
+                      <underline>false</underline>
+                      <strikeout>false</strikeout>
+                      <kerning>false</kerning>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>SYSTEM PHASES</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="6" column="1">
+                   <widget class="QComboBox" name="settingsBox5">
+                    <property name="font">
+                     <font>
+                      <pointsize>11</pointsize>
+                      <weight>75</weight>
+                      <italic>true</italic>
+                      <bold>true</bold>
+                      <underline>false</underline>
+                      <strikeout>false</strikeout>
+                      <kerning>false</kerning>
+                     </font>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="0">
+                   <widget class="QLabel" name="settingsLabel6">
+                    <property name="font">
+                     <font>
+                      <pointsize>11</pointsize>
+                      <weight>75</weight>
+                      <italic>true</italic>
+                      <bold>true</bold>
+                      <underline>false</underline>
+                      <strikeout>false</strikeout>
+                      <kerning>false</kerning>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>SYSTEM VOLTAGE IN KV</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="1">
+                   <widget class="QComboBox" name="settingsBox6">
+                    <property name="font">
+                     <font>
+                      <pointsize>11</pointsize>
+                      <weight>75</weight>
+                      <italic>true</italic>
+                      <bold>true</bold>
+                      <underline>false</underline>
+                      <strikeout>false</strikeout>
+                      <kerning>false</kerning>
+                     </font>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="0">
+                   <widget class="QLabel" name="settingsLabel7">
+                    <property name="font">
+                     <font>
+                      <pointsize>11</pointsize>
+                      <weight>75</weight>
+                      <italic>true</italic>
+                      <bold>true</bold>
+                      <underline>false</underline>
+                      <strikeout>false</strikeout>
+                      <kerning>false</kerning>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>CALCULATIONS ACCURACY</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="1">
+                   <widget class="QComboBox" name="settingsBox7">
+                    <property name="font">
+                     <font>
+                      <pointsize>11</pointsize>
+                      <weight>75</weight>
+                      <italic>true</italic>
+                      <bold>true</bold>
+                      <underline>false</underline>
+                      <strikeout>false</strikeout>
+                      <kerning>false</kerning>
+                     </font>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="5" column="0" colspan="2">
+                   <widget class="QLabel" name="settingsTitle2">
+                    <property name="font">
+                     <font>
+                      <pointsize>11</pointsize>
+                      <weight>75</weight>
+                      <italic>true</italic>
+                      <bold>true</bold>
+                      <underline>true</underline>
+                      <strikeout>false</strikeout>
+                      <kerning>false</kerning>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>CALCULATIONS SETTINGS</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="0" colspan="2">
+                   <widget class="QLabel" name="settingsTitle">
+                    <property name="font">
+                     <font>
+                      <pointsize>11</pointsize>
+                      <weight>75</weight>
+                      <italic>true</italic>
+                      <bold>true</bold>
+                      <underline>true</underline>
+                      <strikeout>false</strikeout>
+                      <kerning>false</kerning>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>DATABASE SETTINGS</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="infoSettingsLabel">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
                  <property name="font">
                   <font>
-                   <pointsize>11</pointsize>
+                   <pointsize>10</pointsize>
                    <weight>75</weight>
                    <italic>true</italic>
                    <bold>true</bold>
-                   <underline>true</underline>
-                   <strikeout>false</strikeout>
-                   <kerning>false</kerning>
                   </font>
                  </property>
                  <property name="text">
-                  <string>DATABASE SETTINGS</string>
+                  <string>*After change such fields as 'LOCAL NAME', 'CONNECTION', 'ENGINE ECHO' should restart program!</string>
                  </property>
-                 <property name="alignment">
-                  <set>Qt::AlignCenter</set>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="0">
-                <widget class="QLabel" name="settingsLabel">
-                 <property name="font">
-                  <font>
-                   <pointsize>11</pointsize>
-                   <weight>75</weight>
-                   <italic>true</italic>
-                   <bold>true</bold>
-                   <underline>false</underline>
-                   <strikeout>false</strikeout>
-                   <kerning>false</kerning>
-                  </font>
-                 </property>
-                 <property name="text">
-                  <string>LOCAL NAME</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="1">
-                <widget class="QComboBox" name="settingsBox">
-                 <property name="font">
-                  <font>
-                   <pointsize>11</pointsize>
-                   <weight>75</weight>
-                   <italic>true</italic>
-                   <bold>true</bold>
-                   <underline>false</underline>
-                   <strikeout>false</strikeout>
-                   <kerning>false</kerning>
-                  </font>
-                 </property>
-                 <property name="editable">
-                  <bool>false</bool>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="0">
-                <widget class="QLabel" name="settingsLabel2">
-                 <property name="font">
-                  <font>
-                   <pointsize>11</pointsize>
-                   <weight>75</weight>
-                   <italic>true</italic>
-                   <bold>true</bold>
-                   <underline>false</underline>
-                   <strikeout>false</strikeout>
-                   <kerning>false</kerning>
-                  </font>
-                 </property>
-                 <property name="text">
-                  <string>CONNECTION</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="1">
-                <widget class="QComboBox" name="settingsBox2">
-                 <property name="font">
-                  <font>
-                   <pointsize>11</pointsize>
-                   <weight>75</weight>
-                   <italic>true</italic>
-                   <bold>true</bold>
-                   <underline>false</underline>
-                   <strikeout>false</strikeout>
-                   <kerning>false</kerning>
-                  </font>
-                 </property>
-                </widget>
-               </item>
-               <item row="3" column="0">
-                <widget class="QLabel" name="settingsLabel3">
-                 <property name="font">
-                  <font>
-                   <pointsize>11</pointsize>
-                   <weight>75</weight>
-                   <italic>true</italic>
-                   <bold>true</bold>
-                   <underline>false</underline>
-                   <strikeout>false</strikeout>
-                   <kerning>false</kerning>
-                  </font>
-                 </property>
-                 <property name="text">
-                  <string>CLEAR INSTALL</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="3" column="1">
-                <widget class="QComboBox" name="settingsBox3">
-                 <property name="font">
-                  <font>
-                   <pointsize>11</pointsize>
-                   <weight>75</weight>
-                   <italic>true</italic>
-                   <bold>true</bold>
-                   <underline>false</underline>
-                   <strikeout>false</strikeout>
-                   <kerning>false</kerning>
-                  </font>
-                 </property>
-                </widget>
-               </item>
-               <item row="4" column="0">
-                <widget class="QLabel" name="settingsLabel4">
-                 <property name="font">
-                  <font>
-                   <pointsize>11</pointsize>
-                   <weight>75</weight>
-                   <italic>true</italic>
-                   <bold>true</bold>
-                   <underline>false</underline>
-                   <strikeout>false</strikeout>
-                   <kerning>false</kerning>
-                  </font>
-                 </property>
-                 <property name="text">
-                  <string>ENGINE ECHO</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="4" column="1">
-                <widget class="QComboBox" name="settingsBox4">
-                 <property name="font">
-                  <font>
-                   <pointsize>11</pointsize>
-                   <weight>75</weight>
-                   <italic>true</italic>
-                   <bold>true</bold>
-                   <underline>false</underline>
-                   <strikeout>false</strikeout>
-                   <kerning>false</kerning>
-                  </font>
-                 </property>
-                </widget>
-               </item>
-               <item row="5" column="1">
-                <widget class="QLabel" name="settingsTitle2">
-                 <property name="font">
-                  <font>
-                   <pointsize>11</pointsize>
-                   <weight>75</weight>
-                   <italic>true</italic>
-                   <bold>true</bold>
-                   <underline>true</underline>
-                   <strikeout>false</strikeout>
-                   <kerning>false</kerning>
-                  </font>
-                 </property>
-                 <property name="text">
-                  <string>CALCULATIONS SETTINGS</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignCenter</set>
-                 </property>
-                </widget>
-               </item>
-               <item row="6" column="0">
-                <widget class="QLabel" name="settingsLabel5">
-                 <property name="font">
-                  <font>
-                   <pointsize>11</pointsize>
-                   <weight>75</weight>
-                   <italic>true</italic>
-                   <bold>true</bold>
-                   <underline>false</underline>
-                   <strikeout>false</strikeout>
-                   <kerning>false</kerning>
-                  </font>
-                 </property>
-                 <property name="text">
-                  <string>SYSTEM PHASES</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="6" column="1">
-                <widget class="QComboBox" name="settingsBox5">
-                 <property name="font">
-                  <font>
-                   <pointsize>11</pointsize>
-                   <weight>75</weight>
-                   <italic>true</italic>
-                   <bold>true</bold>
-                   <underline>false</underline>
-                   <strikeout>false</strikeout>
-                   <kerning>false</kerning>
-                  </font>
-                 </property>
-                </widget>
-               </item>
-               <item row="7" column="0">
-                <widget class="QLabel" name="settingsLabel6">
-                 <property name="font">
-                  <font>
-                   <pointsize>11</pointsize>
-                   <weight>75</weight>
-                   <italic>true</italic>
-                   <bold>true</bold>
-                   <underline>false</underline>
-                   <strikeout>false</strikeout>
-                   <kerning>false</kerning>
-                  </font>
-                 </property>
-                 <property name="text">
-                  <string>SYSTEM VOLTAGE IN KV</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="7" column="1">
-                <widget class="QComboBox" name="settingsBox6">
-                 <property name="font">
-                  <font>
-                   <pointsize>11</pointsize>
-                   <weight>75</weight>
-                   <italic>true</italic>
-                   <bold>true</bold>
-                   <underline>false</underline>
-                   <strikeout>false</strikeout>
-                   <kerning>false</kerning>
-                  </font>
-                 </property>
-                </widget>
-               </item>
-               <item row="8" column="0">
-                <widget class="QLabel" name="settingsLabel7">
-                 <property name="font">
-                  <font>
-                   <pointsize>11</pointsize>
-                   <weight>75</weight>
-                   <italic>true</italic>
-                   <bold>true</bold>
-                   <underline>false</underline>
-                   <strikeout>false</strikeout>
-                   <kerning>false</kerning>
-                  </font>
-                 </property>
-                 <property name="text">
-                  <string>CALCULATIONS ACCURACY</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="8" column="1">
-                <widget class="QComboBox" name="settingsBox7">
-                 <property name="font">
-                  <font>
-                   <pointsize>11</pointsize>
-                   <weight>75</weight>
-                   <italic>true</italic>
-                   <bold>true</bold>
-                   <underline>false</underline>
-                   <strikeout>false</strikeout>
-                   <kerning>false</kerning>
-                  </font>
+                 <property name="wordWrap">
+                  <bool>true</bool>
                  </property>
                 </widget>
                </item>
@@ -1395,6 +1431,15 @@ border-radius: 20px;
               <attribute name="title">
                <string>Help</string>
               </attribute>
+              <layout class="QVBoxLayout" name="verticalLayout_4">
+               <item>
+                <widget class="QLabel" name="helpLabel">
+                 <property name="text">
+                  <string/>
+                 </property>
+                </widget>
+               </item>
+              </layout>
              </widget>
             </widget>
            </item>

@@ -721,7 +721,7 @@ class JoinedMixin:
             }
 
             with session_scope() as session:
-                primary_key_queries = {
+                old_primary_key_queries = {
                     table.get_foreign_keys(on_side=True):
                         session.query(table.id).filter(relation[0] == relation[1])
                     for table in cls.SUBTABLES
@@ -736,9 +736,9 @@ class JoinedMixin:
                     cls
                 ).filter(
                     sa.and_(
-                        key == primary_key_queries[key.name].as_scalar()
+                        key == old_primary_key_queries[key.name].as_scalar()
                         for key in cls.get_foreign_keys(as_str=False)
-                        if key.name in primary_key_queries
+                        if key.name in old_primary_key_queries
                     )
                 ).update(
                     {
@@ -760,6 +760,14 @@ class JoinedMixin:
                 if hasattr(table, attr)
             }
 
+            new_primary_key_queries = {
+                table.get_foreign_keys(on_side=True):
+                    session.query(table.id).filter(relation[0] == relation[1])
+                for table in cls.SUBTABLES
+                for relation in new_source_dict.items()
+                if hasattr(table, relation[0].name)
+            }
+
             changed_tables = tuple(
                 table
                 for table in cls.SUBTABLES
@@ -771,15 +779,31 @@ class JoinedMixin:
                 source_attr = source_table.get_non_keys()[0]
 
                 with session_scope() as session:
-                    query = session.query(
-                        source_table
-                    ).filter(
-                        getattr(source_table, source_attr) == old_source_dict[getattr(source_table, source_attr)]
-                    ).update(
-                        {
-                            source_attr: new_source_dict[getattr(source_table, source_attr)]
-                        }
-                    )
+                    try:
+                        query = session.query(
+                            source_table
+                        ).filter(
+                            getattr(source_table, source_attr) == old_source_dict[getattr(source_table, source_attr)]
+                        ).update(
+                            {
+                                source_attr: new_source_dict[getattr(source_table, source_attr)]
+                            }
+                        )
+                    except sa.exc.IntegrityError as err:
+                        if 'Duplicate entry' in err.orig.__str__():
+                            joined_table_id = source_table.get_foreign_keys(as_str=False, on_side=True)
+
+                            query = session.query(
+                                cls
+                            ).filter(
+                                sa.and_(
+                                    joined_table_id == old_primary_key_queries[joined_table_id.name].as_scalar()
+                                )
+                            ).update(
+                                {
+                                    joined_table_id.name: new_primary_key_queries[joined_table_id.name].first()[0]
+                                }
+                            )
 
                 __UPDATED.append(query)
 

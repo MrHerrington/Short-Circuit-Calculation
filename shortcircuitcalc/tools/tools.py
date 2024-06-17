@@ -19,7 +19,7 @@ import sqlalchemy as sa
 import sqlalchemy.orm
 
 from shortcircuitcalc.config import (
-    ROOT_DIR, CONFIG_DIR, CREDENTIALS_DIR, ENGINE_ECHO, SQLITE_DB_NAME
+    ROOT_DIR, CONFIG_DIR, CREDENTIALS_DIR
 )
 
 
@@ -92,8 +92,9 @@ class Validator:
 
     """
 
-    def __init__(self, default=None, prefer_default: bool = False) -> None:
+    def __init__(self, default=None, log_info: bool = False, prefer_default: bool = False) -> None:
         self._default = default
+        self._log_info = log_info
         self._prefer_default = prefer_default
         self._saved_value = None
 
@@ -118,7 +119,8 @@ class Validator:
         if isinstance(self._saved_value, required_type):
             return self._saved_value
         else:
-            logger.info(type_error_msg)
+            if self._log_info:
+                logger.info(type_error_msg)
 
     def __set__(self, obj: ty.Any, value: ty.Any) -> None:
         # https://stackoverflow.com/questions/67612451/combining-a-descriptor-class-with-dataclass-and-field
@@ -144,7 +146,8 @@ class Validator:
                 return required_type(self._default)
             else:
                 if isinstance(self._default, str) and not self._default:
-                    logger.warning(empty_str_error_msg)
+                    if self._log_info:
+                        logger.info(empty_str_error_msg)
 
         def __set_obj_arg(arg):
             if isinstance(arg, str) and arg or \
@@ -152,7 +155,8 @@ class Validator:
                 return required_type(arg)
             else:
                 if isinstance(arg, str) and not arg:
-                    logger.warning(empty_str_error_msg)
+                    if self._log_info:
+                        logger.info(empty_str_error_msg)
 
         try:
             if value is self:
@@ -391,22 +395,25 @@ def db_access() -> str:
             the MySQL engine string.
 
         """
-        with open(CREDENTIALS_DIR, 'r', encoding='UTF-8') as file:
-            temp = json.load(file)['db_access']
-            login, password, db_name = temp['login'], temp['password'], temp['db_name']
-            engine_string = f'mysql+pymysql://{login}:{password}@localhost/{db_name}?charset=utf8mb4'
+        logger.info('Accessing MySQL database...')
+        logger.info('Credentials initializing...')
 
-        path_link = ROOT_DIR / SQLITE_DB_NAME
-        if path_link.is_file():
-            path_link.unlink()
-            logger.warning(f"Existing SQLite database '{SQLITE_DB_NAME}' deleted!")
+        try:
+            with open(CREDENTIALS_DIR, 'r', encoding='UTF-8') as file:
+                temp = json.load(file)['db_access']
+                login, password, db_name = temp['login'], temp['password'], temp['db_name']
+                engine_string = f'mysql+pymysql://{login}:{password}@localhost/{db_name}?charset=utf8mb4'
 
-        logger.info('Connected to MySQL database.')
+            logger.info('Connected to MySQL database.')
 
-        if config_manager('DB_EXISTING_CONNECTION') != 'MySQL':
-            config_manager('DB_EXISTING_CONNECTION', 'MySQL')
+            if config_manager('DB_EXISTING_CONNECTION') != 'MySQL':
+                config_manager('DB_EXISTING_CONNECTION', 'MySQL')
 
-        return engine_string
+            return engine_string
+
+        except FileNotFoundError:
+            logger.error('Credentials file for MySQL database not found! '
+                         'Try to choose another connection.')
 
     def __sqlite_access() -> str:
         """Сreates a connection to the SQLite database.
@@ -422,59 +429,26 @@ def db_access() -> str:
         if config_manager('DB_EXISTING_CONNECTION') != 'SQLite':
             config_manager('DB_EXISTING_CONNECTION', 'SQLite')
 
-        return f'sqlite:///{ROOT_DIR}/{SQLITE_DB_NAME}'
-
-    def __no_db_access() -> str:
-        """Chooses a database connection based on the existing configuration.
-
-        A method to handle cases when an existing database connection is not found.
-        This function attempts to access the MySQL database and, if unsuccessful,
-        falls back to accessing the SQLite database.
-
-        Returns:
-            str: The engine string for the accessed database connection.
-
-        """
-        logger.warning('Existing connection not found!')
-
-        try:
-            logger.info('Accessing MySQL database...')
-            logger.info('Credentials initializing...')
-            engine_string = __mysql_access()
-
-        except FileNotFoundError:
-            logger.warning('Credentials file for MySQL database not found!')
-            logger.info('Accessing SQLite database...')
-            engine_string = __sqlite_access()
-
-        return engine_string
+        return f"sqlite:///{ROOT_DIR}/{config_manager('SQLITE_DB_NAME')}"
 
     connection_types = {
-        False: __no_db_access,
         'MySQL': __mysql_access,
         'SQLite': __sqlite_access
     }
 
     if not hasattr(db_access, 'engine_string'):
         try:
-            if CREDENTIALS_DIR.is_file():
-                db_access.engine_string = connection_types['MySQL']()
-            else:
-                db_access.engine_string = connection_types[config_manager('DB_EXISTING_CONNECTION')]()
+            db_access.engine_string = connection_types[config_manager('DB_EXISTING_CONNECTION')]()
+            return db_access.engine_string
 
-        except FileNotFoundError:
-            config_manager('DB_EXISTING_CONNECTION', False)
-            logger.warning("The config 'DB_EXISTING_CONNECTION' parameter has been reset. "
-                           "Retrying database connection...")
-            db_access()
-
-        return db_access.engine_string
-
+        except (Exception,):
+            logger.error('Something wrong with access to current database. '
+                         'Try to choose another connection and restart program.')
     else:
         return db_access.engine_string
 
 
-engine = sa.create_engine(url=db_access(), echo=ENGINE_ECHO)
+engine = sa.create_engine(url=db_access(), echo=config_manager('ENGINE_ECHO'))
 metadata = sa.MetaData()
 Session = sa.orm.sessionmaker(bind=engine, expire_on_commit=False)
 
