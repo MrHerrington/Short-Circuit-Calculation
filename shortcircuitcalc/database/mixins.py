@@ -17,7 +17,6 @@ import sqlalchemy.exc
 from sqlalchemy.orm import declared_attr
 from sqlalchemy.inspection import inspect
 import pandas as pd
-import numpy as np
 from matplotlib import figure
 
 from shortcircuitcalc.tools import (
@@ -35,14 +34,56 @@ BT = ty.TypeVar('BT', bound=Base)
 
 
 class BaseMixin:
-    """Class extends the functionality of the declarative base class 'Base'"""
+    """
+    Class extends the functionality of the declarative base class 'Base'.
+
+    Class extends the functionality of the declarative base class 'Base'.
+    This class presented mixin for single source table ORM object.
+
+    Methods:
+        ########################
+        # Main service methods #
+        ########################
+        def __tablename__(): The method automatically generates a table name.
+        def id(): The method generates primary keys.
+
+        ################
+        # CRUD methods #
+        ################
+        def create_table(): The method creates the table.
+        def read_table(): The method reads the table.
+        def show_table(): The method returns the table matplotlib figure.
+        def insert_table(): The method inserts values in chosen table.
+        def update_table(): The method updates values in chosen table.
+        def delete_table(): The method deletes values from chosen table.
+        def drop_table(): The method drops the table.
+
+        #########################
+        # Useful public methods #
+        #########################
+        def reset_id(): The method resets id order in any table if DB is MySQL.
+        def get_all_keys(): The method generates all columns massive for the table.
+        def get_primary_key(): The method generates primary key column for the table.
+        def get_foreign_keys(): The method generates foreign keys columns massive for the table.
+        def get_non_keys(): The method generates non-key columns massive for the table.
+        def get_class_from_tablename(): The method returns table ORM class from table name.
+
+        ##############################
+        # Additional service methods #
+        ##############################
+        def __camel_to_snake(): The method converts the tablename register.
+        def __csv_to_list_of_dicts(): The method converts CSV-file datas into list of the dictionaries.
+        def __convert_types(): The method converts val type.
+
+    """
 
     __new_name: str = None
 
     @declared_attr.directive
     @classmethod
     def __tablename__(cls) -> str:
-        """The method automatically generates a table name.
+        """
+        The method automatically generates a table name.
 
         The method automatically generates a table name based
         on the snake_case-style ORM model.
@@ -56,20 +97,22 @@ class BaseMixin:
     @declared_attr
     @classmethod
     def id(cls) -> sa.orm.Mapped[sa.Integer]:
-        """The method generates primary keys.
+        """
+        The method generates primary keys.
 
         The method automatically generates primary keys with auto increment.
 
         Returns:
-            The return a column of the primary keys."""
+            The return a column of the primary keys.
+
+        """
 
         return sa.orm.mapped_column(sa.Integer, primary_key=True, autoincrement=True, sort_order=0)
 
     @classmethod
     def create_table(cls, drop_first: bool = False, forced_drop: bool = False) -> None:
-        """The method creates the table.
-
-        The method create table. If successful, outputs the info message.
+        """
+        The method creates the table.
 
         Args:
             drop_first (bool): defaults by False, drop table first if existing.
@@ -88,7 +131,8 @@ class BaseMixin:
 
     @classmethod
     def read_table(cls, filtrate: ty.Optional[str] = None, limit: ty.Optional[int] = None) -> pd.DataFrame:
-        """The method reads the table.
+        """
+        The method reads the table.
 
         Args:
             filtrate (Optional[str]): Defaults to None. Accepts the filtering condition.
@@ -128,7 +172,8 @@ class BaseMixin:
                    dataframe: pd.DataFrame,
                    show_title: bool = False
                    ) -> figure.Figure:
-        """The method return the table matplotlib figure.
+        """
+        The method returns the table matplotlib figure.
 
         Args:
             dataframe (Optional[pd.DataFrame]): Defaults to None. Accepts the Pandas dataframe.
@@ -182,11 +227,11 @@ class BaseMixin:
     @classmethod
     def insert_table(cls, data: ty.Optional[ty.List[dict]] = None,
                      from_csv: ty.Union[str, pathlib.WindowsPath] = None) -> None:
-        """The method inserts values in chosen table.
+        """
+        The method inserts values in chosen table.
 
-        This method allows to add records to the table
-        both as individual values and as bulk operations.
-        Also, available from CSV format values insert.
+        This method allows to add records to the table both as individual values
+        and as bulk operations. Also, available from CSV format values insert.
 
         Args:
             data (List[dict]): A list with dictionary(es) of values. Defaults by None, if from_csv param is True.
@@ -212,7 +257,8 @@ class BaseMixin:
     @classmethod
     def update_table(cls, data: ty.Union[ty.List[dict], dict], options: ty.Optional[str] = 'primary_keys',
                      attr: str = None, alias: str = None, criteria: ty.Iterable = None) -> None:
-        """The method updates values in chosen table.
+        """
+        The method updates values in chosen table.
 
         This method allows to update records to the table both as individual values and as bulk operations.
 
@@ -263,7 +309,8 @@ class BaseMixin:
 
     @classmethod
     def delete_table(cls, filtrate: ty.Optional[str] = None) -> None:
-        """The method inserts values in chosen table.
+        """
+        The method deletes values from chosen table.
 
         Args:
             filtrate (Optional[str]): Defaults to None. Accepts the filtering condition.
@@ -278,7 +325,8 @@ class BaseMixin:
 
     @classmethod
     def drop_table(cls, confirm: ty.Union[ty.Callable, str, None] = None, forced: bool = False) -> None:
-        """The method drops the table.
+        """
+        The method drops the table.
 
         Args:
             confirm (Union[Callable, str], optional): Accepts confirmation of table deletion.
@@ -286,6 +334,9 @@ class BaseMixin:
         Note:
              To drop table, enter the name of the table in the form of 'cls.__tablename__'
              or in the format of a string.
+        Samples:
+            Transformer.drop_table('transformer')
+            Transformer.drop_table(cls.__tablename__)
 
         """
         try:
@@ -324,7 +375,13 @@ class BaseMixin:
 
     @classmethod
     def reset_id(cls) -> None:
-        """The method reset id order for the table with updating in child tables."""
+        """
+        The method reset id order for the table with updating in child tables.
+
+        In this mixin class resets id order for the source table with updating
+        in child tables if DB is MySQL, if SQLite - raises an error.
+
+        """
 
         # MySQL dialect
         if config_manager('DB_EXISTING_CONNECTION') == 'MySQL':
@@ -349,7 +406,8 @@ class BaseMixin:
     @classmethod
     def get_all_keys(cls, as_str: bool = True) \
             -> ty.Union[tuple, ty.Tuple[str, sa.orm.attributes.InstrumentedAttribute]]:
-        """The method generates all columns for the table.
+        """
+        The method generates all columns for the table.
 
         Args:
             as_str (bool, optional): Defaults to True. Accepts name string format for columns.
@@ -368,7 +426,8 @@ class BaseMixin:
     @classmethod
     def get_primary_key(cls, as_str: bool = True) \
             -> ty.Union[str, sa.orm.InstrumentedAttribute]:
-        """The method generates primary key column for the table.
+        """
+        The method generates primary key column for the table.
 
         Args:
             as_str (bool, optional): Defaults to True. Accepts name string format for columns.
@@ -390,7 +449,8 @@ class BaseMixin:
                 str, tuple, sa.orm.InstrumentedAttribute,
                 ty.Tuple[str, sa.orm.InstrumentedAttribute]
             ]:
-        """The method generates foreign keys columns for the table.
+        """
+        The method generates foreign keys columns for the table.
 
         Args:
             as_str (bool, optional): Defaults to True. Accepts name string format for columns.
@@ -438,7 +498,8 @@ class BaseMixin:
     @classmethod
     def get_non_keys(cls, as_str: bool = True, allow_foreign: bool = False) \
             -> ty.Union[tuple, ty.Union[str, sa.orm.InstrumentedAttribute]]:
-        """The method generates not keys columns for the table.
+        """
+        The method generates not keys columns for the table.
 
         Args:
             as_str (bool, optional): Defaults to True. Accepts name string format for columns.
@@ -482,8 +543,8 @@ class BaseMixin:
 
     @classmethod
     def __camel_to_snake(cls, name: str) -> str:
-
-        """The method converts the register.
+        """
+        The method converts the register.
 
         A utility method that converts the name of the ORM model of
         the table from the UpperCamelCase register to snake_case.
@@ -502,7 +563,8 @@ class BaseMixin:
 
     @classmethod
     def __csv_to_list_of_dicts(cls, path: ty.Union[str, pathlib.WindowsPath]) -> ty.List[dict]:
-        """The method converts CSV-file datas into list of the dictionaries.
+        """
+        The method converts CSV-file datas into list of the dictionaries.
 
         Args:
             path: Union[str, pathlib.WindowsPath]: Path to the CSV-file.
@@ -516,7 +578,8 @@ class BaseMixin:
 
     @staticmethod
     def __convert_types(val) -> ty.Union[int, float, str]:
-        """The method converts val type.
+        """
+        The method converts val type.
 
         Args:
             val (str): Value in string format from CSV file
@@ -535,30 +598,32 @@ class BaseMixin:
 
 
 class JoinedMixin:
-    @classmethod
-    def get_join_stmt(cls: BT) -> sa.sql.Join:
-        """
-        The method returns joined table statement.
+    """
+    Class extends the functionality of the declarative base class 'Base'.
 
-        Returns:
-            sa.sql.Join: Joined table statement.
-        Example:
-            print(Transformer.get_join_stmt()) ->
+    Class extends the functionality of the declarative base class 'Base'.
+    This class presented mixin for joined table ORM object.
 
-            'transformer
-                JOIN power_nominal ON power_nominal.id = transformer.power_id
-                JOIN voltage_nominal ON voltage_nominal.id = transformer.voltage_id
-                JOIN scheme ON scheme.id = transformer.vector_group_id'
+    Methods:
+        ################
+        # CRUD methods #
+        ################
+        def read_joined_table(): The method returns joined table as pandas DataFrame.
+        def insert_joined_table(): The method inserts new string into joined table.
+        def update_joined_table(): The method updates rows into joined table (and source if necessary).
+        def delete_joined_table(): TThe method deletes rows from joined table (and source if necessary).
 
-        """
-        join_stmt = sa.join(cls, cls.SUBTABLES[0])
-        for table in cls.SUBTABLES[1:]:
-            join_stmt = join_stmt.join(table)
-        return join_stmt
+        ###################
+        # Service methods #
+        ###################
+        def reset_id(): The method extends 'reset_id' method from class 'BaseMixin'.
+        def __get_join_stmt(): The method returns joined table statement.
 
+    """
     @classmethod
     def read_joined_table(cls: BT) -> pd.DataFrame:
-        """The method returns joined table as pandas DataFrame.
+        """
+        The method returns joined table as pandas DataFrame.
 
         Method returns joined table as pandas DataFrame with generated id columns.
 
@@ -577,7 +642,7 @@ class JoinedMixin:
             *joined_tables_non_keys, *cls.get_non_keys(as_str=False)
         )
 
-        join_stmt = cls.get_join_stmt()
+        join_stmt = cls.__get_join_stmt()
 
         with session_scope() as session:
             query = session.query(
@@ -594,11 +659,12 @@ class JoinedMixin:
 
     @classmethod
     def insert_joined_table(cls: BT, data: ty.List[dict]) -> None:
-        """The method inserts new string into joined table.
+        """
+        The method inserts new string into joined table.
 
-        The method inserts new string into joined table. First, unique results are
-        inserted into the source tables, then record id are extracted from the sources,
-        which, along with other parameters, are added to the association object (joined table).
+        The method inserts new string into joined table. First, unique results are inserted
+        into the source tables, then record id are extracted from the sources, which,
+        along with other parameters, are added to the association object (joined table).
 
         Args:
             data (List[dict]): List of dictionaries with pairs "column name - value".
@@ -678,7 +744,8 @@ class JoinedMixin:
                             new_source_data: dict = None,
                             target_row_data: dict = None
                             ) -> None:
-        """The method updates rows into joined table (and source if necessary).
+        """
+        The method updates rows into joined table (and source if necessary).
 
         Args:
             old_source_data (dict): Existing source attribute pairs "column name - value".
@@ -789,23 +856,23 @@ class JoinedMixin:
                                 source_attr: new_source_dict[getattr(source_table, source_attr)]
                             }
                         )
+
                     except sa.exc.IntegrityError as err:
-                        if 'Duplicate entry' in err.orig.__str__():
+                        if 'Duplicate entry' in err.orig.__str__() \
+                                or 'UNIQUE constraint failed' in err.orig.__str__():
                             joined_table_id = source_table.get_foreign_keys(as_str=False, on_side=True)
 
                             query = session.query(
                                 cls
                             ).filter(
-                                sa.and_(
-                                    joined_table_id == old_primary_key_queries[joined_table_id.name].as_scalar()
-                                )
+                                joined_table_id == old_primary_key_queries[joined_table_id.name].as_scalar()
                             ).update(
                                 {
                                     joined_table_id.name: new_primary_key_queries[joined_table_id.name].first()[0]
                                 }
                             )
 
-                __UPDATED.append(query)
+                    __UPDATED.append(query)
 
         if __UPDATED:
             logger.warning(f"Joined table '{cls.__tablename__}' has been changed. "
@@ -820,7 +887,8 @@ class JoinedMixin:
                             source_data: dict = None,
                             from_source: bool = False
                             ) -> None:
-        """The method deletes rows into joined table (and source if necessary).
+        """
+        The method deletes rows into joined table (and source if necessary).
 
         Args:
             source_data (dict): Existing source attribute pairs "column name - value".
@@ -905,7 +973,8 @@ class JoinedMixin:
 
     @classmethod
     def reset_id(cls: BT) -> None:
-        """The method extends 'reset_id' method from class 'BaseMixin'.
+        """
+        The method extends 'reset_id' method from class 'BaseMixin'.
 
         This part of parent method allows to reset id order for joined table in SQLite DB.
 
@@ -927,3 +996,26 @@ class JoinedMixin:
             df.to_sql(f'{cls.__tablename__}', engine, if_exists='append', index=False)
 
             logger.warning(f"Id order for joined table '{cls.__tablename__}' has been reset!")
+
+    @classmethod
+    def __get_join_stmt(cls: BT) -> sa.sql.Join:
+        """
+        The method returns joined table statement.
+
+        Returns:
+            sa.sql.Join: Joined table statement.
+        Example:
+            print(Transformer.get_join_stmt()) ->
+
+            'transformer
+                JOIN power_nominal ON power_nominal.id = transformer.power_id
+                JOIN voltage_nominal ON voltage_nominal.id = transformer.voltage_id
+                JOIN scheme ON scheme.id = transformer.vector_group_id'
+
+        """
+        join_stmt = sa.join(cls, cls.SUBTABLES[0])
+
+        for table in cls.SUBTABLES[1:]:
+            join_stmt = join_stmt.join(table)
+
+        return join_stmt

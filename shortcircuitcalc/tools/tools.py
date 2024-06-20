@@ -400,7 +400,7 @@ def db_access() -> str:
 
         try:
             with open(CREDENTIALS_DIR, 'r', encoding='UTF-8') as file:
-                temp = json.load(file)['db_access']
+                temp = json.load(file)['credentials']
                 login, password, db_name = temp['login'], temp['password'], temp['db_name']
                 engine_string = f'mysql+pymysql://{login}:{password}@localhost/{db_name}?charset=utf8mb4'
 
