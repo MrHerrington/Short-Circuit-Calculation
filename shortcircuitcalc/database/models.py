@@ -5,6 +5,40 @@ The module contains ORM models of tables with equipment of the categories
 Also, the module contains set of dataclasses for CRUD operations in GUI
 of program.
 
+Main models:
+    - PowerNominal: The class describes a table of transformer power nominals.
+    - VoltageNominal: The class describes a table of transformer voltage nominals.
+    - Scheme: The class describes a table of transformer vector group schemes.
+    - Transformer: The class describes a table of communication by transformers.
+
+    - Mark: The class describes a table of cable marking types.
+    - RangeVal: The class describes a table of cable ranges.
+    - Amount: The class describes a table of the number of conductive cores of cables.
+    - Cable: The class describes a table of communication by cables.
+
+    - Device: The class describes a table of switching devices.
+    - CurrentNominal: The class describes a table of the switching devices current nominals.
+    - CurrentBreaker: The class describes a table of the switching devices.
+
+    - OtherContact: The class describes a table of the others resistances.
+
+Dataclasses for CRUD operations:
+    - InsertTrans: Dataclass provides dataset for 'Transformer.insert_joined_table()' method.
+    - UpdateTrans...: Dataclasses provide datasets for 'Transformer.update_joined_table()' method.
+    - DeleteTrans: Dataclass provides dataset for 'Transformer.delete_joined_table()' method.
+
+    - InsertCable: Dataclass provides dataset for 'Cable.insert_joined_table()' method.
+    - UpdateCable...: Dataclasses provide datasets for 'Cable.update_joined_table()' method.
+    - DeleteCable: Dataclass provides dataset for 'Cable.delete_joined_table()' method.
+
+    - InsertContact: Dataclass provides dataset for 'OtherContact.insert_joined_table()' method.
+    - UpdateContact...: Dataclasses provide datasets for 'OtherContact.update_joined_table()' method.
+    - DeleteContact: Dataclass provides dataset for 'OtherContact.delete_joined_table()' method.
+
+    - InsertResist: Dataclass provides dataset for 'OtherContact.insert_table()' method.
+    - UpdateResist...: Dataclasses provide datasets for 'OtherContact.update_table()' method.
+    - DeleteResist: Dataclass provides dataset for 'OtherContact.delete_table()' method.
+
 """
 
 
@@ -39,7 +73,10 @@ __all__ = (
 # 'Transformers' section #
 ##########################
 class PowerNominal(BaseMixin, Base):
-    """The class describes a table of transformer power nominals"""
+    """
+    The class describes a table of transformer power nominals.
+
+    """
     power = sa.orm.mapped_column(
         sa.Integer, nullable=False, unique=True, sort_order=10
     )
@@ -49,7 +86,10 @@ class PowerNominal(BaseMixin, Base):
 
 
 class VoltageNominal(BaseMixin, Base):
-    """The class describes a table of transformer voltage nominals"""
+    """
+    The class describes a table of transformer voltage nominals.
+
+    """
     voltage = sa.orm.mapped_column(
         sa.Numeric(6, 3), nullable=False, unique=True, sort_order=10
     )
@@ -59,7 +99,10 @@ class VoltageNominal(BaseMixin, Base):
 
 
 class Scheme(BaseMixin, Base):
-    """The class describes a table of transformer vector group schemes"""
+    """
+    The class describes a table of transformer vector group schemes.
+
+    """
     vector_group = sa.orm.mapped_column(
         sa.String(10), nullable=False, unique=True, sort_order=10
     )
@@ -119,7 +162,10 @@ class Transformer(JoinedMixin, BaseMixin, Base):
 # 'Cables and wires' section #
 ##############################
 class Mark(BaseMixin, Base):
-    """The class describes a table of cable marking types"""
+    """
+    The class describes a table of cable marking types.
+
+    """
     mark_name = sa.orm.mapped_column(
         sa.String(20), nullable=False, unique=True, sort_order=10
     )
@@ -129,7 +175,10 @@ class Mark(BaseMixin, Base):
 
 
 class Amount(BaseMixin, Base):
-    """The class describes a table of the number of conductive cores of cables"""
+    """
+    The class describes a table of the number of conductive cores of cables.
+
+    """
     multicore_amount = sa.orm.mapped_column(
         sa.Integer, nullable=False, unique=True, sort_order=10
     )
@@ -139,7 +188,10 @@ class Amount(BaseMixin, Base):
 
 
 class RangeVal(BaseMixin, Base):
-    """The class describes a table of cable ranges"""
+    """
+    The class describes a table of cable ranges.
+
+    """
     cable_range = sa.orm.mapped_column(
         sa.Numeric(4, 1), nullable=False, unique=True, sort_order=10
     )
@@ -211,7 +263,10 @@ class Device(BaseMixin, Base):
 
 
 class CurrentNominal(BaseMixin, Base):
-    """The class describes a table of the switching devices current nominals"""
+    """
+    The class describes a table of the switching devices current nominals.
+
+    """
     current_value = sa.orm.mapped_column(
         sa.Integer, nullable=False, unique=True, sort_order=10
     )
@@ -256,7 +311,10 @@ class CurrentBreaker(JoinedMixin, BaseMixin, Base):
 
 
 class OtherContact(BaseMixin, Base):
-    """The class describes a table of the others resistances."""
+    """
+    The class describes a table of the others resistances.
+
+    """
     contact_type = sa.orm.mapped_column(
         sa.String(25), nullable=False, unique=True, sort_order=10
     )

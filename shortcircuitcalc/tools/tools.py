@@ -3,6 +3,22 @@
 This module provides tools for interacting with catalog databases
 and utility tools for the main functionality of the program.
 
+Objects:
+    - engine: The SQLAlchemy engine object.
+    - metadata: The SQLAlchemy metadata object.
+
+Functions:
+    - config_manager: A function that manages configuration parameters.
+    - session_scope: Context manager provides a session for executing database operations.
+
+Classes:
+    - Base: The SQLAlchemy declarative base child class.
+    - Validator: The class for validating the input data.
+    - TypesManager: The class-wrapper for the conversion of the value to the needed type.
+
+Decorators:
+    - logging_error: Decorator for logging errors in the function.
+
 """
 
 
@@ -23,23 +39,35 @@ from shortcircuitcalc.config import (
 )
 
 
-__all__ = ('Base', 'engine', 'metadata', 'session_scope', 'Validator',
-           'TypesManager', 'config_manager', 'logging_error')
+__all__ = (
+    'Base', 'engine', 'metadata', 'session_scope',
+    'Validator', 'TypesManager', 'config_manager', 'logging_error'
+)
 
 
 logger = logging.getLogger(__name__)
 
 
 class Base(sa.orm.DeclarativeBase):
-    """Child class from DeclarativeBase class sqlalchemy package"""
+    """
+    Child class from DeclarativeBase class sqlalchemy package.
+
+    """
     pass
 
 
 class Validator:
-    """The class for validating the input data.
+    # noinspection PyUnresolvedReferences
+    """
+    The class for validating the input data.
 
     The class for validating the input data in accordance with
     the type annotations specified when creating the dataclasses.
+
+    Attributes:
+        default (Any): The default value for the input data.
+        log_info (bool): The flag for logging information.
+        prefer_default (bool): The flag for preferring default value.
 
     Samples:
         #########################################################
@@ -91,7 +119,6 @@ class Validator:
         #########################################################################
 
     """
-
     def __init__(self, default=None, log_info: bool = False, prefer_default: bool = False) -> None:
         self._default = default
         self._log_info = log_info
@@ -141,6 +168,10 @@ class Validator:
                                f'must be non empty string.')
 
         def __set_valid_arg():
+            """
+            The method return self validated default argument if it is True.
+
+            """
             if isinstance(self._default, str) and self._default or \
                     not (isinstance(self._default, str)) and self._default is not None:
                 return required_type(self._default)
@@ -150,6 +181,10 @@ class Validator:
                         logger.info(empty_str_error_msg)
 
         def __set_obj_arg(arg):
+            """
+            The method return owner validated argument if it is True.
+
+            """
             if isinstance(arg, str) and arg or \
                     not (isinstance(arg, str)) and arg is not None:
                 return required_type(arg)
@@ -168,9 +203,9 @@ class Validator:
                 else:
                     value = __set_obj_arg(value)
 
-        except (Exception,):
+        except Exception as err:
             logger.error(type_error_msg)
-            raise
+            raise err
 
         setattr(obj, self._private_name, value)
 
@@ -180,18 +215,16 @@ class Validator:
 
 # noinspection PyUnresolvedReferences
 class TypesManager:
-    """The class-wrapper for the conversion of the value to the needed type.
+    """
+    The class-wrapper for the conversion of the value to the needed type.
 
     Create and return a new instance of the class.
 
-    Args:
+    Attributes:
         value: The value to be converted to the needed type.
         as_decimal (bool, optional): Whether to convert the value to Decimal type. Defaults to False.
         as_string (bool, optional): Whether to convert the value to string type. Defaults to False.
         quoting (bool, optional): Whether to quote the value. Defaults to False.
-
-    Returns:
-        The converted value of the same type as the original value, or None if the value is None.
 
     """
     def __new__(cls, value: ty.Any, as_decimal: bool = False, as_string: bool = False, quoting: bool = False):
@@ -203,7 +236,23 @@ class TypesManager:
 
 
 class _TypesHandler:
-    """The class handles the conversion of the value to the needed type."""
+    """
+    The class handles the conversion of the value to the needed type.
+
+    Attributes:
+        __value: The value to be converted to the needed type.
+        __as_decimal (bool, optional): Whether to convert the value to Decimal type. Defaults to False.
+        __as_string (bool, optional): Whether to convert the value to string type. Defaults to False.
+        __quoting (bool, optional): Whether to quote the value. Defaults to False.
+
+    Private methods:
+        - __types_converting: The method converts the value to the needed type.
+        - __type_parser: The method parses the value from string to basic Python type.
+        - __to_decimal: The method converts the value to Decimal type.
+        - __to_string: The method converts the value to string type.
+        - __quote: The method quotes the value.
+
+    """
     def __init__(self, __value: ty.Any, __as_decimal: bool = False, __as_string: bool = False, __quoting: bool = False):
         self.__value = __value
         self.__as_decimal = __as_decimal
@@ -221,7 +270,10 @@ class _TypesHandler:
         self.__value = value
 
     def __types_converting(self):
-        """The method converts the value to the needed type."""
+        """
+        The method converts the value to the needed type.
+
+        """
         if isinstance(self.__value, str):
             self.__type_parser()
 
@@ -246,7 +298,10 @@ class _TypesHandler:
         return self
 
     def __type_parser(self):
-        """The method parses the value from string to basic Python type."""
+        """
+        The method parses the value from string to basic Python type.
+
+        """
         if isinstance(self.__value, str):
             match = re.search(r"Decimal\('([^']+)'\)", self.__value)
             if match:
@@ -265,7 +320,10 @@ class _TypesHandler:
         return self
 
     def __to_decimal(self):
-        """The method converts the value to Decimal type."""
+        """
+        The method converts the value to Decimal type.
+
+        """
         try:
             if isinstance(self.__value, float):
                 self.__value = Decimal(str(self.__value))
@@ -279,7 +337,10 @@ class _TypesHandler:
         return self
 
     def __to_string(self):
-        """The method converts the value to string type."""
+        """
+        The method converts the value to string type.
+
+        """
         __type_to_string = {
             str: self.__value,
             Decimal: f"Decimal('{self.__value}')",
@@ -293,7 +354,8 @@ class _TypesHandler:
         return self
 
     def __quote(self):
-        """The method quotes the value.
+        """
+        The method quotes the value.
 
         Also, if the value is already quoted, method returns double-quoted value.
 
@@ -312,7 +374,14 @@ class _TypesHandler:
 
 
 def config_manager(param: str, new_val: ty.Any = None) -> ty.Any:
-    """A function that manages configuration parameters.
+    """
+    A function that manages configuration parameters.
+
+    This function reads the configuration file specified by CONFIG_DIR, searches for the
+    specified configuration parameter, and returns its current value. If a new value is
+    provided, the function updates the configuration file with the new value and prints a
+    message indicating the change. If the configuration file does not exist, a FileNotFoundError
+    is raised.
 
     Args:
         param (str): The name of the configuration parameter to manage.
@@ -324,12 +393,6 @@ def config_manager(param: str, new_val: ty.Any = None) -> ty.Any:
 
     Raises:
         FileNotFoundError: If the configuration file specified by CONFIG_DIR does not exist.
-
-    This function reads the configuration file specified by CONFIG_DIR, searches for the
-    specified configuration parameter, and returns its current value. If a new value is
-    provided, the function updates the configuration file with the new value and prints a
-    message indicating the change. If the configuration file does not exist, a FileNotFoundError
-    is raised.
 
     Note:
         The configuration file is assumed to be in UTF-8 encoding.
@@ -367,26 +430,21 @@ def config_manager(param: str, new_val: ty.Any = None) -> ty.Any:
 
 
 def db_access() -> str:
-    """Returns a string representing the database connection URL based on the existing configuration.
+    """
+    Returns a string representing the database connection URL based on the existing configuration.
 
     This function checks the existing configuration to determine the type of database connection
     to use. If the configuration specifies a MySQL database, it opens the credentials file, loads
     the necessary data, and constructs the MySQL engine string. If the configuration specifies a
-    SQLite database, it returns the SQLite engine string. If the configuration does not specify a
-    database connection, it tries to access the MySQL database. If the credentials file is not found,
-    it falls back to accessing the SQLite database. If the configuration specifies an unsupported
-    database connection type, it resets the configuration parameter and prints an error message.
+    SQLite database, it returns the SQLite engine string.
 
     Returns:
         str: The database connection URL.
 
-    Note:
-        The program prefer MySQL connection so when the method finds the credentials file, it deletes
-        the current standalone SQLite database and deploys a new one in the MySQL environment.
-
     """
     def __mysql_access() -> str:
-        """Creates a connection to the MySQL database.
+        """
+        Creates a connection to the MySQL database.
 
         Service method, opens the credentials file, loads the necessary data,
         and constructs the MySQL engine string.
@@ -416,7 +474,8 @@ def db_access() -> str:
                          'Try to choose another connection.')
 
     def __sqlite_access() -> str:
-        """Сreates a connection to the SQLite database.
+        """
+        Creates a connection to the SQLite database.
 
         Service method, returns the SQLite engine string.
 
@@ -455,10 +514,11 @@ Session = sa.orm.sessionmaker(bind=engine, expire_on_commit=False)
 
 @contextmanager
 def session_scope(logs: bool = True) -> None:
-    """Context manager provides a session for executing database operations.
+    """
+    Context manager provides a session for executing database operations.
 
-    Yields:
-        session: A session object for executing database operations.
+    Yields session: a session object for executing database operations.
+
     Args:
         logs (bool, optional): Whether to log errors. Defaults to True.
     Raises:
@@ -481,10 +541,13 @@ def session_scope(logs: bool = True) -> None:
 
 
 def logging_error(func: ty.Callable) -> ty.Callable:
-    """Decorator for logging errors in the function.
+    """
+    Decorator for logging errors in the function.
 
     Args:
         func (ty.Callable): The function to be decorated.
+    Returns:
+        ty.Callable: The decorated function.
 
     """
     @wraps(func)

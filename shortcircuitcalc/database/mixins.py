@@ -3,6 +3,10 @@
 The module presents mixin classes, which extends
 the functionality of the declarative base class 'Base'.
 
+Classes:
+    - BaseMixin: The class presented mixin for single source table ORM object.
+    - JoinedMixin: The class presented mixin for joined table ORM object.
+
 """
 
 
@@ -40,43 +44,33 @@ class BaseMixin:
     Class extends the functionality of the declarative base class 'Base'.
     This class presented mixin for single source table ORM object.
 
-    Methods:
-        ########################
-        # Main service methods #
-        ########################
-        def __tablename__(): The method automatically generates a table name.
-        def id(): The method generates primary keys.
+    Main service methods:
+        - __tablename__: The method automatically generates a table name.
+        - id: The method generates primary keys.
 
-        ################
-        # CRUD methods #
-        ################
-        def create_table(): The method creates the table.
-        def read_table(): The method reads the table.
-        def show_table(): The method returns the table matplotlib figure.
-        def insert_table(): The method inserts values in chosen table.
-        def update_table(): The method updates values in chosen table.
-        def delete_table(): The method deletes values from chosen table.
-        def drop_table(): The method drops the table.
+    CRUD methods:
+        - create_table: The method creates the table.
+        - read_table: The method reads the table.
+        - show_table: The method returns the table matplotlib figure.
+        - insert_table: The method inserts values in chosen table.
+        - update_table: The method updates values in chosen table.
+        - delete_table: The method deletes values from chosen table.
+        - drop_table: The method drops the table.
 
-        #########################
-        # Useful public methods #
-        #########################
-        def reset_id(): The method resets id order in any table if DB is MySQL.
-        def get_all_keys(): The method generates all columns massive for the table.
-        def get_primary_key(): The method generates primary key column for the table.
-        def get_foreign_keys(): The method generates foreign keys columns massive for the table.
-        def get_non_keys(): The method generates non-key columns massive for the table.
-        def get_class_from_tablename(): The method returns table ORM class from table name.
+    Useful public methods:
+        - reset_id: The method resets id order in any table if DB is MySQL.
+        - get_all_keys: The method generates all columns massive for the table.
+        - get_primary_key: The method generates primary key column for the table.
+        - get_foreign_keys: The method generates foreign keys columns massive for the table.
+        - get_non_keys: The method generates non-key columns massive for the table.
+        - get_class_from_tablename: The method returns table ORM class from table name.
 
-        ##############################
-        # Additional service methods #
-        ##############################
-        def __camel_to_snake(): The method converts the tablename register.
-        def __csv_to_list_of_dicts(): The method converts CSV-file datas into list of the dictionaries.
-        def __convert_types(): The method converts val type.
+    Additional service methods:
+        - __camel_to_snake: The method converts the tablename register.
+        - __csv_to_list_of_dicts: The method converts CSV-file datas into list of the dictionaries.
+        - __convert_types: The method converts val type.
 
     """
-
     __new_name: str = None
 
     @declared_attr.directive
@@ -604,20 +598,15 @@ class JoinedMixin:
     Class extends the functionality of the declarative base class 'Base'.
     This class presented mixin for joined table ORM object.
 
-    Methods:
-        ################
-        # CRUD methods #
-        ################
-        def read_joined_table(): The method returns joined table as pandas DataFrame.
-        def insert_joined_table(): The method inserts new string into joined table.
-        def update_joined_table(): The method updates rows into joined table (and source if necessary).
-        def delete_joined_table(): TThe method deletes rows from joined table (and source if necessary).
+    CRUD methods:
+        - def read_joined_table(): The method returns joined table as pandas DataFrame.
+        - def insert_joined_table(): The method inserts new string into joined table.
+        - def update_joined_table(): The method updates rows into joined table (and source if necessary).
+        - def delete_joined_table(): TThe method deletes rows from joined table (and source if necessary).
 
-        ###################
-        # Service methods #
-        ###################
-        def reset_id(): The method extends 'reset_id' method from class 'BaseMixin'.
-        def __get_join_stmt(): The method returns joined table statement.
+    Service methods:
+        - def reset_id(): The method extends 'reset_id' method from class 'BaseMixin'.
+        - def __get_join_stmt(): The method returns joined table statement.
 
     """
     @classmethod
