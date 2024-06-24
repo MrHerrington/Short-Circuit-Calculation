@@ -28,7 +28,7 @@ from shortcircuitcalc.tools import (
 )
 
 
-__all__ = ('BaseMixin', 'JoinedMixin')
+__all__ = ('BT', 'BaseMixin', 'JoinedMixin')
 
 
 logger = logging.getLogger(__name__)
@@ -39,9 +39,9 @@ BT = ty.TypeVar('BT', bound=Base)
 
 class BaseMixin:
     """
-    Class extends the functionality of the declarative base class 'Base'.
+    The class extends the functionality of the declarative base class 'Base'.
 
-    Class extends the functionality of the declarative base class 'Base'.
+    The class extends the functionality of the declarative base class 'Base'.
     This class presented mixin for single source table ORM object.
 
     Main service methods:
@@ -593,9 +593,9 @@ class BaseMixin:
 
 class JoinedMixin:
     """
-    Class extends the functionality of the declarative base class 'Base'.
+    The class extends the functionality of the declarative base class 'Base'.
 
-    Class extends the functionality of the declarative base class 'Base'.
+    The class extends the functionality of the declarative base class 'Base'.
     This class presented mixin for joined table ORM object.
 
     CRUD methods:

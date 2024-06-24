@@ -213,8 +213,8 @@ class Validator:
         return f'{self._saved_value}'
 
 
-# noinspection PyUnresolvedReferences
 class TypesManager:
+    # noinspection PyUnresolvedReferences
     """
     The class-wrapper for the conversion of the value to the needed type.
 
@@ -418,10 +418,9 @@ def config_manager(param: str, new_val: ty.Any = None) -> ty.Any:
         except KeyError:
             new_val = TypesManager(new_val, as_string=True)
 
-        # noinspection PyUnresolvedReferences
         updated_config_data = current_config_data.replace(
-            f"{matched_param.group('name')} = {matched_param.group('value')}",
-            f"{matched_param.group('name')} = {new_val}", 1)
+            f"{matched_param.group('name')} = {matched_param.group('value')}",  # noqa
+            f"{matched_param.group('name')} = {new_val}", 1)  # noqa
         config_file.seek(0)
         config_file.truncate()
         config_file.write(updated_config_data)

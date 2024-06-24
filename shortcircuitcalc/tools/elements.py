@@ -472,7 +472,6 @@ class ElemChain(ty.Sequence, ty.Mapping):
         - ElemChain({QS1: QS(63), W1: W('ВВГ', 3, 2.5, 50)})
 
     """
-
     def __init__(self, obj: ty.Union[ty.Sequence, ty.Mapping]) -> None:
         self._obj = obj
 

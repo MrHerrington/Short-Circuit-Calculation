@@ -3,7 +3,26 @@
 The module contains GUI windows templates, using PyQt5 and Matplotlib.
 Classes are based on ui files, developed by QtDesigner and customized.
 
+Inner functionality:
+    - CustomGraphicView: The class initializes a window shows graphical objects.
+    - CustomPlainTextEdit: The class initializes a custom text edit with a custom caret.
+    - CustomTextEditLogger: The class initializes custom text edit object for logging interface in the GUI.
+    - ConfirmWindow: The class initializes custom QDialog object.
+    - WindowMixin: The class initializes the mixin for graphic window object.
+
+Custom threads:
+    - GraphicsDataThread: The class defines a thread for loading graphics data.
+    - TableDataThread: The class defines a thread for loading table data.
+
+App main windows:
+    - MainWindow: The class defines the main window of the program.
+    - DatabaseBrowser: The class creates database browser window and allows to manage database.
+
+Other functionality:
+    - empty.
+
 """
+
 
 import sys
 import os
@@ -15,9 +34,6 @@ from dataclasses import asdict
 
 import logging
 import matplotlib
-# Need for figure matplotlib annotation
-# noinspection PyUnresolvedReferences
-import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigCanvas,
     NavigationToolbar2QT as NavToolbar,
@@ -25,17 +41,17 @@ from matplotlib.backends.backend_qt5agg import (
 from PyQt5 import QtWidgets, QtCore, QtGui, uic
 
 # Need for correctly loading icons
-# noinspection PyUnresolvedReferences
-import shortcircuitcalc.gui.resources
+import shortcircuitcalc.gui.resources  # noqa
 from shortcircuitcalc.gui.figures import ResultsFigure, CatalogFigure
 from shortcircuitcalc.database import (
     Transformer, Cable, CurrentBreaker, OtherContact,
-    db_install,
 
     InsertTrans, UpdateTransOldSource, UpdateTransNewSource, UpdateTransRow, DeleteTrans,
     InsertCable, UpdateCableOldSource, UpdateCableNewSource, UpdateCableRow, DeleteCable,
     InsertContact, UpdateContactOldSource, UpdateContactNewSource, UpdateContactRow, DeleteContact,
-    InsertResist, UpdateResistOldSource, UpdateResistNewSource, UpdateResistRow, DeleteResist
+    InsertResist, UpdateResistOldSource, UpdateResistNewSource, UpdateResistRow, DeleteResist,
+
+    db_install, BT
 )
 from shortcircuitcalc.tools import config_manager, logging_error, ChainsSystem
 from shortcircuitcalc.config import GUI_DIR
@@ -49,7 +65,8 @@ matplotlib.use('Qt5Agg')
 
 
 logger = logging.getLogger(__name__)
-GW = ty.TypeVar('GW', bound=ty.Union[QtWidgets.QMainWindow, QtWidgets.QWidget])
+GraphicClass = ty.TypeVar('GraphicClass', bound=ty.Union[ResultsFigure, CatalogFigure])
+GraphicWindow = ty.TypeVar('GraphicWindow', bound=ty.Union[QtWidgets.QMainWindow, QtWidgets.QWidget])
 
 
 #######################
@@ -57,20 +74,27 @@ GW = ty.TypeVar('GW', bound=ty.Union[QtWidgets.QMainWindow, QtWidgets.QWidget])
 #######################
 
 class CustomGraphicView(QtWidgets.QGraphicsView):
-    """Initializes a CustomGraphicView object.
+    # noinspection PyUnresolvedReferences
+    """
+    The class initializes a window shows graphical objects.
 
-    Args:
-        parent (Optional[QtWdgets.QWidget], optional): The parent widget for the CustomGraphicView.
-        Defaults to None.
+    Attributes:
+        parent (QtWdgets.QWidget, optional): The parent widget.
+        figure (matplotlib.figure.Figure, optional): The Matplotlib figure.
+        title (str, optional): The title of the graphic window.
 
-    Initializes the following instance variables:
-        - _scene (QtWidgets.QGraphicsScene): The graphics scene for the CustomGraphicView.
-        - _canvas (FigCanvas): The Matplotlib figure canvas for the CustomGraphicView.
-        - _zoom (int): The current zoom level of the CustomGraphicView.
-        - _mousePressed (bool): Flag indicating whether the mouse is currently pressed.
-        - _drag_pos (Optional[QtCore.QPoint]): The position of the mouse during a drag operation.
+    Interface:
+        - supports scrolling, zooming and panning working scene by handling events.
+        - set_figure: The method sets the figure to the view scene.
+        - save_model: The method saves the current figure as an any graphical file.
+        - save_fragment: The method saves the current visible area widget as an image.
 
-    Sets the graphics scene, canvas, transformation anchor, and resize anchor for the CustomGraphicView.
+    Handling events:
+        - mousePressEvent: The method handles mouse press event.
+        - mouseMoveEvent: The method handles mouse move event.
+        - mouseReleaseEvent: The method handles mouse release event.
+        - wheelEvent: The method handles mouse wheel event.
+        - contextMenuEvent: The method handles context menu event.
 
     """
 
@@ -96,7 +120,17 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
 
         self.init_gui()
 
-    def init_gui(self):
+    def init_gui(self) -> None:
+        """
+        The method initializes window GUI.
+
+        Definite:
+            - Window title
+            - Scene settings
+            - Anchor settings
+            - Context menu actions settings
+
+        """
         # Set title
         self.setWindowTitle(self._title)
 
@@ -110,14 +144,26 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
 
         # Context menu actions settings
         self.save_model_action.setIconVisibleInMenu(True)
-        # noinspection PyUnresolvedReferences
-        self.save_model_action.triggered.connect(self.save_model)
+        self.save_model_action.triggered.connect(self.save_model)  # noqa
 
         self.save_fragment_action.setIconVisibleInMenu(True)
-        # noinspection PyUnresolvedReferences
-        self.save_fragment_action.triggered.connect(self.save_fragment)
+        self.save_fragment_action.triggered.connect(self.save_fragment)  # noqa
 
-    def set_figure(self, figure):
+    def set_figure(self,
+                   figure: matplotlib.figure.Figure,
+                   custom_zoom: bool = False
+                   ) -> None:
+        """
+        The method sets the figure to the view scene.
+
+        Args:
+            figure (matplotlib.figure.Figure): The Matplotlib figure.
+            custom_zoom (bool, optional): The flag for custom zoom, need if fig dpi > default.
+
+        Note:
+            Sets start viewing position in top left corner scene.
+
+        """
         self._figure = figure
         self._canvas = FigCanvas(self._figure)
         self._scene = QtWidgets.QGraphicsScene()
@@ -133,16 +179,59 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
         ):
             self.setStyleSheet('QGraphicsView {background-color: transparent;}')
 
-        # self.zoom_initialize()
+        if custom_zoom:
+            self.zoom_initialize()
 
-    # Need if fig dpi > default
-    # def zoom_initialize(self) -> None:
-    #     fig_size_x_inches, fig_size_y_inches = self._figure.get_size_inches()
-    #     start_scale = int(min((self.width() / fig_size_x_inches, self.height() / fig_size_y_inches))) * 0.9
-    #     self.scale(1 / start_scale, 1 / start_scale)
+    def zoom_initialize(self) -> None:
+        """
+        The method sets custom zoom initialization for scene and figure.
+
+        """
+        fig_size_x_inches, fig_size_y_inches = self._figure.get_size_inches()
+        start_scale = int(min((self.width() / fig_size_x_inches, self.height() / fig_size_y_inches))) * 0.9
+        self.scale(1 / start_scale, 1 / start_scale)
+
+    def save_model(self) -> None:
+        """
+        The method saves the current figure as an any graphical file.
+
+        """
+        try:
+            if self.parent() is None:
+                NavToolbar.save_figure(self._figure)
+            else:
+                viewers = self.parent().findChildren(QtWidgets.QGraphicsView)
+                for viewer in viewers:
+                    if viewer == self:
+                        NavToolbar.save_figure(viewer._figure)  # noqa
+
+        except (AttributeError,):
+            logger.error('Cannot save empty model.')
+
+    def save_fragment(self) -> None:
+        """
+        The method saves the current visible area widget as an image.
+
+        Note:
+            Saves the current visible area as an image without the scrollbars.
+
+        """
+        rect_region = QtCore.QRect(0, 0,
+                                   self.width() - self.verticalScrollBar().width(),
+                                   self.height() - self.horizontalScrollBar().height())
+        pixmap = self.grab(rect_region)
+        fname = QtWidgets.QFileDialog.getSaveFileName(
+            self, 'Save fragment as ...', 'image.png',
+            'Portable Network Graphics (*.png);;'
+            'Joint Photographic Experts Group (*.jpeg *.jpg)'
+        )[0]
+
+        if fname:
+            pixmap.save(fname)
 
     def mousePressEvent(self, event: QtCore.Qt.MouseButton.LeftButton) -> None:
-        """Handle the mouse press event.
+        """
+        The method handles the mouse press event.
 
         Args:
             event (QtCore.Qt.MouseButton.LeftButton): The mouse press event.
@@ -158,15 +247,11 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
             super(CustomGraphicView, self).mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QtCore.Qt.MouseButton.LeftButton) -> None:
-        """Handle the mouse move event.
+        """
+        The method handles the mouse move event.
 
         Args:
             event (QtCore.Qt.MouseButton.LeftButton): The mouse move event.
-
-
-        This function is called when the mouse is moved while the left button is pressed.
-        It calculates the difference between the current mouse position and the previous
-        mouse position and updates the scrollbars accordingly.
 
         """
         if self._mousePressed:
@@ -181,35 +266,26 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
             super(CustomGraphicView, self).mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtCore.Qt.MouseButton.LeftButton) -> None:
-        """Handle the mouse release event.
+        """
+        The method handles the mouse release event.
 
         Args:
             event (QtCore.Qt.MouseButton.LeftButton): The mouse release event.
-
-        This function is called when the mouse button is released. It checks if the released
-        button is the left button. If it is, it sets the '_mousePressed' flag to 'False' and
-        changes the cursor to an arrow cursor. Finally, it calls the 'mouseReleaseEvent' method
-        of the parent class with the given event.
 
         """
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
             self._mousePressed = False
             self.viewport().setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.ArrowCursor))
 
-        super(CustomGraphicView, self).mouseReleaseEvent(event)
+        else:
+            super(CustomGraphicView, self).mouseReleaseEvent(event)
 
     def wheelEvent(self, event: QtCore.Qt.KeyboardModifier.ControlModifier) -> None:
-        """Handle the wheel event.
+        """
+        The method handles the wheel event.
 
         Args:
             event (QtCore.Qt.KeyboardModifier.ControlModifier): The wheel event.
-
-        This function is called when the user scrolls the mouse wheel. It checks if the Control
-        modifier key is pressed and adjusts the zoom level accordingly. If the zoom level is
-        greater than 0, it scales the view by a factor of 1.25 or 0.8 depending on the scroll
-        direction. If the zoom level is 0, it resets the view transformation. If the Control
-        modifier key is not pressed, it calls the parent class's wheelEvent method with the
-        given event.
 
         """
         modifiers = QtWidgets.QApplication.keyboardModifiers()
@@ -238,14 +314,11 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
             super(CustomGraphicView, self).wheelEvent(event)
 
     def contextMenuEvent(self, event: QtGui.QContextMenuEvent) -> None:
-        """Handle the context menu event.
+        """
+        The method handles the context menu event.
 
         Args:
             event (QtGui.QContextMenuEvent): The context menu event.
-
-        This function is called when a context menu event is triggered. It creates a context menu
-        with actions to save model and save fragment. It then executes the menu at the global position
-        specified by the event.
 
         """
         # Creating context menu
@@ -260,41 +333,30 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
         menu.addAction(self.save_fragment_action)
         menu.exec(event.globalPos())
 
-    def save_model(self):
-        """Saves the current figure as an any graphical file."""
-        if self.parent() is None:
-            NavToolbar.save_figure(self._figure)
-        else:
-            viewers = self.parent().findChildren(QtWidgets.QGraphicsView)
-            for viewer in viewers:
-                if viewer == self:
-                    # noinspection PyUnresolvedReferences
-                    # noinspection PyProtectedMember
-                    NavToolbar.save_figure(viewer._figure)
-
-    def save_fragment(self):
-        """Saves the current visible area widget as an image.
-
-        Note:
-            Saves the current visible area as an image without the scrollbars.
-
-        """
-        rect_region = QtCore.QRect(0, 0,
-                                   self.width() - self.verticalScrollBar().width(),
-                                   self.height() - self.horizontalScrollBar().height())
-        pixmap = self.grab(rect_region)
-        fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save fragment as ...', 'image.png',
-                                                      'Portable Network Graphics (*.png);;'
-                                                      'Joint Photographic Experts Group (*.jpeg *.jpg)')[0]
-        if fname:
-            pixmap.save(fname)
-
 
 class CustomPlainTextEdit(QtWidgets.QPlainTextEdit):
-    def __init__(self, parent=None):
-        QtWidgets.QPlainTextEdit.__init__(self, parent)
+    # noinspection PyUnresolvedReferences
+    """
+    The class initializes a custom text edit with a custom caret.
 
-    def paintEvent(self, event):
+    Attributes:
+        parent (Optional[QtWdgets.QWidget], optional): The parent widget.
+
+    Handling events:
+        paintEvent(self, event: QtGui.QPaintEvent)
+
+    """
+    def __init__(self, parent=None) -> None:
+        super(CustomPlainTextEdit, self).__init__(parent)
+
+    def paintEvent(self, event: QtGui.QPaintEvent) -> None:
+        """
+        The method handles the paint event.
+
+        Args:
+            event (QtGui.QPaintEvent): The context menu event.
+
+        """
         # Use paintEvent() of base class to do the main work
         QtWidgets.QPlainTextEdit.paintEvent(self, event)
         # Draw cursor (if widget has focus)
@@ -304,49 +366,92 @@ class CustomPlainTextEdit(QtWidgets.QPlainTextEdit):
             painter = QtGui.QPainter(self.viewport())
             painter.fillRect(rect, QtGui.QColor('red'))
 
+        else:
+            super(CustomPlainTextEdit, self).paintEvent(event)
 
-class QPlainTextEditLogger(QtWidgets.QPlainTextEdit, logging.Handler):
+
+class CustomTextEditLogger(QtWidgets.QPlainTextEdit, logging.Handler):
+    # noinspection PyUnresolvedReferences
+    """
+    The class initializes custom text edit object for logging interface in the GUI.
+
+    Attributes:
+        parent (Optional[QtWdgets.QWidget], optional): The parent widget.
+
+    Handling events:
+        emit(self, record: logging.LogRecord)
+
+    """
     append_plain_text = QtCore.pyqtSignal(str)
 
-    def __init__(self, parent):
-        super(QPlainTextEditLogger, self).__init__(parent)
+    def __init__(self, parent=None) -> None:
+        super(CustomTextEditLogger, self).__init__(parent)
         self.setReadOnly(True)
 
-    def emit(self, record):
+    def emit(self, record: logging.LogRecord) -> None:
+        """
+        Do whatever it takes to actually log the specified logging record.
+
+        This version is intended to be implemented by subclasses and so raises a NotImplementedError.
+
+        Args:
+            record (logging.LogRecord): The record to be logged.
+
+        Signals:
+            - append_plain_text(str): The text to be appended to the logs terminal.
+
+        """
         msg = self.format(record)
 
-        if "DEBUG" in msg or "INFO" in msg:
-            msg = f"""<span style='color:#000000;'>{msg}</span>"""
-        elif "WARNING" in msg:
-            msg = f"""<span style='color:#ffffff;'>{msg}</span>"""
-        elif "ERROR" in msg or "CRITICAL" in msg:
-            msg = f"""<span style='color:#ff0000;'>{msg}</span>"""
+        color_info = '#000000'
+        color_warning = '#ffffff'
+        color_error = '#ff0000'
+
+        if 'DEBUG' in msg or 'INFO' in msg:
+            msg = f"<span style='color:{color_info};'>{msg}</span>"
+        elif 'WARNING' in msg:
+            msg = f"<span style='color:{color_warning};'>{msg}</span>"
+        elif 'ERROR' in msg or 'CRITICAL' in msg:
+            msg = f"<span style='color:{color_error};'>{msg}</span>"
 
         self.append_plain_text.emit(self.appendHtml(msg))
 
 
 class ConfirmWindow(QtWidgets.QDialog):
-    """Initializes a ConfirmWindow object."""
+    # noinspection PyUnresolvedReferences
+    """
+    The class initializes custom QDialog object.
 
-    def __init__(self, parent=None, msg: str = None):
+    Attributes:
+        parent (Optional[QtWdgets.QWidget], optional): The parent widget.
+        msg (str): The message to be displayed. If None, show 'Are you sure?'.
+
+    """
+
+    def __init__(self, parent=None, msg: str = None) -> None:
         super(ConfirmWindow, self).__init__(parent)
         uic.loadUi(GUI_DIR / 'confirm.ui', self)
-        # noinspection PyUnresolvedReferences
-        self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
+
+        self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)  # noqa
 
         if msg:
             self.textLabel.setText(msg)
 
 
-class CustomWindow:
-    def __init__(self):
-        super().__init__()
+class WindowMixin:
+    """
+    The class initializes the mixin for graphic window object.
 
-    def window_center_position(self: GW,
+    Mixins methods:
+        - window_center_position: The method centers the window on the screen.
+
+    """
+    def window_center_position(self: GraphicWindow,
                                shift_x: int = 0,
                                shift_y: int = 0,
                                relative: ty.Tuple[int, int] = None) -> None:
-        """Centers the window on the screen.
+        """
+        The method centers the window on the screen.
 
         Args:
             shift_x (int, optional): The shift on the X axis in percentage. Defaults to 0.
@@ -359,11 +464,13 @@ class CustomWindow:
         screen_height = desktop.height()
         x = int((screen_width - self.width()) / 2)
         y = int((screen_height - self.height()) / 2)
+
         if not relative:
             self.move(
                 int(x + self.width() * shift_x / 100),
                 int(y - self.height() * shift_y / 100)
             )
+
         else:
             self.move(
                 int(relative[0] + self.width() * shift_x / 100),
@@ -376,18 +483,41 @@ class CustomWindow:
 ##################
 
 class GraphicsDataThread(QtCore.QThread):
+    # noinspection PyUnresolvedReferences
+    """
+    The class defines a thread for loading graphics data.
+
+    Attributes:
+        parent (QtWdgets.QWidget, optional): The parent widget.
+        outer_fn (Callable, optional): The outer function object.
+        inner_fn (Callable, optional): The inner function object.
+
+    Signals:
+        - save_data(object): The data to be saved.
+        - read_data(object): The data to be read.
+        - load_complete(str): The message to be displayed on the success of loading.
+        - load_failure(str): The message to be displayed on the failure of loading.
+
+    """
     save_data = QtCore.pyqtSignal(object)
     read_data = QtCore.pyqtSignal(object)
     load_complete = QtCore.pyqtSignal(str)
     load_failure = QtCore.pyqtSignal(str)
 
-    def __init__(self, parent=None, outer_fn=None, inner_fn=None, *args):
+    def __init__(self, parent=None,
+                 outer_fn: ty.Union[GraphicClass, ty.Callable] = None,
+                 inner_fn: ty.Union[GraphicClass, ty.Callable] = None,
+                 *args) -> None:
         super(GraphicsDataThread, self).__init__(parent)
         self.outer_fn = outer_fn
         self.inner_fn = inner_fn
         self.args = (*args,)
 
-    def run(self):
+    def run(self) -> ty.Any:
+        """
+        The method runs separated thread.
+
+        """
         try:
             if self.inner_fn:
                 data = self.outer_fn(self.inner_fn(*self.args))
@@ -409,15 +539,33 @@ class GraphicsDataThread(QtCore.QThread):
 
 
 class TableDataThread(QtCore.QThread):
+    # noinspection PyUnresolvedReferences
+    """
+    The class defines a thread for loading table data.
+
+    Attributes:
+        parent (QtWdgets.QWidget, optional): The parent widget.
+        table (Table): The table object.
+
+    Signals:
+        - load_data(object): The data to be loaded.
+        - load_complete(str): The message to be displayed on the success of loading.
+        - load_failure(str): The message to be displayed on the failure of loading.
+
+    """
     load_data = QtCore.pyqtSignal(object)
     load_complete = QtCore.pyqtSignal(str)
     load_failure = QtCore.pyqtSignal(str)
 
-    def __init__(self, parent=None, table=None):
+    def __init__(self, parent=None, table: BT = None):
         super(TableDataThread, self).__init__(parent)
         self.table = table
 
     def run(self):
+        """
+        The method runs separated thread.
+
+        """
         try:
             if 'JoinedMixin' in map(lambda x: x.__name__, self.table.__mro__):
                 data = self.table.show_table(self.table.read_joined_table())
@@ -439,9 +587,29 @@ class TableDataThread(QtCore.QThread):
 # App main windows #
 ####################
 
-class MainWindow(QtWidgets.QMainWindow, CustomWindow):
-    def __init__(self):
-        super(MainWindow, self).__init__()
+class MainWindow(QtWidgets.QMainWindow, WindowMixin):
+    # noinspection PyUnresolvedReferences
+    """
+    The class defines the main window of the program.
+
+    Attributes:
+        parent (QtWdgets.QWidget, optional): The parent widget.
+
+    Interface:
+        - Contains informative logs terminal.
+        - Contains input terminal allowing to input data.
+        - Shows dynamic interactive results and allows save them in any format.
+        - Contain dynamic catalog of current database unique values.
+        - Contains settings panel for the program and allows to change them at any time (partial).
+        - Allow to open custom database browser for manage database.
+
+    Handling events:
+        - eventFilter: The method handles eventFilter.
+        - closeEvent: The method handles the close event of the window.
+
+    """
+    def __init__(self, parent=None) -> None:
+        super(MainWindow, self).__init__(parent)
         uic.loadUi(GUI_DIR / 'main_window.ui', self)
 
         # Saved instances
@@ -450,11 +618,24 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
 
         self.init_gui()
 
-    def init_gui(self):
+    def init_gui(self) -> None:
+        """
+        The method initializes the main window GUI.
+
+        Interface initialization includes:
+            - Logger frame settings.
+            - Initial start interface.
+            - Main bar buttons config.
+            - Side panel buttons config.
+            - Input tab settings.
+            - Results tab settings.
+            - Catalog tab settings.
+            - Settings tab config.
+
+        """
         #########################
         # Logger frame settings #
         #########################
-
         self.logsOutput.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s]: %(message)s'))
         logging.getLogger().addHandler(self.logsOutput)
         logging.getLogger().setLevel(logging.INFO)
@@ -474,7 +655,6 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
         ###########################
         # Main bar buttons config #
         ###########################
-
         self.switchButton.setToolTip('Switch side panel view')
 
         self.dbmanagerButton.setToolTip('Open database manage client in separate window')
@@ -483,7 +663,6 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
         #############################
         # Side panel buttons config #
         #############################
-
         self.inputButton.setToolTip('Show input console')
         self.inputButton.clicked.connect(lambda: self.tabWidget.setCurrentIndex(0))
 
@@ -504,7 +683,6 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
         ######################
         # Input tab settings #
         ######################
-
         self.consoleInput.installEventFilter(self)
 
         # Set placeholder text color
@@ -526,22 +704,19 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
             "TCH: T(160, 'У/Ун-0'), QF3: QF(100), R1: Line(), QF2: QF(25), W1: W('ВВГ', 3, 4, 20)"
         )
 
-        #######################
-        # Result tab settings #
-        #######################
-
+        ########################
+        # Results tab settings #
+        ########################
         pass
 
         ########################
         # Catalog tab settings #
         ########################
-
         self.set_catalog()
 
         ###########################
-        # "Settings" tab settings #
+        #   Settings tab config   #
         ###########################
-
         BoxParams = namedtuple('BoxParams', ('editable', 'values', 'default', 'update'))
 
         box_config = {
@@ -624,7 +799,18 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
             lambda: box_config[self.settingsBox7].update(self.settingsBox7.currentText())
         )
 
-    def admit_changes(self, critical_param, owner):
+    def admit_changes(self, critical_param: str, owner: QtWidgets.QComboBox) -> None:
+        """
+        The method admit critical changes and reload app if changes were made.
+
+        The method admit critical changes and reload app if changes were made.
+        If changes were not made, the method returns to previous state.
+
+        Args:
+            critical_param (str): The name of critical param.
+            owner (QtWidgets.QComboBox): The owner of param field.
+
+        """
         if not owner.previous_index == owner.currentText():
             confirm_window = ConfirmWindow(self, 'ADMIT CHANGES AND RELOAD APP?')
             confirm_window.exec_()
@@ -638,7 +824,14 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
                 index = owner.findText(owner.previous_index)
                 owner.setCurrentIndex(index)
 
-    def set_catalog(self):
+    def set_catalog(self) -> None:
+        """
+        The method set catalog figure in the catalog view.
+
+        Loading catalog figure processing in a separate thread
+        and when it is done, the catalog view is updated.
+
+        """
         catalog_thread = GraphicsDataThread(self, CatalogFigure)
 
         catalog_thread.read_data.connect(self.catalogView.set_figure)
@@ -647,7 +840,13 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
 
         catalog_thread.start()
 
-    def open_db_browser(self):
+    def open_db_browser(self) -> None:
+        """
+        The method create and open database browser window.
+
+        If database browser is already were opened in session, the method just opens it.
+
+        """
         if self.db_browser is None:
             self.db_browser = DatabaseBrowser()
             self.db_browser.window_center_position(
@@ -655,13 +854,30 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
             )
         self.db_browser.show()
 
-    def save_interactive_stmt(self, figure_obj):
+    def save_interactive_stmt(self, figure_obj: matplotlib.figure.Figure) -> None:
+        """
+        The method save interactive figure in the app state.
+
+        Args:
+            figure_obj (matplotlib.figure.Figure): The matplotlib figure object.
+
+        """
         self.results_figure = figure_obj
 
-    # noinspection PyUnresolvedReferences
-    def eventFilter(self, obj, event):
-        if event.type() == QtCore.QEvent.KeyPress and obj is self.consoleInput:
-            if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Return:
+    def eventFilter(self, obj: QtWidgets.QWidget, event: QtCore.QEvent) -> bool:
+        """
+        The method handles eventFilter.
+
+        When console input is focused and pressed 'CTRL + ENTER', the method start new thread
+        for loading interactive results figure. When it is done, the results view is updated.
+
+        Args:
+            obj (QtWidgets.QWidget): The widget object.
+            event (QtCore.QEvent): The event object.
+
+        """
+        if event.type() == QtCore.QEvent.KeyPress and obj is self.consoleInput:  # noqa
+            if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Return:  # noqa
                 text = self.consoleInput.toPlainText()
                 results_thread = GraphicsDataThread(
                     self, ResultsFigure, ChainsSystem, text
@@ -677,14 +893,15 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
         return super().eventFilter(obj, event)
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
-        """Handle the close event of the window.
-
-        Args:
-            event (QtGui.QCloseEvent): The close event object.
+        """
+        The method handles the close event of the window.
 
         This function is called when the user tries to close the window. It creates a confirmation window
         and displays it to the user. If the user confirms the close action, the event is accepted and the
         window is closed. Otherwise, the event is ignored and the window remains open.
+
+        Args:
+            event (QtGui.QCloseEvent): The close event object.
 
         """
         app = QtWidgets.QApplication.instance()
@@ -692,20 +909,42 @@ class MainWindow(QtWidgets.QMainWindow, CustomWindow):
         confirm_window.exec_()
         if confirm_window.result() == QtWidgets.QDialog.Accepted:
             event.accept()
-            # noinspection PyUnresolvedReferences
-            for window in app.topLevelWidgets():
+            for window in app.topLevelWidgets():  # noqa
                 window.close()
         else:
             event.ignore()
 
     @staticmethod
-    def restart_app():
+    def restart_app() -> None:
+        """
+        The method restarts the app.
+
+        """
         os.execl(sys.executable, sys.executable, *sys.argv)
 
 
-class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
-    def __init__(self):
-        super(DatabaseBrowser, self).__init__()
+class DatabaseBrowser(QtWidgets.QWidget, WindowMixin):
+    # noinspection PyUnresolvedReferences
+    """
+    The class creates database browser window and allows to manage database.
+
+    Attributes:
+        parent (QtWdgets.QWidget, optional): The parent widget.
+
+    Interface:
+        - Shows different categories of database in separate views.
+        - Allows to install or reinstall database.
+        - Allows to manage database.
+        - Supports CRUD operations on database as insert, update and delete.
+        - Supports update keys and non keys values.
+        - Supports delete values from joined tables and source tables (from catalog).
+
+    Handling events:
+        - crud_event: The method get tools and ready for CRUD operations to execution, await command.
+
+    """
+    def __init__(self, parent=None) -> None:
+        super(DatabaseBrowser, self).__init__(parent)
         uic.loadUi(GUI_DIR / 'db_browser.ui', self)
 
         self.init_gui()
@@ -714,7 +953,15 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
         self.show_database()
         self.crud_operations()
 
-    def init_gui(self):
+    def init_gui(self) -> None:
+        """
+        The method initializes the database browser GUI.
+
+        Interface initialization includes:
+            - Initial start interface.
+            - Main keys actions binding.
+
+        """
         ###########################
         # Initial start interface #
         ###########################
@@ -746,7 +993,11 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
         #############################
         self.installButton.clicked.connect(self.reinstall_database)
 
-    def show_database(self):
+    def show_database(self) -> None:
+        """
+        The method loads data from database in separate threads and shows it in the views.
+
+        """
         tables = Transformer, Cable, CurrentBreaker, OtherContact
         views = self.transformersView, self.cablesView, self.contactsView, self.resistancesView
 
@@ -762,7 +1013,14 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
             threads.append(table_data_thread)
             table_data_thread.start()
 
-    def reinstall_database(self):
+    def reinstall_database(self) -> None:
+        """
+        The method allows to install or reinstall the database.
+
+        Clear or partially install depending on the installation settings configuration.
+        After operation, the catalog view is updated.
+
+        """
         confirm_window = ConfirmWindow(self, 'RE/INSTALL DATABASE?')
         confirm_window.exec_()
 
@@ -771,7 +1029,15 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
             self.show_database()
             self.main_menu.set_catalog()
 
-    def crud_operations(self):
+    def crud_operations(self) -> None:
+        """
+        The method executes the CRUD operations when crud_event is called.
+
+        Update method supports update keys and non keys values.
+        Delete method supports delete values from joined tables (pivot table)
+        and source tables (from catalog).
+
+        """
         ##############################
         # Insert operations settings #
         ##############################
@@ -789,7 +1055,14 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
         self.sourceButton.clicked.connect(lambda: self.crud_event(self.get_delete_tools, True))
 
     @logging_error
-    def crud_event(self, get_tools, *args, **kwargs) -> None:
+    def crud_event(self, get_tools: namedtuple, *args, **kwargs) -> None:
+        """
+        The method get tools and ready for CRUD operations to execution, await command.
+
+        Args:
+            get_tools(namedtuple): tools for CRUD operations.
+
+        """
         tools = get_tools()
         tools.operation(*args, **kwargs)
 
@@ -804,7 +1077,14 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
 
         self.main_menu.set_catalog()
 
-    def get_insert_tools(self):
+    def get_insert_tools(self) -> namedtuple:
+        """
+        The method returns tools for insert operations.
+
+        Returns:
+            namedtuple: tools for insert operations.
+
+        """
         InsertTuple = namedtuple('InsertTuple', ('table', 'view', 'operation'))
 
         insert_operations = {
@@ -883,7 +1163,14 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
 
         return insert_operations[self.insertWidget.currentWidget().objectName()]
 
-    def get_update_tools(self):
+    def get_update_tools(self) -> namedtuple:
+        """
+        The method returns tools for update operations.
+
+        Returns:
+            namedtuple: tools for update operations.
+
+        """
         UpdateTuple = namedtuple('UpdateTuple', ('table', 'view', 'operation'))
 
         update_operations = {
@@ -1013,7 +1300,14 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
 
         return update_operations[self.updateWidget.currentWidget().objectName()]
 
-    def get_delete_tools(self):
+    def get_delete_tools(self) -> namedtuple:
+        """
+        The method returns tools for delete operations.
+
+        Returns:
+            namedtuple: tools for delete operations.
+
+        """
         DeleteTuple = namedtuple('DeleteTuple', ('table', 'view', 'operation'))
 
         delete_operations = {
@@ -1079,7 +1373,14 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
         return delete_operations[self.deleteWidget.currentWidget().objectName()]
 
     @property
-    def __dict_factory(self):
+    def __dict_factory(self) -> ty.Callable:
+        """
+        The method returns a dictionary factory template lambda function.
+
+        Returns:
+            ty.Callable: dictionary factory template lambda function.
+
+        """
         return lambda x: {k: v for (k, v) in x if v is not None}
 
 
@@ -1087,25 +1388,4 @@ class DatabaseBrowser(QtWidgets.QWidget, CustomWindow):
 # Others functionality #
 ########################
 
-# class ViewerWidget(QtWidgets.QWidget):
-#     """Initializes a ViewerWidget object.
-#
-#     ViewerWidget is a QWidget that displays a matplotlib figure in a QGraphicsView widget.
-#     Also allows saving the figure as any graphical format or saving part of the figure as an image.
-#
-#     Args:
-#         title (str): The title of the viewer widget.
-#
-#     """
-#
-#     def __init__(self, title: str = 'Viewer Window') -> None:
-#         super(ViewerWidget, self).__init__()
-#         # self._figure definition before loadUi is necessarily!
-#         uic.loadUi(GUI_DIR / 'viewer.ui', self)
-#         self.setWindowTitle(title)
-#
-#         self.allButton.setToolTip('Save whole page')
-#         self.allButton.clicked.connect(self.save_model)
-#
-#         self.partButton.setToolTip('Save part of page')
-#         self.partButton.clicked.connect(self.save_fragment)
+pass

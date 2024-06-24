@@ -1496,7 +1496,7 @@ border-radius: 5px;</string>
          </widget>
         </item>
         <item>
-         <widget class="QPlainTextEditLogger" name="logsOutput">
+         <widget class="CustomTextEditLogger" name="logsOutput">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
@@ -1539,7 +1539,7 @@ border-radius: 20px
    <header>shortcircuitcalc.gui.windows</header>
   </customwidget>
   <customwidget>
-   <class>QPlainTextEditLogger</class>
+   <class>CustomTextEditLogger</class>
    <extends>QPlainTextEdit</extends>
    <header>shortcircuitcalc.gui.windows</header>
   </customwidget>

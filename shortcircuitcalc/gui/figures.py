@@ -1,15 +1,19 @@
 # -*- coding: utf-8 -*-
 """
-Module contains classes for drawing matplotlib figures in the GUI PyQt5.
+The module contains classes for drawing matplotlib figures in the GUI PyQt5.
 
-For correctly working cairosvg first install and
-add in PATH environment bin directory variables:
+Requirements for correctly working 'cairosvg' module (for sample requirements for Windows OS 64 bit):
     - gtk3-runtime-3.24.31-2022-01-04-ts-win64.exe;
     - uniconvertor-2.0rc4-win64_headless.msi
+
+Classes:
+    - ResultsFigure: Class for drawing results figure in the GUI.
+    - CatalogFigure: Class for drawing catalog figure in the GUI.
 
 """
 
 
+from __future__ import annotations
 import typing as ty
 from io import BytesIO
 from collections import namedtuple
@@ -49,73 +53,17 @@ logger = logging.getLogger(__name__)
 BaseElem = ty.TypeVar('BaseElem', bound=BaseElement)
 
 
-class Visualizer:
-    """Class returns an object path for drawing an element in the GUI."""
-    __PHASES_LIST = (1, 3)
-
-    def __init__(self, element: BaseElem, phases_default: int):
-        self._element = element
-        self._phases_default = phases_default
-        self._graphs = {
-
-            (T, 3, 'У/Ун-0'): GRAPHS_DIR / 'T_star_three.svg',
-            (T, 1, 'У/Ун-0'): GRAPHS_DIR / 'T_star_one.svg',
-            (T, 3, 'Д/Ун-11'): GRAPHS_DIR / 'T_triangle_three.svg',
-            (T, 1, 'Д/Ун-11'): GRAPHS_DIR / 'T_triangle_one.svg',
-
-            (Q, 3): GRAPHS_DIR / 'Q_three.svg',
-            (Q, 1): GRAPHS_DIR / 'Q_one.svg',
-            (QF, 3): GRAPHS_DIR / 'QF_three.svg',
-            (QF, 1): GRAPHS_DIR / 'QF_one.svg',
-            (QS, 3): GRAPHS_DIR / 'QS_three.svg',
-            (QS, 1): GRAPHS_DIR / 'QS_one.svg',
-
-            (W, 3): GRAPHS_DIR / 'W_three.svg',
-            (W, 1): GRAPHS_DIR / 'W_one.svg',
-
-            (R, 3): GRAPHS_DIR / 'R_three.svg',
-            (R, 1): GRAPHS_DIR / 'R_one.svg',
-            (Line, 3): GRAPHS_DIR / 'Line_three.svg',
-            (Line, 1): GRAPHS_DIR / 'Line_one.svg',
-            (Arc, 3): GRAPHS_DIR / 'Arc_three.svg',
-            (Arc, 1): GRAPHS_DIR / 'Arc_one.svg',
-
-        }
-
-    @singledispatchmethod
-    def _display_element(self, element: BaseElem) -> None:
-        logger.error(f'Unknown type of element: {type(element)}')
-        raise NotImplementedError
-
-    @_display_element.register(T)
-    def _(self, element: BaseElem) -> str:
-        return self._graphs[element.__class__, self._phases_default, self._element.vector_group]
-
-    @_display_element.register(Q)
-    @_display_element.register(W)
-    @_display_element.register(R)
-    def _(self, element: BaseElem) -> str:
-        return self._graphs[element.__class__, self._phases_default]
-
-    @property
-    def create_invert(self):
-        """Create an inverted object path for drawing an element in the GUI."""
-        if self._phases_default == Visualizer.__PHASES_LIST[1]:
-            __phases = Visualizer.__PHASES_LIST[0]
-        else:
-            __phases = Visualizer.__PHASES_LIST[1]
-        return Visualizer(self._element, __phases)
-
-    def __repr__(self):
-        return f'{self._display_element(self._element)}'
-
-
 class ResultsFigure:
-    """Service class for drawing results figure."""
+    """
+    The class for drawing results figure in the GUI.
 
+    Attributes:
+        schem (ChainsSystem): electrical system.
+
+    """
     LOGS_NAME = 'Results presentation'
 
-    def __init__(self, schem: ChainsSystem):
+    def __init__(self, schem: ChainsSystem) -> None:
         self.schem = schem
 
         self.nrows = max(map(len, self.schem))
@@ -136,19 +84,30 @@ class ResultsFigure:
         logger.info('Results system successfully created %s' % self.schem)
 
     def __draw_figure(self) -> None:
-        """Draw all elements in the figure."""
+        """
+        Draw all elements in the figure.
+
+        """
         for idx, row in enumerate(self.schem):
             for col in range(len(row)):
                 self.__draw_cells(idx, row, col)
 
     def __draw_cells(self, idx: int, row: ElemChain, col: int) -> None:
-        """Contain one cell configuration.
+        """
+        Contain one cell configuration.
 
-        Draw one cell in the figure, including:
-        - element label and project name if exists,
-        - element graph,
-        - element resists table,
-        - element short circuit current values.
+        Draw one cell in the figure.
+
+        Args:
+            idx (int): index of row in the figure.
+            row (ElemChain): row of the figure.
+            col (int): index of column in the figure.
+
+        Draw:
+            - element label and project name if exists,
+            - element graph,
+            - element resists table,
+            - element short circuit current values.
 
         """
         iter_values = None
@@ -214,6 +173,16 @@ class ResultsFigure:
                 )
 
         def __get_resistance_df(vals: ty.Sequence) -> pd.DataFrame:
+            """
+            Service method, that returns resistance dataframe.
+
+            Args:
+                vals (ty.Sequence): The chain of elements.
+
+            Returns:
+                pd.DataFrame: resistance dataframe.
+
+            """
             return pd.DataFrame.from_dict({
                 'r1': [vals[col].resistance_r1],
                 'x1': [vals[col].reactance_x1],
@@ -226,8 +195,7 @@ class ResultsFigure:
         else:
             resistance_df = __get_resistance_df(iter_values)
 
-        # noinspection PyUnusedLocal
-        resistance_table = self.ax[col][idx].table(
+        resistance_table = self.ax[col][idx].table(  # noqa
             cellText=resistance_df.values, colLabels=resistance_df.columns,
             loc='center', cellLoc='center', bbox=[0.2, 0.5, 0.8, 0.5],
             colColours=('#9999FF',) * len(resistance_df.columns),
@@ -236,16 +204,24 @@ class ResultsFigure:
         background = self.fig.canvas.copy_from_bbox(self.ax[col][idx].bbox)
 
         def __get_images(vals: ty.Sequence) -> ty.List[Image.Image]:
-            """Return images list with one/three phases element"""
+            """
+            Service method, that returns images list with one/three phases element.
+
+            Args:
+                vals (Sequence): The chain of elements.
+            Returns:
+                List[Image.Image]: images list with one/three phases element graphs.
+
+            """
             return [
                 Image.open(BytesIO(
                     cairosvg.svg2png(url=str(
-                        Visualizer(vals[col], config_manager('SYSTEM_PHASES'))
+                        _Visualizer(vals[col], config_manager('SYSTEM_PHASES'))
                     )))
                 ),
                 Image.open(BytesIO(
                     cairosvg.svg2png(url=str(
-                        Visualizer(vals[col], config_manager('SYSTEM_PHASES')).create_invert
+                        _Visualizer(vals[col], config_manager('SYSTEM_PHASES')).create_invert
                     )))
                 )
             ]
@@ -258,7 +234,15 @@ class ResultsFigure:
         axx.imshow(images[0])
 
         def __get_short_circuit_df(vals: ty.Sequence) -> ty.List[pd.DataFrame]:
-            """Return short circuit table with one/three phases element calculations"""
+            """
+            Service method, that returns short circuit table with one/three phases element calculations.
+
+            Args:
+                vals (Sequence): The chain of elements.
+            Returns:
+                List[pd.DataFrame]: short circuit table with one/three phases element calculations.
+
+            """
             return [
                 pd.DataFrame.from_dict({
                     'I_k(3)': [ElemChain(vals[:col + 1]).three_phase_current_short_circuit],
@@ -295,12 +279,19 @@ class ResultsFigure:
             check, self.ax[col, idx], rax, images, short_circuit_df, short_circuit_table, background
         )
 
-    # noinspection PyUnusedLocal
-    def __callback(self, label, i, j) -> None:
-        """Check buttons callback.
+    def __callback(self, label, i, j) -> None:  # noqa
+        """
+        Check buttons callback.
 
-        Replace graph / table calculations view.
-        Also realize blitting / fast refreshing figure.
+        Replace graph / table calculations view. Also realize blitting / fast refreshing figure.
+
+        Args:
+            label (str): The check button label.
+            i (int): The column index.
+            j (int): The row index.
+
+        Note:
+            The method realize blitting / fast refreshing figure.
 
         """
         # Replace graph
@@ -327,7 +318,10 @@ class ResultsFigure:
         self.fig.canvas.flush_events()
 
     def __off_axis(self) -> None:
-        """Turn off all axis."""
+        """
+        Service method, that turns off all axis.
+
+        """
         for idx, row in enumerate(self.schem):
             for col in range(self.nrows):
                 self.ax[col][idx].axis('off')
@@ -335,7 +329,20 @@ class ResultsFigure:
     @staticmethod
     def __redraw_table(axe: axes, h_pos: int, v_pos: int, df: ty.List[pd.DataFrame],
                        switch_bool: bool) -> axes.Axes:
+        """
+        Service method, that redraws table.
 
+        Args:
+            axe (Axes): The table axes.
+            h_pos (int): The horizontal position.
+            v_pos (int): The vertical position.
+            df (List[pd.DataFrame]): The table dataframes.
+            switch_bool (bool): The switch boolean.
+
+        Returns:
+            Axes: The table axes.
+
+        """
         return axe[h_pos][v_pos].table(
             cellText=df[switch_bool].values, colLabels=df[switch_bool].columns,
             loc='center', cellLoc='center', bbox=[0.4, 0, 0.6, 0.5],
@@ -344,16 +351,19 @@ class ResultsFigure:
 
 
 class CatalogFigure:
-    """Service class for drawing catalog figure."""
+    """
+    The class for drawing catalog figure in the GUI.
 
+    """
     LOGS_NAME = 'Catalog presentation'
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.fig = figure.Figure()
         self.grid = gridspec.GridSpec(nrows=1, ncols=9)
         self.table_transparency = 0.7
         self.background_image = image.imread(GUI_DIR / 'resources' / 'images' / 'info_catalog_back.jpg')
         self.dataframes = []
+
         self.__transformers_dataframe()
         self.__cables_dataframe()
         self.__devices_dataframe()
@@ -362,7 +372,10 @@ class CatalogFigure:
         self.__set_background()
 
     def __transformers_dataframe(self) -> None:
-        """Draw transformers dataframe in catalog."""
+        """
+        The method draws transformers dataframe in catalog.
+
+        """
         power_col = PowerNominal.read_table().loc[:, 'power']
         voltage_col = VoltageNominal.read_table().loc[:, 'voltage']
         vector_group_col = Scheme.read_table().loc[:, 'vector_group']
@@ -378,8 +391,11 @@ class CatalogFigure:
             cell_color='#CCCCFF'
         )
 
-    def __cables_dataframe(self):
-        """Draw cables / wires dataframe in catalog."""
+    def __cables_dataframe(self) -> None:
+        """
+        The method draws cables / wires dataframe in catalog.
+
+        """
         mark_col = Mark.read_table().loc[:, 'mark_name']
         multicore_amount_col = Amount.read_table().loc[:, 'multicore_amount']
         range_col = RangeVal.read_table().loc[:, 'cable_range']
@@ -393,8 +409,11 @@ class CatalogFigure:
             cell_color='#FFCCCC'
         )
 
-    def __devices_dataframe(self):
-        """Draw devices dataframe in catalog."""
+    def __devices_dataframe(self) -> None:
+        """
+        The method draws devices dataframe in catalog.
+
+        """
         device_col = Device.read_table().loc[:, 'device_type']
         current_nominal_col = CurrentNominal.read_table().loc[:, 'current_value']
         current_breakers_df = pd.concat(
@@ -409,8 +428,11 @@ class CatalogFigure:
             cell_color='#FFE5CC'
         )
 
-    def __contacts_dataframe(self):
-        """Draw contacts dataframe in catalog."""
+    def __contacts_dataframe(self) -> None:
+        """
+        The method draws contacts dataframe in catalog.
+
+        """
         other_contacts_df = pd.DataFrame(OtherContact.read_table().loc[:, 'contact_type'])
 
         self.__set_dataframe(
@@ -421,8 +443,21 @@ class CatalogFigure:
             cell_color='#E5FFCC'
         )
 
-    def __set_dataframe(self, title, grid, df, col_color, cell_color):
-        """Set dataframe options."""
+    def __set_dataframe(self, title, grid, df, col_color, cell_color) -> None:
+        """
+        The method sets dataframe options.
+
+        Args:
+            title (str): The table title.
+            grid (GridSpec): The table grid.
+            df (pd.DataFrame): The table dataframe.
+            col_color (str): The table column color.
+            cell_color (str): The table cell color.
+
+        Note:
+            Also adds the dataframe to the dataframes list in class memory.
+
+        """
         ax = self.fig.add_subplot(grid)
         ax.axis('off')
         ax.set_title(title).set_bbox(dict(facecolor=col_color, alpha=self.table_transparency))
@@ -435,26 +470,139 @@ class CatalogFigure:
 
         table.auto_set_column_width(col=list(range(len(df.columns))))
 
-        # noinspection PyProtectedMember
-        for cell in table._cells:
-            # noinspection PyProtectedMember
-            table._cells[cell].set_alpha(self.table_transparency)
+        for cell in table._cells:  # noqa
+            table._cells[cell].set_alpha(self.table_transparency) # noqa
 
         self.dataframes.append(df)
 
-    def __figure_options(self):
-        """Set figure options."""
+    def __figure_options(self) -> None:
+        """
+        The method sets figure options.
+
+        """
         figsize_x = sum(map(lambda x: len(x.columns), self.dataframes)) + 2
         figsize_y = (max(map(lambda x: len(x.index), self.dataframes)) + 1) * 0.4
+
         self.fig.set_size_inches(figsize_x, figsize_y)
         self.fig.patch.set_facecolor('#FFFFCC')
         self.fig.tight_layout()
 
     def __set_background(self):
-        """Set background image in catalog."""
+        """
+        The method sets background image in catalog.
+
+        """
         # create a subplot for the background
         background_ax = self.fig.add_axes([0, 0, 1, 1])
         # set the background subplot behind the others
         background_ax.set_zorder(-1)
         # show the background image
         background_ax.imshow(self.background_image, aspect='auto')
+
+
+class _Visualizer:
+    # noinspection PyUnresolvedReferences
+    """
+    Service class returns an object path for drawing an element in the GUI.
+
+    Attributes:
+        element (BaseElem): element of electrical system.
+        phases_default (int): default count of phases.
+
+    Public methods:
+        - create_invert: Create an inverted object path for drawing an element in the GUI.
+
+    """
+    __PHASES_LIST = (1, 3)
+
+    def __init__(self, element: BaseElem, phases_default: int) -> None:
+        self._element = element
+        self._phases_default = phases_default
+        self._graphs = {
+
+            (T, 3, 'У/Ун-0'): GRAPHS_DIR / 'T_star_three.svg',
+            (T, 1, 'У/Ун-0'): GRAPHS_DIR / 'T_star_one.svg',
+            (T, 3, 'Д/Ун-11'): GRAPHS_DIR / 'T_triangle_three.svg',
+            (T, 1, 'Д/Ун-11'): GRAPHS_DIR / 'T_triangle_one.svg',
+
+            (Q, 3): GRAPHS_DIR / 'Q_three.svg',
+            (Q, 1): GRAPHS_DIR / 'Q_one.svg',
+            (QF, 3): GRAPHS_DIR / 'QF_three.svg',
+            (QF, 1): GRAPHS_DIR / 'QF_one.svg',
+            (QS, 3): GRAPHS_DIR / 'QS_three.svg',
+            (QS, 1): GRAPHS_DIR / 'QS_one.svg',
+
+            (W, 3): GRAPHS_DIR / 'W_three.svg',
+            (W, 1): GRAPHS_DIR / 'W_one.svg',
+
+            (R, 3): GRAPHS_DIR / 'R_three.svg',
+            (R, 1): GRAPHS_DIR / 'R_one.svg',
+            (Line, 3): GRAPHS_DIR / 'Line_three.svg',
+            (Line, 1): GRAPHS_DIR / 'Line_one.svg',
+            (Arc, 3): GRAPHS_DIR / 'Arc_three.svg',
+            (Arc, 1): GRAPHS_DIR / 'Arc_one.svg',
+
+        }
+
+    @singledispatchmethod
+    def _display_element(self, element: BaseElem) -> None:
+        """
+        The method return the graph path for drawing an element in the GUI.
+
+        Args:
+            element (BaseElem): element of electrical system.
+        Raises:
+            NotImplementedError: if unknown type of element.
+
+        """
+        logger.error(f'Unknown type of element: {type(element)}')
+        raise NotImplementedError
+
+    @_display_element.register(T)
+    def _(self, element: BaseElem) -> str:
+        """
+        The method return the graph path for drawing an element in the GUI.
+
+        The method return the graph path for drawing an element in the GUI
+        if element has type transformer (T).
+
+        Args:
+            element (BaseElem): element of electrical system with type T.
+        Returns:
+            str: graph path for drawing a T element in the GUI.
+
+        """
+        return self._graphs[element.__class__, self._phases_default, self._element.vector_group]
+
+    @_display_element.register(Q)
+    @_display_element.register(W)
+    @_display_element.register(R)
+    def _(self, element: BaseElem) -> str:
+        """
+        The method return the graph path for drawing an element in the GUI.
+
+        The method return the graph path for drawing an element in the GUI if element
+        has one type of: contacts (Q), cables/wires (W) or other resistances (R).
+
+        Args:
+            element (BaseElem): element of electrical system with type Q, W or R.
+        Returns:
+            str: graph path for drawing a Q, W or R element in the GUI.
+
+        """
+        return self._graphs[element.__class__, self._phases_default]
+
+    @property
+    def create_invert(self) -> _Visualizer:
+        """
+        Create an inverted object path for drawing an element in the GUI.
+
+        """
+        if self._phases_default == _Visualizer.__PHASES_LIST[1]:
+            __phases = _Visualizer.__PHASES_LIST[0]
+        else:
+            __phases = _Visualizer.__PHASES_LIST[1]
+        return _Visualizer(self._element, __phases)
+
+    def __repr__(self):
+        return f'{self._display_element(self._element)}'

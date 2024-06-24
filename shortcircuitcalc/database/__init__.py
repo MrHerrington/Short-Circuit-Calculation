@@ -15,3 +15,4 @@ Modules:
 
 from shortcircuitcalc.database.models import *
 from shortcircuitcalc.database.install import *
+from shortcircuitcalc.database.mixins import BT
