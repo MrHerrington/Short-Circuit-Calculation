@@ -29,17 +29,16 @@ import cairosvg
 from PIL import Image
 
 from shortcircuitcalc.tools import (
-    BaseElement,
-    T, Q, QF, QS, W, R, Line, Arc,
     ChainsSystem, ElemChain,
-
     config_manager
 )
 from shortcircuitcalc.database import (
     PowerNominal, VoltageNominal, Scheme,
     Mark, Amount, RangeVal,
     Device, CurrentNominal,
-    OtherContact
+    OtherContact,
+
+    BaseElement, T, Q, QF, QS, W, R, Line, Arc,
 )
 from shortcircuitcalc.config import GRAPHS_DIR, GUI_DIR
 

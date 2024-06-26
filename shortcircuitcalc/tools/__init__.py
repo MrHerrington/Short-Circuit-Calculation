@@ -2,8 +2,7 @@
 """
 This package provides tools for interacting with catalog databases and utility
 tools for the main functionality of the program. Also, the package contains
-classes for various electrical elements such as transformers, cables and
-contacts, for programmatically inputting data related to these categories.
+classes for electrical system calculations.
 
 Modules:
     - tools: Module provides tools for the main functionality of the program.
