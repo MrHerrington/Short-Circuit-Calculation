@@ -99,7 +99,7 @@ class CustomGraphicView(QtWidgets.QGraphicsView):
     """
 
     def __init__(self,
-                 parent: QtWidgets = None,
+                 parent=None,
                  figure: matplotlib.figure.Figure = None,
                  title: str = 'Viewer') -> None:
         super(CustomGraphicView, self).__init__(parent)

@@ -116,6 +116,7 @@ class BaseElement(ABC):
 
         Args:
             attr_name (str): The attribute name to query.
+
         Returns:
             Decimal: The scalar value from the query.
 
@@ -125,6 +126,7 @@ class BaseElement(ABC):
 
 @dataclass
 class T(BaseElement):
+    # noinspection PyTypeChecker
     """
     The dataclass describes transformer.
 
@@ -143,8 +145,11 @@ class T(BaseElement):
         - reactance_x0: The method searches in the database reactance X0.
 
     Samples string representation:
-        - print(T(63, 'У/Ун-0')) -> T 63/0.4 (У/Ун-0)
-        - print(T('160', 'Д/Ун-11')) -> T 160/0.4 (Д/Ун-11)
+        >>> print(T(63, 'У/Ун-0'))
+        T 63/0.4 (У/Ун-0)
+        >>>
+        >>> print(T('160', 'Д/Ун-11'))
+        T 160/0.4 (Д/Ун-11)
 
     """
     __slots__ = ('_power', '_vector_group')
@@ -158,6 +163,7 @@ class T(BaseElement):
 
         Args:
             attr_name (str): The attribute name to query.
+
         Returns:
             Decimal: The scalar value from the query.
 
@@ -187,6 +193,7 @@ class T(BaseElement):
 
 @dataclass
 class W(BaseElement):
+    # noinspection PyTypeChecker
     """
     The dataclass describes cables and wires.
 
@@ -206,8 +213,11 @@ class W(BaseElement):
         - reactance_x0: The method searches in the database reactance X0.
 
     Samples string representation:
-        - print(W('ВВГ', 3, 2.5, 50)) -> ВВГ 3x2.5 50м
-        - print(W('СИП', '3', '120', '100')) -> СИП 3x120 100м
+        >>> print(W('ВВГ', 3, 2.5, 50))
+        ВВГ 3x2.5 50м
+        >>>
+        >>> print(W('СИП', '3', '120', '100'))
+        СИП 3x120 100м
 
     """
     __slots__ = ('_mark', '_amount', '_range_val', '_length')
@@ -223,6 +233,7 @@ class W(BaseElement):
 
         Args:
             attr_name (str): The attribute name to query.
+
         Returns:
             Decimal: The scalar value from the query.
 
@@ -256,6 +267,7 @@ class W(BaseElement):
 
 @dataclass
 class Q(BaseElement):
+    # noinspection PyTypeChecker
     """
     The dataclass describes current breaker devices if default device type is not defined.
 
@@ -273,8 +285,11 @@ class Q(BaseElement):
         - reactance_x0: The method searches in the database reactance X0.
 
     Samples string representation:
-        - print(Q(25, 'Устройство')) -> Q 25A
-        - print(Q('63', 'Контактор')) -> Q 63A
+        >>> print(Q(25, 'Устройство'))
+        Q 25A
+        >>>
+        >>> print(Q('63', 'Контактор'))
+        Q 63A
 
     """
     __slots__ = ('_device_type', '_current_value')
@@ -287,6 +302,7 @@ class Q(BaseElement):
 
         Args:
             attr_name (str): The attribute name to query.
+
         Returns:
             Decimal: The scalar value from the query.
 
@@ -313,6 +329,7 @@ class Q(BaseElement):
 
 @dataclass
 class QF(Q):
+    # noinspection PyTypeChecker
     """
     The dataclass describes current breaker devices has default device type 'Автомат'.
 
@@ -326,11 +343,13 @@ class QF(Q):
         - reactance_x0: The method searches in the database reactance X0.
 
     Sample string representation:
-        - print(QF(25)) -> QF 25A
-        - print(QF('63')) -> QF 63A
+        >>> print(QF(25))
+        QF 25A
+        >>>
+        >>> print(QF('63'))
+        QF 63A
 
     """
-
     def __post_init__(self):
         self.device_type = 'Автомат'
 
@@ -340,6 +359,7 @@ class QF(Q):
 
 @dataclass
 class QS(Q):
+    # noinspection PyTypeChecker
     """
     The dataclass describes current breaker devices has default device type 'Рубильник'.
 
@@ -353,11 +373,13 @@ class QS(Q):
         - reactance_x0: The method searches in the database reactance X0.
 
     Sample string representation:
-        - print(QS(25)) -> QS 25A
-        - print(QS('63')) -> QS 63A
+        >>> print(QS(25))
+        QS 25A
+        >>>
+        >>> print(QS('63'))
+        QS 63A
 
     """
-
     def __post_init__(self):
         self.device_type = 'Рубильник'
 
@@ -380,13 +402,24 @@ class R(BaseElement):
         - reactance_x0: The method searches in the database reactance X0.
 
     Sample string representation:
-        - print(R('Клеммник')) -> R
+        >>> print(R('Клеммник'))
+        R
 
     """
     __slots__ = '_contact_type'
     contact_type: str = field(default=Validator())
 
     def _sql_query(self, attr_name) -> Decimal:
+        """
+        Returns the resistance value from the database.
+
+        Args:
+            attr_name (str): The attribute name to query.
+
+        Returns:
+            Decimal: The scalar value from the query.
+
+        """
         with session_scope() as session:
             return session.execute(
                 sa.select(
@@ -412,10 +445,10 @@ class Line(R):
         - reactance_x0: The method searches in the database reactance X0.
 
     Sample string representation:
-        - print(Line()) -> РУ
+        >>> print(Line())
+        РУ
 
     """
-
     def __post_init__(self):
         self.contact_type = 'РУ'
 
@@ -435,10 +468,10 @@ class Arc(R):
         - reactance_x0: The method searches in the database reactance X0.
 
     Sample string representation:
-        - print(Arc()) -> Дуга
+        >>> print(Arc())
+        Дуга
 
     """
-
     def __post_init__(self):
         self.contact_type = 'Дуга'
 

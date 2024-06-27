@@ -44,10 +44,6 @@ class BaseMixin:
     The class extends the functionality of the declarative base class 'Base'.
     This class presented mixin for single source table ORM object.
 
-    Main service methods:
-        - __tablename__: The method automatically generates a table name.
-        - id: The method generates primary keys.
-
     CRUD methods:
         - create_table: The method creates the table.
         - read_table: The method reads the table.
@@ -57,18 +53,13 @@ class BaseMixin:
         - delete_table: The method deletes values from chosen table.
         - drop_table: The method drops the table.
 
-    Useful public methods:
+    Service methods:
         - reset_id: The method resets id order in any table if DB is MySQL.
         - get_all_keys: The method generates all columns massive for the table.
         - get_primary_key: The method generates primary key column for the table.
         - get_foreign_keys: The method generates foreign keys columns massive for the table.
         - get_non_keys: The method generates non-key columns massive for the table.
         - get_class_from_tablename: The method returns table ORM class from table name.
-
-    Additional service methods:
-        - __camel_to_snake: The method converts the tablename register.
-        - __csv_to_list_of_dicts: The method converts CSV-file datas into list of the dictionaries.
-        - __convert_types: The method converts val type.
 
     """
     __new_name: str = None
@@ -125,15 +116,21 @@ class BaseMixin:
 
     @classmethod
     def read_table(cls, filtrate: ty.Optional[str] = None, limit: ty.Optional[int] = None) -> pd.DataFrame:
+        # noinspection PyUnresolvedReferences
         """
         The method reads the table.
 
         Args:
             filtrate (Optional[str]): Defaults to None. Accepts the filtering condition.
             limit (Optional[int]): Default shows all results, otherwise shows the specified number of results.
+
         Filtrate query sample:
-            PowerNominal.read_table(filtrate='power <= 63') or
-            VoltageNominal.read_table(filtrate="voltage = Decimal('0.4')")
+            >>> PowerNominal.read_table(filtrate='power <= 63')
+               id power
+            0   1    25
+            1   2    40
+            2   3    63
+
         Returns:
             pd.DataFrame: Object with query results
 
@@ -172,6 +169,7 @@ class BaseMixin:
         Args:
             dataframe (Optional[pd.DataFrame]): Defaults to None. Accepts the Pandas dataframe.
             show_title (bool): Defaults to False. Accepts the title of the table.
+
         Returns:
             figure.Figure: Matplotlib figure object.
 
@@ -221,6 +219,7 @@ class BaseMixin:
     @classmethod
     def insert_table(cls, data: ty.Optional[ty.List[dict]] = None,
                      from_csv: ty.Union[str, pathlib.WindowsPath] = None) -> None:
+        # noinspection PyUnresolvedReferences
         """
         The method inserts values in chosen table.
 
@@ -231,11 +230,15 @@ class BaseMixin:
             data (List[dict]): A list with dictionary(es) of values. Defaults by None, if from_csv param is True.
             from_csv (Union[str, pathlib.WindowsPath]): Path to the CSV-file.
 
-        Sample:
-            PowerNominal.insert_table([
-                {'id': 1, 'power': 25}, {'id':9, 'power': 1000}
-            ]) or
-            PowerNominal.insert_table(DATA_DIR/'power')
+        Samples:
+            >>> PowerNominal.insert_table(data=[
+            >>>     {'id': 1, 'power': 25},
+            >>>     {'id':9, 'power': 1000}
+            >>> ])
+            >>>
+            >>> PowerNominal.insert_table(
+            >>>     from_csv=DATA_DIR/'transformer_catalog'/'power_nominals'
+            >>> )
 
         """
         if all((data is None, from_csv is None)):
@@ -251,6 +254,7 @@ class BaseMixin:
     @classmethod
     def update_table(cls, data: ty.Union[ty.List[dict], dict], options: ty.Optional[str] = 'primary_keys',
                      attr: str = None, alias: str = None, criteria: ty.Iterable = None) -> None:
+        # noinspection PyUnresolvedReferences
         """
         The method updates values in chosen table.
 
@@ -262,22 +266,27 @@ class BaseMixin:
             attr (str): Defaults by None, name attribute in filter for 'with_alias' or 'where condition' method.
             alias (str): Defaults by None, name alias for 'with_alias' method.
             criteria (Iterable): Defaults by None, iterable object with values to filtering update query
-            in 'where condition' method.
+                in 'where condition' method.
 
-        Samples:
-            for 'primary_keys' method:
-                PowerNominals.update_table([
-                    {'id': 1, 'power': 25}, {'id':9, 'power': 1000}]
-                )
+        Sample for 'primary_keys' method:
+            >>> PowerNominal.update_table([
+            >>>     {'id': 1, 'power': 25},
+            >>>     {'id':9, 'power': 1000}
+            >>> ])
 
-            for 'with_alias' method:
-                Transformer.update_table({'vol_id': 2, 'power_id': 10}, options='with_alias',
-                                            attr='voltage_id', alias='vol_id')
-            for 'where_conditions' method:
-                Transformer.update_table({'power': 630}, options='where_condition', attr='power', criteria=[250, 400])
+        Sample for 'with_alias' method:
+            >>> Transformer.update_table(
+            >>>     options='with_alias', attr='voltage_id', alias='vol_id',
+            >>>     data={'vol_id': 2, 'power_id': 10}
+            >>> )
+
+        Sample for 'where condition' method:
+            >>> Transformer.update_table(
+            >>>     options='where_condition', attr='power', criteria=[250, 400]
+            >>>     data={'power': 630}  # noqa
+            >>> )
 
         """
-
         def __primary_keys():
             with session_scope() as session:
                 session.execute(sa.update(cls), data)
@@ -303,6 +312,7 @@ class BaseMixin:
 
     @classmethod
     def delete_table(cls, filtrate: ty.Optional[str] = None) -> None:
+        # noinspection PyUnresolvedReferences
         """
         The method deletes values from chosen table.
 
@@ -310,7 +320,7 @@ class BaseMixin:
             filtrate (Optional[str]): Defaults to None. Accepts the filtering condition.
 
         Sample:
-            Transformer.delete_table('id > 20')
+            >>> Transformer.delete_table('id > 20')
 
         """
         with session_scope() as session:
@@ -319,18 +329,21 @@ class BaseMixin:
 
     @classmethod
     def drop_table(cls, confirm: ty.Union[ty.Callable, str, None] = None, forced: bool = False) -> None:
+        # noinspection PyUnresolvedReferences
         """
         The method drops the table.
 
         Args:
             confirm (Union[Callable, str], optional): Accepts confirmation of table deletion.
             forced (bool): Force drop table bypassing foreign key constraint.
+
         Note:
              To drop table, enter the name of the table in the form of 'cls.__tablename__'
              or in the format of a string.
+
         Samples:
-            Transformer.drop_table('transformer')
-            Transformer.drop_table(cls.__tablename__)
+            >>> Transformer.drop_table('transformer')
+            >>> Transformer.drop_table(cls.__tablename__)
 
         """
         try:
@@ -405,6 +418,7 @@ class BaseMixin:
 
         Args:
             as_str (bool, optional): Defaults to True. Accepts name string format for columns.
+
         Returns:
             Union[tuple, Tuple[str, sa.orm.attributes.InstrumentedAttribute]]:
             Returns the columns as names strings or as ORM objects.
@@ -425,9 +439,10 @@ class BaseMixin:
 
         Args:
             as_str (bool, optional): Defaults to True. Accepts name string format for columns.
+
         Returns:
             Union[str, sa.orm.InstrumentedAttribute]: Returns the primary key column
-            as name string or as ORM object.
+                as name string or as ORM object.
 
         """
         primary_key = next(key.name for key in inspect(cls).primary_key)
@@ -449,10 +464,10 @@ class BaseMixin:
         Args:
             as_str (bool, optional): Defaults to True. Accepts name string format for columns.
             on_side (bool, optional): Defaults to False. Accept return foreign key from bind table.
+
         Returns:
-            Union[str, tuple, sa.orm.InstrumentedAttribute,
-                  ty.Tuple[str, sa.orm.InstrumentedAttribute]]: Returns the foreign keys columns
-            as name strings or as ORM objects.
+            Union[str, tuple, sa.orm.InstrumentedAttribute, ty.Tuple[str, sa.orm.InstrumentedAttribute]]:
+                Returns the foreign keys columns as name strings or as ORM objects.
 
         """
         foreign_keys = None
@@ -498,9 +513,10 @@ class BaseMixin:
         Args:
             as_str (bool, optional): Defaults to True. Accepts name string format for columns.
             allow_foreign (bool, optional): Defaults to False. Accept include foreign keys in result.
+
         Returns:
-            Union[tuple, Union[str, sa.orm.InstrumentedAttribute]]:
-            Returns the not keys columns as name strings or as ORM objects (and foreign keys if allowed).
+            Union[tuple, Union[str, sa.orm.InstrumentedAttribute]]: Returns the not keys
+                columns as name strings or as ORM objects (and foreign keys if allowed).
 
         """
         if allow_foreign:
@@ -527,6 +543,7 @@ class BaseMixin:
 
         Args:
             tablename (str): Accept table name as string.
+
         Returns:
             Base.metadata: Returns table ORM class.
 
@@ -545,6 +562,7 @@ class BaseMixin:
 
         Args:
             name (str): Default table name.
+
         Returns:
             str: Return new table name.
 
@@ -562,6 +580,7 @@ class BaseMixin:
 
         Args:
             path: Union[str, pathlib.WindowsPath]: Path to the CSV-file.
+
         Returns:
             List[dict]: CSV-file datas into list of the dictionaries.
 
@@ -577,6 +596,7 @@ class BaseMixin:
 
         Args:
             val (str): Value in string format from CSV file
+
         Returns:
             Union[int, float, str]: Value with new type.
 
@@ -606,7 +626,6 @@ class JoinedMixin:
 
     Service methods:
         - def reset_id(): The method extends 'reset_id' method from class 'BaseMixin'.
-        - def __get_join_stmt(): The method returns joined table statement.
 
     """
     @classmethod
@@ -618,6 +637,7 @@ class JoinedMixin:
 
         Returns:
             pd.DataFrame: Joined table as pandas DataFrame.
+
         Note:
             Further on the project, the joined table is a summary table of several source
             tables and the object of their association with additional information.
@@ -648,6 +668,7 @@ class JoinedMixin:
 
     @classmethod
     def insert_joined_table(cls: BT, data: ty.List[dict]) -> None:
+        # noinspection PyUnresolvedReferences
         """
         The method inserts new string into joined table.
 
@@ -657,28 +678,29 @@ class JoinedMixin:
 
         Args:
             data (List[dict]): List of dictionaries with pairs "column name - value".
+
         Note:
             For correct insert query must contain all not empty fields of joined table row.
             List type need for package insert method.
+
         Example:
-            Transformer.insert_joined_table(
-                [
-                    {
-                        'power': 6300,
-                        'voltage': 0.4,
-                        'vector_group': 'У/Ун-0',
-                        'power_short_circuit': 0.11,
-                        'voltage_short_circuit': 0.22,
-                        'resistance_r1': 0.333,
-                        'reactance_x1': 0.444,
-                        'resistance_r0': 0.555,
-                        'reactance_x0': 0.777
-                    }
-                ]
-            )
+            >>> Transformer.insert_joined_table(
+            >>>     [
+            >>>         {
+            >>>             'power': 6300,
+            >>>             'voltage': 0.4,
+            >>>             'vector_group': 'У/Ун-0',
+            >>>             'power_short_circuit': 0.11,
+            >>>             'voltage_short_circuit': 0.22,
+            >>>             'resistance_r1': 0.333,
+            >>>             'reactance_x1': 0.444,
+            >>>             'resistance_r0': 0.555,
+            >>>             'reactance_x0': 0.777
+            >>>         }
+            >>>     ]
+            >>>  )
 
         """
-
         def __temp_insert(tab: BT, attr: str) -> None:
             """
             The method insert new string into source table.
@@ -733,6 +755,7 @@ class JoinedMixin:
                             new_source_data: dict = None,
                             target_row_data: dict = None
                             ) -> None:
+        # noinspection PyUnresolvedReferences
         """
         The method updates rows into joined table (and source if necessary).
 
@@ -740,29 +763,31 @@ class JoinedMixin:
             old_source_data (dict): Existing source attribute pairs "column name - value".
             new_source_data (dict): New source attribute pairs "column name - value".
             target_row_data (dict): New joined table attribute pairs "column name - value".
+
         Note:
             First insert target row data into joined table.
             Then, if necessary, updated source rows.
+
         Example:
-            Transformer.update_joined_table(
-                old_source_data={
-                    'voltage': 0.4,
-                    'power': 100,
-                    'vector_group': 'У/Ун-0'
-                }, \n
-                new_source_data={
-                    'vector_group': 'У/Z-0',
-                    'power': 6300
-                }, \n
-                target_row_data={
-                    'power_short_circuit': 0.11,
-                    'voltage_short_circuit': 0.22,
-                    'resistance_r1': 0.333,
-                    'reactance_x1': 0.444,
-                    'resistance_r0': 0.555,
-                    'reactance_x0': 0.777
-                }
-            )
+            >>> Transformer.update_joined_table(
+            >>>     old_source_data={
+            >>>         'voltage': 0.4,
+            >>>         'power': 100,
+            >>>         'vector_group': 'У/Ун-0'
+            >>>     },
+            >>>     new_source_data={
+            >>>         'vector_group': 'У/Z-0',
+            >>>         'power': 6300
+            >>>     },
+            >>>     target_row_data={
+            >>>         'power_short_circuit': 0.11,
+            >>>         'voltage_short_circuit': 0.22,
+            >>>         'resistance_r1': 0.333,
+            >>>         'reactance_x1': 0.444,
+            >>>         'resistance_r0': 0.555,
+            >>>         'reactance_x0': 0.777
+            >>>     }
+            >>> )
 
         """
         old_source_dict = None
@@ -876,23 +901,26 @@ class JoinedMixin:
                             source_data: dict = None,
                             from_source: bool = False
                             ) -> None:
+        # noinspection PyUnresolvedReferences
         """
         The method deletes rows into joined table (and source if necessary).
 
         Args:
             source_data (dict): Existing source attribute pairs "column name - value".
             from_source (bool): If True, deletes rows from source table, otherwise from joined table.
+
         Note:
             Default delete single rows from joined table.
+
         Example:
-            Transformer.delete_joined_table(
-                source_data={
-                    'voltage': 0.4,
-                    'vector_group': 'У/Ун-0',
-                    'power': 100
-                }, \n
-                from_source=True
-            )
+            >>> Transformer.delete_joined_table(
+            >>>     source_data={
+            >>>         'voltage': 0.4,
+            >>>         'vector_group': 'У/Ун-0',
+            >>>         'power': 100
+            >>>     },
+            >>>     from_source=True
+            >>> )
 
         """
         source_dict = None
@@ -988,18 +1016,19 @@ class JoinedMixin:
 
     @classmethod
     def __get_join_stmt(cls: BT) -> sa.sql.Join:
+        # noinspection PyUnresolvedReferences
         """
         The method returns joined table statement.
 
         Returns:
             sa.sql.Join: Joined table statement.
-        Example:
-            print(Transformer.get_join_stmt()) ->
 
-            'transformer
+        Example:
+            >>> print(Transformer.get_join_stmt())
+            transformer
                 JOIN power_nominal ON power_nominal.id = transformer.power_id
                 JOIN voltage_nominal ON voltage_nominal.id = transformer.voltage_id
-                JOIN scheme ON scheme.id = transformer.vector_group_id'
+                JOIN scheme ON scheme.id = transformer.vector_group_id
 
         """
         join_stmt = sa.join(cls, cls.SUBTABLES[0])
