@@ -12,4 +12,3 @@ This utility is designed to calculate the values ​​of short circuit currents
 ![Static Badge](https://img.shields.io/badge/PyQt5-green?style=for-the-badge)
 ![Static Badge](https://img.shields.io/badge/Designer-white?style=for-the-badge&logo=Qt)
 ![Static Badge](https://img.shields.io/badge/sphinx-%234682B4?style=for-the-badge&logo=sphinx&logoColor=white&labelColor=%234682B4)
-![Static Badge](https://img.shields.io/badge/jax-white?style=for-the-badge&label=Math&labelColor=%23228B22)
