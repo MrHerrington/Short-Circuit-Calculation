@@ -7,14 +7,15 @@ Welcome to ShortCircuitCalc's documentation!
 ============================================
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
    :caption: Contents:
 
-   shortcircuitcalc
+   rst_files/modules
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search`
+
+.. * :ref:`search`

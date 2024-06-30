@@ -126,7 +126,6 @@ class BaseElement(ABC):
 
 @dataclass
 class T(BaseElement):
-    # noinspection PyTypeChecker
     """
     The dataclass describes transformer.
 
@@ -145,10 +144,13 @@ class T(BaseElement):
         - reactance_x0: The method searches in the database reactance X0.
 
     Samples string representation:
-        >>> print(T(63, 'У/Ун-0'))
+
+    .. code-block:: python
+
+        >> print(T(63, 'У/Ун-0'))
         T 63/0.4 (У/Ун-0)
-        >>>
-        >>> print(T('160', 'Д/Ун-11'))
+        >>
+        >> print(T('160', 'Д/Ун-11'))
         T 160/0.4 (Д/Ун-11)
 
     """
@@ -193,7 +195,6 @@ class T(BaseElement):
 
 @dataclass
 class W(BaseElement):
-    # noinspection PyTypeChecker
     """
     The dataclass describes cables and wires.
 
@@ -213,10 +214,13 @@ class W(BaseElement):
         - reactance_x0: The method searches in the database reactance X0.
 
     Samples string representation:
-        >>> print(W('ВВГ', 3, 2.5, 50))
+
+    .. code-block:: python
+
+        >> print(W('ВВГ', 3, 2.5, 50))
         ВВГ 3x2.5 50м
-        >>>
-        >>> print(W('СИП', '3', '120', '100'))
+        >>
+        >> print(W('СИП', '3', '120', '100'))
         СИП 3x120 100м
 
     """
@@ -267,7 +271,6 @@ class W(BaseElement):
 
 @dataclass
 class Q(BaseElement):
-    # noinspection PyTypeChecker
     """
     The dataclass describes current breaker devices if default device type is not defined.
 
@@ -285,10 +288,13 @@ class Q(BaseElement):
         - reactance_x0: The method searches in the database reactance X0.
 
     Samples string representation:
-        >>> print(Q(25, 'Устройство'))
+
+    .. code-block:: python
+
+        >> print(Q(25, 'Устройство'))
         Q 25A
-        >>>
-        >>> print(Q('63', 'Контактор'))
+        >>
+        >> print(Q('63', 'Контактор'))
         Q 63A
 
     """
@@ -329,7 +335,6 @@ class Q(BaseElement):
 
 @dataclass
 class QF(Q):
-    # noinspection PyTypeChecker
     """
     The dataclass describes current breaker devices has default device type 'Автомат'.
 
@@ -343,10 +348,13 @@ class QF(Q):
         - reactance_x0: The method searches in the database reactance X0.
 
     Sample string representation:
-        >>> print(QF(25))
+
+    .. code-block:: python
+
+        >> print(QF(25))
         QF 25A
-        >>>
-        >>> print(QF('63'))
+        >>
+        >> print(QF('63'))
         QF 63A
 
     """
@@ -359,7 +367,6 @@ class QF(Q):
 
 @dataclass
 class QS(Q):
-    # noinspection PyTypeChecker
     """
     The dataclass describes current breaker devices has default device type 'Рубильник'.
 
@@ -373,10 +380,13 @@ class QS(Q):
         - reactance_x0: The method searches in the database reactance X0.
 
     Sample string representation:
-        >>> print(QS(25))
+
+    .. code-block:: python
+
+        >> print(QS(25))
         QS 25A
-        >>>
-        >>> print(QS('63'))
+        >>
+        >> print(QS('63'))
         QS 63A
 
     """
@@ -402,7 +412,10 @@ class R(BaseElement):
         - reactance_x0: The method searches in the database reactance X0.
 
     Sample string representation:
-        >>> print(R('Клеммник'))
+
+    .. code-block:: python
+
+        >> print(R('Клеммник'))
         R
 
     """
@@ -445,7 +458,10 @@ class Line(R):
         - reactance_x0: The method searches in the database reactance X0.
 
     Sample string representation:
-        >>> print(Line())
+
+    .. code-block:: python
+
+        >> print(Line())
         РУ
 
     """
@@ -468,7 +484,10 @@ class Arc(R):
         - reactance_x0: The method searches in the database reactance X0.
 
     Sample string representation:
-        >>> print(Arc())
+
+    .. code-block:: python
+
+        >> print(Arc())
         Дуга
 
     """

@@ -57,7 +57,11 @@ from shortcircuitcalc.tools import config_manager, logging_error, ChainsSystem
 from shortcircuitcalc.config import GUI_DIR
 
 
-__all__ = ('MainWindow', 'DatabaseBrowser', 'CustomGraphicView', 'ConfirmWindow')
+__all__ = (
+    'CustomGraphicView', 'CustomPlainTextEdit', 'CustomTextEditLogger', 'ConfirmWindow', 'WindowMixin',
+    'GraphicsDataThread', 'TableDataThread',
+    'MainWindow', 'DatabaseBrowser',
+)
 
 
 # Select the backend used for rendering and GUI integration.

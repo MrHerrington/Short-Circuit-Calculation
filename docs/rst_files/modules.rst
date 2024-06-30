@@ -1,7 +1,9 @@
+:orphan:
+
 shortcircuitcalc
 ================
 
 .. toctree::
    :maxdepth: 4
 
-   shortcircuitcalc
+   shortcircuitcalc.database

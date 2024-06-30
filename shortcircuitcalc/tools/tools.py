@@ -48,14 +48,6 @@ __all__ = (
 logger = logging.getLogger(__name__)
 
 
-class Base(sa.orm.DeclarativeBase):
-    """
-    Child class from DeclarativeBase class sqlalchemy package.
-
-    """
-    pass
-
-
 class Validator:
     # noinspection PyUnresolvedReferences
     """
@@ -69,54 +61,65 @@ class Validator:
         log_info (bool): The flag for logging information.
         prefer_default (bool): The flag for preferring default value.
 
-    Samples:
-        #########################################################
-        #                                                       #
-        #   @dataclass                                          #
-        #   class Person:                                       #
-        #       age: float = field(default=Validator())         #
-        #       ---: ...                                        #
-        #                                                       #
-        #   print(Person('10').age) -> 10.0                     #
-        #   print(type(Person('10').age)) -> <class 'float'>    #
-        #                                                       #
-        #########################################################
+    Sample using dataclass obj True argument with Validator None arg:
 
-        #########################################################
-        #                                                       #
-        #   @dataclass                                          #
-        #   class Person:                                       #
-        #       age: int = field(default=Validator('1'))        #
-        #       ---: ...                                        #
-        #                                                       #
-        #   print(Person().age) -> 1                            #
-        #   print(type(Person().age)) -> <class 'int'>          #
-        #                                                       #
-        #########################################################
+    .. code-block:: python
 
-        #########################################################
-        #                                                       #
-        #   @dataclass                                          #
-        #   class Person:                                       #
-        #       age: Decimal = field(default=Validator('2'))    #
-        #       ---: ...                                        #
-        #                                                       #
-        #   print(Person('').age) -> 2.0                        #
-        #   print(type(Person('').age)) -> <class 'Decimal'>    #
-        #                                                       #
-        #########################################################
+        >> @dataclass
+        >> class Person:
+        >>     age: float = field(default=Validator())
+        >>
+        >>
+        >> p = Person('10').age
+        >> print(p)
+        10.0
+        >> print(p.__class__.__name__)
+        float
 
-        #########################################################################
-        #                                                                       #
-        #   @dataclass                                                          #
-        #   class Person:                                                       #
-        #       age: str = field(default=Validator(3.0, prefer_default=True))   #
-        #       ---: ...                                                        #
-        #                                                                       #
-        #   print(Person(10).age) -> '3'                                        #
-        #   print(type(Person(10).age)) -> <class 'str'>                        #
-        #                                                                       #
-        #########################################################################
+    Sample using dataclass obj None argument with Validator True arg:
+
+    ..code-block:: python
+
+        >> @dataclass
+        >> class Person:
+        >>     age: int = field(default=Validator('1'))
+        >>
+        >>
+        >> p = Person().age
+        >> print(p)
+        1
+        >> print(p.__class__.__name__)
+        int
+
+    Sample using dataclass obj False argument with Validator True arg:
+
+    .. code-block:: python
+
+        >> @dataclass
+        >> class Person:
+        >>     age: Decimal = field(default=Validator('2'))
+        >>
+        >>
+        >> p = Person('').age
+        >> print(p)
+        2.0
+        >> print(p.__class__.__name__)
+        Decimal
+
+    Sample using dataclass obj True argument with Validator True arg and prefer_default param:
+
+    .. code-block:: python
+
+        >> @dataclass
+        >> class Person:
+        >>     age: str = field(default=Validator(3.0, prefer_default=True))
+        >>
+        >>
+        >> p = Person(10).age
+        >> print(p)
+        3
+        >> print(p.__class__.__name__)
+        str
 
     """
     def __init__(self, default=None, log_info: bool = False, prefer_default: bool = False) -> None:
@@ -225,6 +228,47 @@ class TypesManager:
         as_decimal (bool, optional): Whether to convert the value to Decimal type. Defaults to False.
         as_string (bool, optional): Whether to convert the value to string type. Defaults to False.
         quoting (bool, optional): Whether to quote the value. Defaults to False.
+
+    Samples with float / Decimal:
+
+    .. code-block:: python
+
+        >> TypesManager(1.5, as_decimal=True)
+        1.5
+        >> TypesManager(1.5, as_decimal=True, as_string=True)
+        Decimal('1.5')
+
+    Samples with bool / int:
+
+    .. code-block:: python
+
+        >> TypesManager(True, as_decimal=True)
+        1.0
+        >> TypesManager(False, as_string=True, quoting=True)
+        'False'
+        >> tm = TypesManager(1, as_string=True)
+        >> print(tm)
+        1
+        >> type(tm.__class__.__name__)
+        str
+
+    Samples with string:
+
+    .. code-block:: python
+
+        >> TypesManager('1.5', as_decimal=True)
+        1.5
+        >> TypesManager('1.5', as_decimal=True, as_string=True, quoting=True)
+        "Decimal('1.5')"
+
+    Samples with None:
+
+    .. code-block:: python
+
+        >> TypesManager(None, as_string=True, quoting=True)
+        'None'
+        >> TypesManager(None)
+        None
 
     """
     def __new__(cls, value: ty.Any, as_decimal: bool = False, as_string: bool = False, quoting: bool = False):
@@ -397,6 +441,19 @@ def config_manager(param: str, new_val: ty.Any = None) -> ty.Any:
     Note:
         The configuration file is assumed to be in UTF-8 encoding.
 
+    Getting param sample:
+
+    .. code-block:: python
+
+        >> config_manager('SYSTEM_PHASES')
+
+    Setting param samples:
+
+    .. code-block:: python
+
+        >> config_manager('SQLITE_DB_NAME', 'test.db')
+        >> config_manager('ENGINE_ECHO', True)
+
     """
     pattern = re.compile(rf'(?P<name>{param}) = (?P<value>.+)\n')
     config_file = open(CONFIG_DIR, 'r+', encoding='UTF-8')
@@ -449,7 +506,7 @@ def db_access() -> str:
         and constructs the MySQL engine string.
 
         Returns:
-            the MySQL engine string.
+            str: The MySQL engine string.
 
         """
         logger.info('Accessing MySQL database...')
@@ -506,6 +563,7 @@ def db_access() -> str:
         return db_access.engine_string
 
 
+Base = sa.orm.declarative_base()
 engine = sa.create_engine(url=db_access(), echo=config_manager('ENGINE_ECHO'))
 metadata = sa.MetaData()
 Session = sa.orm.sessionmaker(bind=engine, expire_on_commit=False)
@@ -516,10 +574,12 @@ def session_scope(logs: bool = True) -> None:
     """
     Context manager provides a session for executing database operations.
 
-    Yields session: a session object for executing database operations.
+    Func yield:
+        - A session object for executing database operations.
 
     Args:
         logs (bool, optional): Whether to log errors. Defaults to True.
+
     Raises:
         Exception: If an error occurs during the execution of the database operations.
 
@@ -545,6 +605,7 @@ def logging_error(func: ty.Callable) -> ty.Callable:
 
     Args:
         func (ty.Callable): The function to be decorated.
+
     Returns:
         ty.Callable: The decorated function.
 

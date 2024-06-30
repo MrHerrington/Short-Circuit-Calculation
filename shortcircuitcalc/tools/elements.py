@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 class ElemChain(ty.Sequence, ty.Mapping):
-    # noinspection PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences, PyTypeChecker
     """
     The class describes the chain of elements.
 
@@ -42,12 +42,24 @@ class ElemChain(ty.Sequence, ty.Mapping):
         - one_phase_current_short_circuit: The method calculates the one-phase current during a short circuit.
 
     Samples data input as sequence:
-        - ElemChain((QS(63), QF(25), Line()))
-        - ElemChain([QS(63), W('ВВГ', 3, 2.5, 50)])
+
+    .. code-block:: python
+
+        >> ElemChain((QS(63), QF(25), Line()))
+        QS(63) -> QF(25) -> Line()
+        >>
+        >> ElemChain([QS(63), W('ВВГ', 3, 2.5, 50)])
+        QS(63) -> W('ВВГ', 3, 2.5, 50)
 
     Samples data input as mapping:
-        - ElemChain({QS1: QS(63), QF1: QF(25), R1: Line()})
-        - ElemChain({QS1: QS(63), W1: W('ВВГ', 3, 2.5, 50)})
+
+    .. code-block:: python
+
+        >> ElemChain({'QS1': QS(63), 'QF1': QF(25), 'R1': Line()})
+        QS1: QS(63) -> QF1: QF(25) -> R1: Line()
+        >>
+        >> ElemChain({'QS1': QS(63), 'W1': W('ВВГ', 3, 2.5, 50)})
+        QS1: QS(63) -> W1: W('ВВГ', 3, 2.5, 50)
 
     """
     def __init__(self, obj: ty.Union[ty.Sequence, ty.Mapping]) -> None:
@@ -67,6 +79,7 @@ class ElemChain(ty.Sequence, ty.Mapping):
 
         .. math::
             I_{k^{(3)}} = \\frac{U}{\\sqrt{3} * z_{^{(3)}}}
+
         :math:`U` - voltage value,
         :math:`z_{^{(3)}}` - three-phase summary resistance.
 
@@ -89,6 +102,7 @@ class ElemChain(ty.Sequence, ty.Mapping):
 
         .. math::
             I_{k^{(2)}} = \\frac{\\sqrt{3} * I_{k^{(3)}}}{2}
+
         :math:`I_{k^{(3)}}` - three-phase current during a short circuit.
 
         """
@@ -109,6 +123,7 @@ class ElemChain(ty.Sequence, ty.Mapping):
 
         .. math::
             I_{k^{(1)}} = \\frac{\\sqrt{3} * U}{z_{^{(1)}}}
+
         :math:`U` - voltage value,
         :math:`I_{k^{(1)}}` - one-phase current during a short circuit.
 
@@ -130,6 +145,7 @@ class ElemChain(ty.Sequence, ty.Mapping):
 
         .. math::
             z_{^{(3)}} = \\sqrt{r_{1\\sum_{}^{2}} + x_{1\\sum_{}^{2}}}
+
         :math:`r_1` - resistance value resistance_r1,
         :math:`x_1` - reactance value reactance_x1.
 
@@ -140,6 +156,7 @@ class ElemChain(ty.Sequence, ty.Mapping):
 
             Args:
                 obj (Union[Sequence, Mapping]): The chain of elements.
+
             Returns:
                 summary resistance as single Decimal value.
 
@@ -174,6 +191,7 @@ class ElemChain(ty.Sequence, ty.Mapping):
 
         .. math::
             z_{^{(1)}} = \\sqrt{{(2r_{1\\sum_{}} + r_{0\\sum_{}})}^{2} + {(2x_{1\\sum_{}} + x_{0\\sum_{}})}^{2}}
+
         :math:`r_1` - resistance value resistance_r1,
         :math:`r_0` - resistance value resistance_r0,
         :math:`x_1` - reactance value reactance_x1,
@@ -186,6 +204,7 @@ class ElemChain(ty.Sequence, ty.Mapping):
 
             Args:
                 obj (Union[Sequence, Mapping]): The chain of elements.
+
             Returns:
                 summary resistance as single Decimal value.
 
@@ -256,19 +275,26 @@ class ChainsSystem(ty.Iterable):
         obj (Union[Iterable, str]): The system of chains of elements.
 
     Samples:
-        - ChainsSystem([
-            ElemChain([T(160, 'У/Ун-0'), QS(160), QF(160)]),
-            ElemChain([QF(25)])
-          ])
-        - ChainsSystem([
-            ElemChain({'T1': T(160, 'У/Ун-0'), 'QS1': QS(160), 'QF1': QF(160)}),
-            ElemChain([QF(25)])
-          ])
-        - ChainsSystem(
-            "T(160, 'У/Ун-0'), QS(160), QF(160), Line(), QF(25), W('ВВГ', 3, 4, 20), Line(), Arc();"
-            "TCH: T(160, 'У/Ун-0'), QF3: QF(100), R1: Line(), QF2: QF(25), W1: W('ВВГ', 3, 4, 20)"
-          )
 
+    .. code-block:: python
+
+        >> ChainsSystem([
+               ElemChain([T(160, 'У/Ун-0'), QS(160), QF(160)]),
+               ElemChain([QF(25)])
+           ])
+        [ChainsSystem of 2 chains / 4 elements]
+        >>
+        >> ChainsSystem([
+               ElemChain({'T1': T(160, 'У/Ун-0'), 'QS1': QS(160), 'QF1': QF(160)}),
+               ElemChain([QF(25)])
+           ])
+        [ChainsSystem of 2 chains / 4 elements]
+        >>
+        >> ChainsSystem(
+               "T(160, 'У/Ун-0'), QS(160), QF(160), Line(), QF(25), W('ВВГ', 3, 4, 20), Line(), Arc();"
+               "TCH: T(160, 'У/Ун-0'), QF3: QF(100), R1: Line(), QF2: QF(25), W1: W('ВВГ', 3, 4, 20)"
+           )
+        [ChainsSystem of 2 chains / 13 elements]
 
     """
     def __init__(self, obj):

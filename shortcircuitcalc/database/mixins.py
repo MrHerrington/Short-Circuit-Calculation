@@ -63,6 +63,7 @@ class BaseMixin:
 
     """
     __new_name: str = None
+    id = sa.orm.mapped_column(sa.Integer, primary_key=True, autoincrement=True, sort_order=0)
 
     @declared_attr.directive
     @classmethod
@@ -78,21 +79,6 @@ class BaseMixin:
 
         """
         return cls.__camel_to_snake(cls.__name__)
-
-    @declared_attr
-    @classmethod
-    def id(cls) -> sa.orm.Mapped[sa.Integer]:
-        """
-        The method generates primary keys.
-
-        The method automatically generates primary keys with auto increment.
-
-        Returns:
-            The return a column of the primary keys.
-
-        """
-
-        return sa.orm.mapped_column(sa.Integer, primary_key=True, autoincrement=True, sort_order=0)
 
     @classmethod
     def create_table(cls, drop_first: bool = False, forced_drop: bool = False) -> None:
@@ -116,7 +102,6 @@ class BaseMixin:
 
     @classmethod
     def read_table(cls, filtrate: ty.Optional[str] = None, limit: ty.Optional[int] = None) -> pd.DataFrame:
-        # noinspection PyUnresolvedReferences
         """
         The method reads the table.
 
@@ -125,7 +110,10 @@ class BaseMixin:
             limit (Optional[int]): Default shows all results, otherwise shows the specified number of results.
 
         Filtrate query sample:
-            >>> PowerNominal.read_table(filtrate='power <= 63')
+
+        .. code-block:: python
+
+            >> PowerNominal.read_table(filtrate='power <= 63')
                id power
             0   1    25
             1   2    40
@@ -219,7 +207,6 @@ class BaseMixin:
     @classmethod
     def insert_table(cls, data: ty.Optional[ty.List[dict]] = None,
                      from_csv: ty.Union[str, pathlib.WindowsPath] = None) -> None:
-        # noinspection PyUnresolvedReferences
         """
         The method inserts values in chosen table.
 
@@ -231,14 +218,17 @@ class BaseMixin:
             from_csv (Union[str, pathlib.WindowsPath]): Path to the CSV-file.
 
         Samples:
-            >>> PowerNominal.insert_table(data=[
-            >>>     {'id': 1, 'power': 25},
-            >>>     {'id':9, 'power': 1000}
-            >>> ])
-            >>>
-            >>> PowerNominal.insert_table(
-            >>>     from_csv=DATA_DIR/'transformer_catalog'/'power_nominals'
-            >>> )
+
+        .. code-block:: python
+
+            >> PowerNominal.insert_table(data=[
+            >>     {'id': 1, 'power': 25},
+            >>     {'id':9, 'power': 1000}
+            >> ])
+            >>
+            >> PowerNominal.insert_table(
+            >>     from_csv=DATA_DIR/'transformer_catalog'/'power_nominals'
+            >> )
 
         """
         if all((data is None, from_csv is None)):
@@ -254,7 +244,6 @@ class BaseMixin:
     @classmethod
     def update_table(cls, data: ty.Union[ty.List[dict], dict], options: ty.Optional[str] = 'primary_keys',
                      attr: str = None, alias: str = None, criteria: ty.Iterable = None) -> None:
-        # noinspection PyUnresolvedReferences
         """
         The method updates values in chosen table.
 
@@ -269,22 +258,31 @@ class BaseMixin:
                 in 'where condition' method.
 
         Sample for 'primary_keys' method:
-            >>> PowerNominal.update_table([
-            >>>     {'id': 1, 'power': 25},
-            >>>     {'id':9, 'power': 1000}
-            >>> ])
+
+        .. code-block:: python
+
+            >> PowerNominal.update_table([
+            >>     {'id': 1, 'power': 25},
+            >>     {'id':9, 'power': 1000}
+            >> ])
 
         Sample for 'with_alias' method:
-            >>> Transformer.update_table(
-            >>>     options='with_alias', attr='voltage_id', alias='vol_id',
-            >>>     data={'vol_id': 2, 'power_id': 10}
-            >>> )
+
+        .. code-block:: python
+
+            >> Transformer.update_table(
+            >>     options='with_alias', attr='voltage_id', alias='vol_id',
+            >>     data={'vol_id': 2, 'power_id': 10}
+            >> )
 
         Sample for 'where condition' method:
-            >>> Transformer.update_table(
-            >>>     options='where_condition', attr='power', criteria=[250, 400]
-            >>>     data={'power': 630}  # noqa
-            >>> )
+
+        .. code-block:: python
+
+            >> Transformer.update_table(
+            >>     options='where_condition', attr='power', criteria=[250, 400]
+            >>     data={'power': 630}
+            >> )
 
         """
         def __primary_keys():
@@ -312,7 +310,6 @@ class BaseMixin:
 
     @classmethod
     def delete_table(cls, filtrate: ty.Optional[str] = None) -> None:
-        # noinspection PyUnresolvedReferences
         """
         The method deletes values from chosen table.
 
@@ -320,7 +317,10 @@ class BaseMixin:
             filtrate (Optional[str]): Defaults to None. Accepts the filtering condition.
 
         Sample:
-            >>> Transformer.delete_table('id > 20')
+
+        .. code-block:: python
+
+            >> Transformer.delete_table('id > 20')
 
         """
         with session_scope() as session:
@@ -329,7 +329,6 @@ class BaseMixin:
 
     @classmethod
     def drop_table(cls, confirm: ty.Union[ty.Callable, str, None] = None, forced: bool = False) -> None:
-        # noinspection PyUnresolvedReferences
         """
         The method drops the table.
 
@@ -342,8 +341,11 @@ class BaseMixin:
              or in the format of a string.
 
         Samples:
-            >>> Transformer.drop_table('transformer')
-            >>> Transformer.drop_table(cls.__tablename__)
+
+        .. code-block:: python
+
+            >> Transformer.drop_table('transformer')
+            >> Transformer.drop_table(cls.__tablename__)
 
         """
         try:
@@ -442,7 +444,7 @@ class BaseMixin:
 
         Returns:
             Union[str, sa.orm.InstrumentedAttribute]: Returns the primary key column
-                as name string or as ORM object.
+            as name string or as ORM object.
 
         """
         primary_key = next(key.name for key in inspect(cls).primary_key)
@@ -467,7 +469,7 @@ class BaseMixin:
 
         Returns:
             Union[str, tuple, sa.orm.InstrumentedAttribute, ty.Tuple[str, sa.orm.InstrumentedAttribute]]:
-                Returns the foreign keys columns as name strings or as ORM objects.
+            Returns the foreign keys columns as name strings or as ORM objects.
 
         """
         foreign_keys = None
@@ -516,7 +518,7 @@ class BaseMixin:
 
         Returns:
             Union[tuple, Union[str, sa.orm.InstrumentedAttribute]]: Returns the not keys
-                columns as name strings or as ORM objects (and foreign keys if allowed).
+            columns as name strings or as ORM objects (and foreign keys if allowed).
 
         """
         if allow_foreign:
@@ -668,7 +670,6 @@ class JoinedMixin:
 
     @classmethod
     def insert_joined_table(cls: BT, data: ty.List[dict]) -> None:
-        # noinspection PyUnresolvedReferences
         """
         The method inserts new string into joined table.
 
@@ -684,21 +685,24 @@ class JoinedMixin:
             List type need for package insert method.
 
         Example:
-            >>> Transformer.insert_joined_table(
-            >>>     [
-            >>>         {
-            >>>             'power': 6300,
-            >>>             'voltage': 0.4,
-            >>>             'vector_group': 'У/Ун-0',
-            >>>             'power_short_circuit': 0.11,
-            >>>             'voltage_short_circuit': 0.22,
-            >>>             'resistance_r1': 0.333,
-            >>>             'reactance_x1': 0.444,
-            >>>             'resistance_r0': 0.555,
-            >>>             'reactance_x0': 0.777
-            >>>         }
-            >>>     ]
-            >>>  )
+
+        .. code-block:: python
+
+            >> Transformer.insert_joined_table(
+            >>     [
+            >>         {
+            >>             'power': 6300,
+            >>             'voltage': 0.4,
+            >>             'vector_group': 'У/Ун-0',
+            >>             'power_short_circuit': 0.11,
+            >>             'voltage_short_circuit': 0.22,
+            >>             'resistance_r1': 0.333,
+            >>             'reactance_x1': 0.444,
+            >>             'resistance_r0': 0.555,
+            >>             'reactance_x0': 0.777
+            >>         }
+            >>     ]
+            >> )
 
         """
         def __temp_insert(tab: BT, attr: str) -> None:
@@ -755,7 +759,6 @@ class JoinedMixin:
                             new_source_data: dict = None,
                             target_row_data: dict = None
                             ) -> None:
-        # noinspection PyUnresolvedReferences
         """
         The method updates rows into joined table (and source if necessary).
 
@@ -769,25 +772,28 @@ class JoinedMixin:
             Then, if necessary, updated source rows.
 
         Example:
-            >>> Transformer.update_joined_table(
-            >>>     old_source_data={
-            >>>         'voltage': 0.4,
-            >>>         'power': 100,
-            >>>         'vector_group': 'У/Ун-0'
-            >>>     },
-            >>>     new_source_data={
-            >>>         'vector_group': 'У/Z-0',
-            >>>         'power': 6300
-            >>>     },
-            >>>     target_row_data={
-            >>>         'power_short_circuit': 0.11,
-            >>>         'voltage_short_circuit': 0.22,
-            >>>         'resistance_r1': 0.333,
-            >>>         'reactance_x1': 0.444,
-            >>>         'resistance_r0': 0.555,
-            >>>         'reactance_x0': 0.777
-            >>>     }
-            >>> )
+
+        .. code-block:: python
+
+            >> Transformer.update_joined_table(
+            >>     old_source_data={
+            >>         'voltage': 0.4,
+            >>         'power': 100,
+            >>         'vector_group': 'У/Ун-0'
+            >>     },
+            >>     new_source_data={
+            >>         'vector_group': 'У/Z-0',
+            >>         'power': 6300
+            >>     },
+            >>     target_row_data={
+            >>         'power_short_circuit': 0.11,
+            >>         'voltage_short_circuit': 0.22,
+            >>         'resistance_r1': 0.333,
+            >>         'reactance_x1': 0.444,
+            >>         'resistance_r0': 0.555,
+            >>         'reactance_x0': 0.777
+            >>     }
+            >> )
 
         """
         old_source_dict = None
@@ -901,7 +907,6 @@ class JoinedMixin:
                             source_data: dict = None,
                             from_source: bool = False
                             ) -> None:
-        # noinspection PyUnresolvedReferences
         """
         The method deletes rows into joined table (and source if necessary).
 
@@ -913,14 +918,17 @@ class JoinedMixin:
             Default delete single rows from joined table.
 
         Example:
-            >>> Transformer.delete_joined_table(
-            >>>     source_data={
-            >>>         'voltage': 0.4,
-            >>>         'vector_group': 'У/Ун-0',
-            >>>         'power': 100
-            >>>     },
-            >>>     from_source=True
-            >>> )
+
+        .. code-block:: python
+
+            >> Transformer.delete_joined_table(
+            >>     source_data={
+            >>         'voltage': 0.4,
+            >>         'vector_group': 'У/Ун-0',
+            >>         'power': 100
+            >>     },
+            >>     from_source=True
+            >> )
 
         """
         source_dict = None
@@ -1016,7 +1024,6 @@ class JoinedMixin:
 
     @classmethod
     def __get_join_stmt(cls: BT) -> sa.sql.Join:
-        # noinspection PyUnresolvedReferences
         """
         The method returns joined table statement.
 
@@ -1024,7 +1031,10 @@ class JoinedMixin:
             sa.sql.Join: Joined table statement.
 
         Example:
-            >>> print(Transformer.get_join_stmt())
+
+        .. code-block:: python
+
+            >> print(Transformer.get_join_stmt())
             transformer
                 JOIN power_nominal ON power_nominal.id = transformer.power_id
                 JOIN voltage_nominal ON voltage_nominal.id = transformer.voltage_id

@@ -208,6 +208,7 @@ class ResultsFigure:
 
             Args:
                 vals (Sequence): The chain of elements.
+
             Returns:
                 List[Image.Image]: images list with one/three phases element graphs.
 
@@ -238,6 +239,7 @@ class ResultsFigure:
 
             Args:
                 vals (Sequence): The chain of elements.
+
             Returns:
                 List[pd.DataFrame]: short circuit table with one/three phases element calculations.
 
@@ -550,6 +552,7 @@ class _Visualizer:
 
         Args:
             element (BaseElem): element of electrical system.
+
         Raises:
             NotImplementedError: if unknown type of element.
 
@@ -567,6 +570,7 @@ class _Visualizer:
 
         Args:
             element (BaseElem): element of electrical system with type T.
+
         Returns:
             str: graph path for drawing a T element in the GUI.
 
@@ -585,6 +589,7 @@ class _Visualizer:
 
         Args:
             element (BaseElem): element of electrical system with type Q, W or R.
+
         Returns:
             str: graph path for drawing a Q, W or R element in the GUI.
 
