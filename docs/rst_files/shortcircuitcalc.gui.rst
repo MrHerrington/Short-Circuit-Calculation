@@ -1,33 +1,28 @@
-shortcircuitcalc.gui package
-============================
+:tocdepth: 3
 
-Submodules
-----------
+gui
+***
 
-shortcircuitcalc.gui.figures module
------------------------------------
+Module description
+==================
+
+.. automodule:: shortcircuitcalc.gui
+   :members:
+   :show-inheritance:
+
+Modules
+=======
+
+figures
+-------
 
 .. automodule:: shortcircuitcalc.gui.figures
    :members:
    :show-inheritance:
 
-shortcircuitcalc.gui.resources module
--------------------------------------
-
-.. automodule:: shortcircuitcalc.gui.resources
-   :members:
-   :show-inheritance:
-
-shortcircuitcalc.gui.windows module
------------------------------------
+windows
+-------
 
 .. automodule:: shortcircuitcalc.gui.windows
-   :members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: shortcircuitcalc.gui
    :members:
    :show-inheritance:

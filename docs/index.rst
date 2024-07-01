@@ -3,14 +3,18 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to ShortCircuitCalc's documentation!
-============================================
+
+Simplify calculation the electrical system parameters
+=====================================================
+
+Yasos bibas
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 5
+   :hidden:
+   :caption: APP STRUCTURE
 
-   rst_files/modules
+   rst_files/shortcircuitcalc
 
 Indices and tables
 ==================

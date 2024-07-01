@@ -29,11 +29,15 @@ add_module_names = False  # Shorten names
 # on generating document. It preserves them as is in the source code.
 autodoc_preserve_defaults = True
 templates_path = ['_templates']
+# root_doc = "rst_files/shortcircuitcalc"
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'insegel'
+html_theme_options = {
+    'navigation_depth': 5
+}
 html_static_path = ['_static']
 
 # -- Options for PDF output

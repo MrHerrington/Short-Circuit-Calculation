@@ -1,41 +1,43 @@
-shortcircuitcalc.database package
-=================================
+:tocdepth: 3
 
-Submodules
-----------
+database
+********
 
-shortcircuitcalc.database.install module
-----------------------------------------
+Package description
+===================
+
+.. automodule:: shortcircuitcalc.database
+   :members:
+   :show-inheritance:
+
+Modules
+=======
+
+install
+-------
 
 .. automodule:: shortcircuitcalc.database.install
    :members:
    :show-inheritance:
 
-shortcircuitcalc.database.mixins module
----------------------------------------
+mixins
+------
 
 .. automodule:: shortcircuitcalc.database.mixins
    :members:
    :show-inheritance:
 
-shortcircuitcalc.database.models module
----------------------------------------
+models
+------
 
 .. automodule:: shortcircuitcalc.database.models
    :members:
    :exclude-members: id
    :show-inheritance:
 
-shortcircuitcalc.database.units module
---------------------------------------
+units
+-----
 
 .. automodule:: shortcircuitcalc.database.units
-   :members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: shortcircuitcalc.database
    :members:
    :show-inheritance:

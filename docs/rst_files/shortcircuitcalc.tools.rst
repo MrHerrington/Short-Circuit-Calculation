@@ -1,26 +1,28 @@
-shortcircuitcalc.tools package
-==============================
+:tocdepth: 3
 
-Submodules
-----------
+tools
+*****
 
-shortcircuitcalc.tools.elements module
---------------------------------------
+Module description
+==================
+
+.. automodule:: shortcircuitcalc.tools
+   :members:
+   :show-inheritance:
+
+Modules
+=======
+
+elements
+--------
 
 .. automodule:: shortcircuitcalc.tools.elements
    :members:
    :show-inheritance:
 
-shortcircuitcalc.tools.tools module
------------------------------------
+tools
+-----
 
 .. automodule:: shortcircuitcalc.tools.tools
-   :members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: shortcircuitcalc.tools
    :members:
    :show-inheritance:
