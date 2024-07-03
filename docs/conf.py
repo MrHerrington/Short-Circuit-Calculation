@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.abspath('..'))
 project = 'ShortCircuitCalc'
 copyright = '2024, Ilya Belov'  # noqa
 author = 'Ilya Belov'
-release = '1.0.0'
+version = '1.0.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -42,6 +42,12 @@ html_static_path = ['_static']
 
 # -- Options for PDF output
 
+simplepdf_vars = {
+    'primary': '#FFA900',
+    'cover-bg': 'transparent',
+    'cover-overlay': 'url(cover.jpg) no-repeat center'
+}
 
 # sphinx apidoc -o docs/rst_files/ ./shortcircuitcalc #  for generating rst files
-# sphinx-build -b rinoh . _build/rinoh #  for generating pdf
+# /docs make html #  for generating html
+# /docs make simplepdf #  for generating pdf

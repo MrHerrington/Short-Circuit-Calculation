@@ -2,9 +2,9 @@
 """
 The module contains classes for drawing matplotlib figures in the GUI PyQt5.
 
-Requirements for correctly working 'cairosvg' module (for sample requirements for Windows OS 64 bit):
-    - gtk3-runtime-3.24.31-2022-01-04-ts-win64.exe;
-    - uniconvertor-2.0rc4-win64_headless.msi
+Requirements for correctly working CairoSVG module:
+    - GTK+ for Windows Runtime Environment Installer;
+    - UniConvertor 2.0 Release Candidate 5 (RC5).
 
 Classes:
     - ResultsFigure: Class for drawing results figure in the GUI.

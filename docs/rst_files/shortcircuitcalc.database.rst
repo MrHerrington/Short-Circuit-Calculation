@@ -10,8 +10,8 @@ Package description
    :members:
    :show-inheritance:
 
-Modules
-=======
+Modules:
+========
 
 install
 -------

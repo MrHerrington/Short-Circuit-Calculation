@@ -3,15 +3,15 @@
 tools
 *****
 
-Module description
-==================
+Package description
+===================
 
 .. automodule:: shortcircuitcalc.tools
    :members:
    :show-inheritance:
 
-Modules
-=======
+Modules:
+========
 
 elements
 --------

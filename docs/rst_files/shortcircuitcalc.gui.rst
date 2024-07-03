@@ -3,15 +3,15 @@
 gui
 ***
 
-Module description
-==================
+Package description
+===================
 
 .. automodule:: shortcircuitcalc.gui
    :members:
    :show-inheritance:
 
-Modules
-=======
+Modules:
+========
 
 figures
 -------
