@@ -1,17 +1,7 @@
-:tocdepth: 3
+:tocdepth: 2
 
-database
-********
-
-Package description
-===================
-
-.. automodule:: shortcircuitcalc.database
-   :members:
-   :show-inheritance:
-
-Modules:
-========
+Modules
+=======
 
 install
 -------

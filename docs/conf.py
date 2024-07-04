@@ -34,18 +34,20 @@ templates_path = ['_templates']
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'insegel'
+html_theme = 'sphinx_rtd_theme'
+html_static_path = ['_static']
+html_logo = "_static/images/logo.png"
+html_favicon = '_static/images/logo.png'
 html_theme_options = {
     'navigation_depth': 5
 }
-html_static_path = ['_static']
 
 # -- Options for PDF output
 
 simplepdf_vars = {
     'primary': '#FFA900',
     'cover-bg': 'transparent',
-    'cover-overlay': 'url(cover.jpg) no-repeat center'
+    'cover-overlay': 'url(images/cover.jpg) no-repeat center'
 }
 
 # sphinx apidoc -o docs/rst_files/ ./shortcircuitcalc #  for generating rst files

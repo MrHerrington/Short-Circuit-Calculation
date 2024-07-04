@@ -36,11 +36,19 @@ Requirements for correctly working CairoSVG module (successful testing on Window
       | (watch https://sk1project.net/uc2/download/).
 
 .. toctree::
-   :maxdepth: 5
    :hidden:
-   :caption: APP STRUCTURE
+   :caption: PACKAGES
 
-   rst_files/shortcircuitcalc
+   rst_files/database
+   rst_files/gui
+   rst_files/tools
+
+.. toctree::
+   :hidden:
+   :caption: MODULES
+
+   rst_files/config
+   rst_files/run
 
 Indices and tables
 ==================

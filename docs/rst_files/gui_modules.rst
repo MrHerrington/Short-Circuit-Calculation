@@ -1,17 +1,7 @@
-:tocdepth: 3
+:tocdepth: 2
 
-gui
-***
-
-Package description
-===================
-
-.. automodule:: shortcircuitcalc.gui
-   :members:
-   :show-inheritance:
-
-Modules:
-========
+Modules
+=======
 
 figures
 -------

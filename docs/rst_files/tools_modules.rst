@@ -1,17 +1,7 @@
-:tocdepth: 3
+:tocdepth: 2
 
-tools
-*****
-
-Package description
-===================
-
-.. automodule:: shortcircuitcalc.tools
-   :members:
-   :show-inheritance:
-
-Modules:
-========
+Modules
+=======
 
 elements
 --------
