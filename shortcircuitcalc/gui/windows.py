@@ -386,11 +386,12 @@ class CustomTextEditLogger(QtWidgets.QPlainTextEdit, logging.Handler):
         emit(self, record: logging.LogRecord)
 
     """
-    append_plain_text = QtCore.pyqtSignal(str)
+    new_record = QtCore.pyqtSignal(str)
 
     def __init__(self, parent=None) -> None:
         super(CustomTextEditLogger, self).__init__(parent)
         self.setReadOnly(True)
+        self.new_record.connect(self.appendHtml)
 
     def emit(self, record: logging.LogRecord) -> None:
         """
@@ -402,7 +403,7 @@ class CustomTextEditLogger(QtWidgets.QPlainTextEdit, logging.Handler):
             record (logging.LogRecord): The record to be logged.
 
         Signals:
-            - append_plain_text(str): The text to be appended to the logs terminal.
+            - new_record(str): The text to be appended to the logs terminal.
 
         """
         msg = self.format(record)
@@ -418,7 +419,7 @@ class CustomTextEditLogger(QtWidgets.QPlainTextEdit, logging.Handler):
         elif 'ERROR' in msg or 'CRITICAL' in msg:
             msg = f"<span style='color:{color_error};'>{msg}</span>"
 
-        self.append_plain_text.emit(self.appendHtml(msg))
+        self.new_record.emit(msg)
 
 
 class ConfirmWindow(QtWidgets.QDialog):
