@@ -1,6 +1,0 @@
-develop ChainsSystem class
-add annotations to elements classes
-replace eval на getattr in run
-add console entry_points methods
-Add # -*- coding: utf-8 -*- in files
-Using Sphinx write doc for project
