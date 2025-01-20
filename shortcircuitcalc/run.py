@@ -5,7 +5,9 @@ The module running the program.
 """
 
 
+import os
 import sys
+sys.path.append(os.getcwd())
 from PyQt5 import QtWidgets
 from shortcircuitcalc.gui import MainWindow
 
